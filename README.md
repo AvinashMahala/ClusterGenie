@@ -23,7 +23,7 @@
 **ClusterGenie** is a fullstack demo project designed for a DigitalOcean Senior Software Engineer (Copilots) interview. It showcases a scalable, AI-assisted cluster management dashboard inspired by cloud infrastructure operations. The application allows users to diagnose cluster health, provision droplets (virtual machines), manage scaling actions, monitor worker job progress, perform synthetic health checks, and view activity logs—all with a focus on operational excellence, automation, and AI-driven insights.
 
 This project demonstrates key skills from the job description, including:
-- Developing gRPC APIs in Go for microservices.
+- Developing REST APIs in Go for microservices.
 - Building distributed systems with MySQL, Redis, and Kafka.
 - Integrating Large Language Models (LLMs) for agentic solutions (e.g., diagnostics).
 - Collaborating on product features with clean architecture.
@@ -49,7 +49,7 @@ The demo is structured for a 15-20 minute presentation: overview the UI, demonst
 
 ## Architecture
 
-ClusterGenie follows a microservices architecture with clean layers for scalability and maintainability. The backend uses Go for gRPC services, while the frontend is a React SPA. Communication is handled via gRPC (sync), Kafka (async events), and gRPC-Web (frontend-backend).
+ClusterGenie follows a microservices architecture with clean layers for scalability and maintainability. The backend uses Go for REST services, while the frontend is a React SPA. Communication is handled via HTTP/JSON (sync), Kafka (async events), and Axios (frontend-backend).
 
 ### Text-Based Architecture Diagram
 
@@ -63,11 +63,11 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 | - Interfaces      |     | - Interfaces      |     | - Migrations      |
 | - Services        |     | - Services        |     | - Init Scripts    |
 | - Repositories    |     | - Repositories    |     |                   |
-| - Components      |     | - gRPC Handlers   |     |                   |
+| - Components      |     | - REST Handlers   |     |                   |
 | - UI (Tailwind)   |     | - Kafka Consumers |     |                   |
 +-------------------+     +-------------------+     +-------------------+
           |                           |                           |
-          | gRPC-Web                 | gRPC/Kafka                | SQL/Cache
+          | Axios/HTTP               | HTTP/JSON/Kafka           | SQL/Cache
           |                           |                           |
           v                           v                           v
 +-------------------+     +-------------------+     +-------------------+
@@ -75,7 +75,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 |                   |     |   Service         |     |   (Persistent)    |
 +-------------------+     +-------------------+     +-------------------+
                               |           |
-                              | Kafka     | gRPC
+                              | Kafka     | HTTP/JSON
                               |           |
                               v           v
 +-------------------+     +-------------------+     +-------------------+
@@ -83,7 +83,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 | (LLM Integration) |     | Service           |     | (Cache)          |
 +-------------------+     +-------------------+     +-------------------+
                               |           |
-                              | Kafka     | gRPC
+                              | Kafka     | HTTP/JSON
                               |           |
                               v           v
 +-------------------+     +-------------------+     +-------------------+
@@ -92,15 +92,15 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 +-------------------+     +-------------------+     +-------------------+
 ```
 
-- **Frontend**: React SPA with layered architecture (models → interfaces → services → repositories → components). Communicates with backend via gRPC-Web.
+- **Frontend**: React SPA with layered architecture (models → interfaces → services → repositories → components). Communicates with backend via Axios/HTTP.
 - **Backend**: 4 microservices (Core API, Diagnosis, Provisioning, Monitoring) with shared layers. Uses DI for loose coupling.
 - **Database**: MySQL for persistence, Redis for caching, Kafka for events. Schemas and migrations in `database/`.
-- **Communication**: gRPC for service calls, Kafka for async events (e.g., scaling triggers log updates), gRPC-Web for frontend.
+- **Communication**: HTTP/JSON for service calls, Kafka for async events (e.g., scaling triggers log updates), Axios for frontend.
 
 ## Tech Stack
 
-- **Backend**: Go 1.21+, gRPC, Protocol Buffers, grpc-gateway (for Swagger), MySQL, Redis, Kafka, Mocked LLM logic (pluggable for real APIs).
-- **Frontend**: React 18+, TypeScript, Vite, Tailwind CSS, SASS, gRPC-Web.
+- **Backend**: Go 1.21+, Gin, Swagger, MySQL, Redis, Kafka, Mocked LLM logic (pluggable for real APIs).
+- **Frontend**: React 18+, TypeScript, Vite, Tailwind CSS, SASS, Axios.
 - **Infrastructure**: Docker, Docker Compose, Makefile.
 - **Other**: Git, GitHub Actions (CI/CD), Prometheus (optional monitoring).
 
@@ -120,7 +120,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
    - Builds Docker images.
    - Starts services via Docker Compose.
 3. Run `./start.sh` to initiate and start backend/frontend in separate terminals.
-4. Access the app: Open browser to `http://localhost:3000`. Backend gRPC at `localhost:50051`.
+4. Access the app: Open browser to `http://localhost:3000`. Backend REST API at `localhost:8080`.
 5. To stop: Run `./stop.sh` in any terminal.
 
 For manual setup:
@@ -130,7 +130,7 @@ For manual setup:
 ## Usage
 
 - **Demo Flow**: Provision a droplet → Trigger diagnosis → View scaling/logs → Run health checks.
-- **API Docs**: Visit `http://localhost:8080` for Swagger UI (via grpc-gateway).
+- **API Docs**: Visit `http://localhost:8080/swagger/index.html` for Swagger UI.
 - **Logs**: Check Docker logs: `docker-compose logs`.
 
 ## Development
@@ -155,7 +155,7 @@ For manual setup:
 
 - **Phase 1 (In Progress)**: Project setup, README, directory structure.
 - **Phase 2**: Backend core (models, interfaces, services, repositories).
-- **Phase 3**: Frontend core (components, gRPC integration).
+- **Phase 3**: Frontend core (components, REST integration).
 - **Phase 4**: Integration (Kafka, LLM, full features).
 - **Phase 5**: Polish (tests, docs, demo script).
 
@@ -164,7 +164,7 @@ This README will be updated after each phase.
 ## Troubleshooting
 
 - **Docker Issues**: If `docker-compose up` fails, check ports (e.g., 3306 for MySQL). Run `docker system prune` to clean up.
-- **gRPC Errors**: Verify proto files; ensure services are running (`docker ps`).
+- **REST Errors**: Check logs for Gin errors; ensure services are running (`docker ps`).
 - **Frontend Not Loading**: Check Node.js version; clear npm cache (`npm cache clean --force`).
 - **Go Mod Errors**: Run `go mod tidy` in `backend/`.
 - **Kafka Not Connecting**: Wait for Zookeeper; check logs with `docker-compose logs kafka`.
@@ -180,7 +180,7 @@ This README will be updated after each phase.
 1. **Intro (2 min)**: Overview of ClusterGenie and architecture.
 2. **Setup (1 min)**: Run `./setup.sh`; show services starting.
 3. **Features Demo (10 min)**: Provision droplet → Diagnose → Scale → Monitor jobs/health/logs.
-4. **Code Walkthrough (4 min)**: Explain layers, gRPC, Kafka.
+4. **Code Walkthrough (4 min)**: Explain layers, REST API, Kafka.
 5. **Q&A (3 min)**: Handle questions.
 
 ## License
@@ -190,7 +190,7 @@ MIT License. See LICENSE for details.
 ## Additional Ideas
 
 - **CHANGELOG.md**: Track changes per phase.
-- **API Docs**: Auto-generated from gRPC in `docs/`.
+- **API Docs**: Auto-generated from REST in `docs/`.
 - **Performance**: Add benchmarks for scaling demos.
 - **Security**: Input validation, rate limiting.
 - **Extensibility**: Plugin system for new diagnostics.
