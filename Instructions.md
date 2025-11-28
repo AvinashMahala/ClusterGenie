@@ -1,13 +1,13 @@
 # ClusterGenie Setup Instructions
 
-This document outlines the complete sequence of one-time setup steps performed to get ClusterGenie running. These steps ensure all prerequisites are installed and configured for the fullstack gRPC application.
+This document outlines the complete sequence of one-time setup steps performed to get ClusterGenie running. These steps ensure all prerequisites are installed and configured for the fullstack REST API application.
 
 ## Overview
 ClusterGenie is a fullstack application with:
-- **Backend**: Go gRPC server with protobuf
-- **Frontend**: React/TypeScript with gRPC-Web
+- **Backend**: Go REST API server with Gin and Swagger
+- **Frontend**: React/TypeScript with Axios HTTP client
 - **Infrastructure**: Docker Compose (MySQL, Redis, Kafka)
-- **Communication**: gRPC-Web proxy for browser-backend communication
+- **Communication**: Direct HTTP/JSON between frontend and backend
 
 ## One-Time Setup Sequence
 
@@ -54,13 +54,12 @@ These are foundational tools required for development.
 - **Installation**: `brew install yarn`
 - **Verification**: `yarn --version`
 
-### 3. gRPC and Protobuf Tools
+### 3. REST API Tools
 
-#### 3.1 Protobuf Compiler (protoc)
-- **Purpose**: Compile .proto files to language-specific code
-- **Installation**: `brew install protobuf`
-- **Verification**: `protoc --version`
-- **Note**: Compiles from source (~5-10 minutes)
+#### 3.1 Swagger CLI (swag)
+- **Purpose**: Generate OpenAPI/Swagger documentation from Go REST API code
+- **Installation**: `go install github.com/swaggo/swag/cmd/swag@latest`
+- **Verification**: `swag --version`
 
 #### 3.2 Go Protobuf Plugins
 - **Purpose**: Generate Go code from .proto files
