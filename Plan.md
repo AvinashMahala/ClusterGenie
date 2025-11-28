@@ -44,7 +44,7 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: App builds; UI loads in browser.
   - **Testing**: Run `npm run dev`; verify UI loads.
 
-- **Microphase 1.4**: Integrate MVP (frontend calls backend).
+- **Microphase 1.4**: Integrate MVP (frontend calls backend). ✅ **COMPLETED**
   - **Tasks**: Add gRPC-Web to frontend; connect to backend "Hello" endpoint.
   - **Estimated Time**: 2-3 hours.
   - **Dependencies**: 1.2 and 1.3 completed.
@@ -203,7 +203,7 @@ Progress will be tracked here—update after each completion.
 **Phase 5 Milestone**: Product ready for interview demo.
 
 ## Tracking & Feedback
-- **Current Status**: Completed Phase 1, Microphase 1.3. Starting Microphase 1.4.
+- **Current Status**: Completed Phase 1, all microphases. Ready for Phase 2.
 - **Feedback Loop**: After each microphase, test manually and note issues here. Iterate as needed.
 - **Risks**: Docker complexity—mitigate with simple configs. LLM mocks—ensure they're realistic.
 - **Timeline**: 1-2 weeks total, adjustable based on feedback.

@@ -5,26 +5,16 @@ import (
 	"log"
 	"net"
 
+	pb "github.com/AvinashMahala/ClusterGenie/backend/shared/proto"
 	"google.golang.org/grpc"
 )
 
-// Manual proto definitions for MVP
-type HelloRequest struct {
-	Name string `json:"name"`
+type server struct {
+	pb.UnimplementedHelloServiceServer
 }
 
-type HelloResponse struct {
-	Message string `json:"message"`
-}
-
-type HelloServiceServer interface {
-	SayHello(context.Context, *HelloRequest) (*HelloResponse, error)
-}
-
-type server struct{}
-
-func (s *server) SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error) {
-	return &HelloResponse{Message: "Hello, " + req.Name + " from ClusterGenie!"}, nil
+func (s *server) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
+	return &pb.HelloResponse{Message: "Hello, " + req.GetName() + " from ClusterGenie!"}, nil
 }
 
 func main() {
@@ -34,16 +24,10 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	// Register manually for MVP
-	RegisterHelloServiceServer(s, &server{})
+	pb.RegisterHelloServiceServer(s, &server{})
 
 	log.Println("Core API server listening on :50051")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-}
-
-// Manual registration for MVP
-func RegisterHelloServiceServer(s *grpc.Server, srv HelloServiceServer) {
-	// Placeholder
 }

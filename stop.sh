@@ -8,10 +8,11 @@ echo "Stopping ClusterGenie services..."
 echo "Stopping Docker containers..."
 docker-compose down
 
-# Kill any remaining processes (e.g., yarn dev)
-echo "Killing any remaining processes..."
-pkill -f "yarn dev" || true
-pkill -f "docker-compose logs" || true
-pkill -f "sleep infinity" || true
+# Kill gRPC-Web proxy
+if [ -f grpcwebproxy.pid ]; then
+    echo "Stopping gRPC-Web proxy..."
+    kill $(cat grpcwebproxy.pid) 2>/dev/null || true
+    rm grpcwebproxy.pid
+fi
 
 echo "All services stopped."

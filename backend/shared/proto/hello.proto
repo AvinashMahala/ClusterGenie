@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package clustergenie;
 
-option go_package = "github.com/AvinashMahala/ClusterGenie/backend/shared/proto";
+option go_package = ".";
 
 service HelloService {
   rpc SayHello (HelloRequest) returns (HelloResponse);
