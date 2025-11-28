@@ -133,13 +133,6 @@ check_prerequisites() {
             exit 1
         fi
         echo "✅ Go installed!"
-        # Install Go protobuf plugins
-        echo "📦 Installing Go protobuf plugins (1 minute)..."
-        echo "Starting Go protobuf plugins installation..." >> "$LOG_FILE"
-        ( go install google.golang.org/protobuf/cmd/protoc-gen-go@latest ) >> "$LOG_FILE" 2>&1
-        ( go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest ) >> "$LOG_FILE" 2>&1
-        echo "Go protobuf plugins installation completed." >> "$LOG_FILE"
-        echo "✅ Go protobuf plugins installed!"
         # Install Air for hot reloading
         echo "📦 Installing Air for Go hot reloading (1 minute)..."
         echo "Starting Air installation..." >> "$LOG_FILE"
@@ -168,13 +161,7 @@ check_prerequisites() {
             exit 1
         fi
         echo "✅ Node.js installed!"
-        # Install gRPC-Web plugin
-        echo "📦 Installing gRPC-Web plugin (1 minute)..."
-        echo "Starting gRPC-Web plugin installation..." >> "$LOG_FILE"
-        ( npm install -g protoc-gen-grpc-web ) >> "$LOG_FILE" 2>&1
-        echo "gRPC-Web plugin installation completed." >> "$LOG_FILE"
-        echo "✅ gRPC-Web plugin installed!"
-hello_pb.js:14 Uncaught ReferenceError: global is not defined
+        # Install protobuf TypeScript plugin
         echo "📦 Installing protobuf TypeScript plugin (1 minute)..."
         echo "Starting protobuf TypeScript plugin installation..." >> "$LOG_FILE"
         ( cd frontend && yarn add --dev @protobuf-ts/protoc ) >> "$LOG_FILE" 2>&1
@@ -240,33 +227,10 @@ hello_pb.js:14 Uncaught ReferenceError: global is not defined
         echo "✅ gRPC-Web plugin already installed."
     fi
 
-    # grpcwebproxy
-    if ! command -v grpcwebproxy >/dev/null 2>&1; then
-        echo "📦 Installing grpcwebproxy..."
-        echo "Starting grpcwebproxy installation..." >> "$LOG_FILE"
-        ( curl -L https://github.com/improbable-eng/grpc-web/releases/download/v0.15.0/grpcwebproxy-v0.15.0-osx-x86_64.zip -o grpcwebproxy.zip && unzip grpcwebproxy.zip && chmod +x dist/grpcwebproxy-v0.15.0-osx-x86_64 && sudo mv dist/grpcwebproxy-v0.15.0-osx-x86_64 /usr/local/bin/grpcwebproxy && rm grpcwebproxy.zip ) >> "$LOG_FILE" 2>&1
-        echo "grpcwebproxy installation completed." >> "$LOG_FILE"
-        if ! command -v grpcwebproxy >/dev/null 2>&1; then
-            echo "❌ grpcwebproxy installation failed. Check $LOG_FILE for details."
-            exit 1
-        fi
-        echo "✅ grpcwebproxy installed!"
-    else
-        echo "✅ grpcwebproxy already installed."
-    fi
-
     echo "🎉 All prerequisites ready!"
     echo ""
 }
 
-# Function to start gRPC-Web proxy
-start_grpc_web_proxy() {
-    echo "Starting gRPC-Web proxy..."
-    grpcwebproxy --backend_addr=localhost:50051 --run_tls_server=false --allow_all_origins >> "$LOG_FILE" 2>&1 &
-    echo $! > grpcwebproxy.pid
-    sleep 2
-    echo "gRPC-Web proxy started on port 8080"
-}
 start_docker_services() {
     local retries=3
     for i in $(seq 1 $retries); do
@@ -302,36 +266,6 @@ wait_for_services() {
 
 # Check prerequisites
 check_prerequisites
-
-# Generate protobuf code if not present
-if [ ! -f "backend/shared/proto/hello.pb.go" ]; then
-    echo "🔧 Generating Go protobuf code..."
-    echo "Starting Go protobuf code generation..." >> "$LOG_FILE"
-    ( cd backend/shared/proto && export PATH=$PATH:~/go/bin && protoc --go_out=. --go-grpc_out=. hello.proto ) >> "$LOG_FILE" 2>&1
-    echo "Go protobuf code generation completed." >> "$LOG_FILE"
-    echo "✅ Go protobuf code generated!"
-fi
-
-if [ ! -f "frontend/src/hello_grpc_web_pb.js" ]; then
-    echo "🔧 Generating TypeScript protobuf code..."
-    echo "Starting TypeScript protobuf code generation..." >> "$LOG_FILE"
-    ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-grpc-web=/Users/avinashmahala/.nvm/versions/node/v20.19.5/bin/protoc-gen-grpc-web --grpc-web_out=import_style=commonjs,mode=grpcwebtext:. hello.proto ) >> "$LOG_FILE" 2>&1
-    echo "TypeScript protobuf code generation completed." >> "$LOG_FILE"
-    echo "✅ TypeScript protobuf code generated!"
-    # Fix CommonJS require for ES modules
-    echo "🔧 Fixing CommonJS imports for ES modules..."
-    ( cd frontend/src && sed -i '' 's/const grpc = {};/import * as grpcWeb from '\''grpc-web'\'';\nconst grpc = {};/g' hello_grpc_web_pb.js )
-    ( cd frontend/src && sed -i '' 's/grpc\.web = require('\''grpc-web'\'');/grpc.web = grpcWeb.default || grpcWeb;/g' hello_grpc_web_pb.js )
-    echo "✅ CommonJS imports fixed!"
-fi
-
-if [ ! -f "frontend/src/hello_pb.js" ]; then
-    echo "🔧 Generating JavaScript protobuf messages..."
-    echo "Starting JS protobuf message generation..." >> "$LOG_FILE"
-    ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-js=../node_modules/.bin/protoc-gen-js --js_out=import_style=es6,binary:. hello.proto ) >> "$LOG_FILE" 2>&1
-    echo "JS protobuf message generation completed." >> "$LOG_FILE"
-    echo "✅ JS protobuf messages generated!"
-fi
 
 # Start Docker services if not running
 if ! docker-compose ps | grep -q "Up"; then
@@ -428,12 +362,6 @@ osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/backend && 
 # Docker overview terminal
 echo "Opening terminal for Docker overview logs..."
 osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && docker-compose logs -f\"" > /dev/null 2>&1
-
-# Central monitor terminal
-echo "📺 Opening central monitor terminal..."
-osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  Central Monitor: Run ./stop.sh to stop all services.'; echo '📄 Setup logs: $LOG_FILE'; sleep infinity\"" > /dev/null 2>&1
-
-start_grpc_web_proxy
 
 echo "🎉 All terminals opened successfully!"
 echo "💡 Use ./stop.sh in the central monitor to stop all services."
