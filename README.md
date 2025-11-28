@@ -119,13 +119,23 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
    - Installs dependencies (Go modules, Yarn packages).
    - Builds Docker images.
    - Starts services via Docker Compose.
-3. Run `./start.sh` to initiate and start backend/frontend in separate terminals.
-4. Access the app: Open browser to `http://localhost:3000`. Backend REST API at `localhost:8080`.
-5. To stop: Run `./stop.sh` in any terminal.
+3. **For Development**: Run `./dev.sh` for hot-reloading development environment.
+   - Starts infrastructure (MySQL, Redis, Kafka) in Docker
+   - Runs backend with Air (Go hot reloading)
+   - Runs frontend with Vite (React hot reloading)
+4. **For Production-like Testing**: Run `./start.sh` to start full Docker environment.
+5. Access the app: Open browser to `http://localhost:3000`. Backend REST API at `localhost:8080`.
+6. To stop: Run `./stop.sh` in any terminal or press Ctrl+C in the development terminal.
+
+### Development Workflow
+- **Daily Development**: Use `./dev.sh` - hot reloading for both backend and frontend
+- **Production Testing**: Use `./start.sh` - full Docker environment
+- **Manual Development**: See Development section below
 
 For manual setup:
-- Backend: `cd backend && go mod tidy && docker-compose up`.
-- Frontend: `cd frontend && yarn install && yarn dev`.
+- Backend: `cd backend && go mod tidy && air` (hot reloading)
+- Frontend: `cd frontend && yarn install && yarn dev` (hot reloading)
+- Infrastructure: `docker-compose up -d mysql redis kafka zookeeper`
 
 ## Usage
 
@@ -135,10 +145,34 @@ For manual setup:
 
 ## Development
 
-- **Backend**: Each service in `backend/` has its own `main.go`. Use `go run` for local dev.
-- **Frontend**: `yarn dev` in `frontend/`. Hot-reload enabled.
-- **Testing**: Run `make test` (unit tests) or `docker-compose exec <service> go test`.
-- **Debugging**: Use VS Code debugger for Go/React. Logs via `docker-compose logs`.
+### Quick Start for Development
+```bash
+# One-time setup (installs Go, Node, Air, etc.)
+./start.sh
+
+# Daily development with hot reloading
+./dev.sh
+```
+
+### Manual Development Setup
+- **Backend**: Run `cd backend && air` for hot reloading with Air
+- **Frontend**: Run `cd frontend && yarn dev` for hot reloading with Vite
+- **Infrastructure**: Run `docker-compose up -d mysql redis kafka zookeeper`
+
+### Development Features
+- **Hot Reloading**: Both backend (Go) and frontend (React) support hot reloading
+- **Automatic Rebuild**: Backend rebuilds automatically on Go file changes
+- **Live Browser Refresh**: Frontend updates automatically in browser
+- **Database Persistence**: MySQL/Redis data persists across restarts
+
+### Testing
+- **Unit Tests**: Run `make test` or `docker-compose exec <service> go test`
+- **Integration Tests**: Use the running development environment
+
+### Debugging
+- **Backend**: Use VS Code Go debugger or `dlv` debugger
+- **Frontend**: Use browser dev tools or VS Code React debugger
+- **Logs**: Check `backend-dev.log` and `frontend-dev.log` for development logs
 
 ## Contributing
 

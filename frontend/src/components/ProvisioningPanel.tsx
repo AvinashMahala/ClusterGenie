@@ -43,9 +43,10 @@ export function ProvisioningPanel() {
   const loadDroplets = async () => {
     try {
       const list = await provisioningService.listDroplets();
-      setDroplets(list);
+      setDroplets(list || []);
     } catch (error) {
       console.error('Failed to load droplets:', error);
+      setDroplets([]);
     }
   };
 
@@ -77,9 +78,9 @@ export function ProvisioningPanel() {
           </svg>
         }
         stats={[
-          { value: droplets.length, label: 'Droplets' },
-          { value: droplets.filter(d => d.status === 'active').length, label: 'Active' },
-          { value: droplets.filter(d => d.status === 'provisioning').length, label: 'Pending' }
+          { value: (droplets || []).length, label: 'Droplets' },
+          { value: (droplets || []).filter(d => d.status === 'active').length, label: 'Active' },
+          { value: (droplets || []).filter(d => d.status === 'provisioning').length, label: 'Pending' }
         ]}
         variant="compact"
       />

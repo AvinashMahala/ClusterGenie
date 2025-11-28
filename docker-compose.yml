@@ -43,7 +43,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
   core-api:
-    build: ./backend/core-api
+    build: ./backend
     ports:
       - "8080:8080"
     depends_on:
