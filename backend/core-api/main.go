@@ -5,16 +5,16 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/AvinashMahala/ClusterGenie/backend/shared/proto"
+	proto "github.com/AvinashMahala/ClusterGenie/backend/shared/proto"
 	"google.golang.org/grpc"
 )
 
 type server struct {
-	pb.UnimplementedHelloServiceServer
+	proto.UnimplementedHelloServiceServer
 }
 
-func (s *server) SayHello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
-	return &pb.HelloResponse{Message: "Hello, " + req.GetName() + " from ClusterGenie!"}, nil
+func (s *server) SayHello(ctx context.Context, req *proto.HelloRequest) (*proto.HelloResponse, error) {
+	return &proto.HelloResponse{Message: "Hello, " + req.GetName() + " from ClusterGenie!"}, nil
 }
 
 func main() {
@@ -24,9 +24,10 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterHelloServiceServer(s, &server{})
+	proto.RegisterHelloServiceServer(s, &server{})
 
 	log.Println("Core API server listening on :50051")
+	log.Println("Hot reload enabled with Air")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}

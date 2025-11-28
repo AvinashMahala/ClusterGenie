@@ -411,7 +411,7 @@ osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/frontend &&
 
 # Backend terminal
 echo "Opening terminal for Backend dev server..."
-osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/backend/core-api && air\"" > /dev/null 2>&1
+osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/backend && export PATH=\$PATH:~/go/bin && air\"" > /dev/null 2>&1
 
 # Docker overview terminal
 echo "Opening terminal for Docker overview logs..."
