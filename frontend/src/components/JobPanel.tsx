@@ -49,8 +49,14 @@ export function JobPanel() {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleString();
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return 'Unknown';
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleString();
+    } catch (error) {
+      return 'Invalid date';
+    }
   };
 
   return (

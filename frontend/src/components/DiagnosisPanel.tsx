@@ -76,21 +76,21 @@ export function DiagnosisPanel() {
               <div className="info-grid">
                 <div className="info-item">
                   <span className="label">Name:</span>
-                  <span className="value">{diagnosis.cluster.name}</span>
+                  <span className="value">{diagnosis.cluster?.name || 'Unknown'}</span>
                 </div>
                 <div className="info-item">
                   <span className="label">Region:</span>
-                  <span className="value">{diagnosis.cluster.region}</span>
+                  <span className="value">{diagnosis.cluster?.region || 'Unknown'}</span>
                 </div>
                 <div className="info-item">
                   <span className="label">Status:</span>
-                  <span className={`status-badge ${diagnosis.cluster.status}`}>
-                    {diagnosis.cluster.status}
+                  <span className={`status-badge ${diagnosis.cluster?.status || 'unknown'}`}>
+                    {diagnosis.cluster?.status || 'Unknown'}
                   </span>
                 </div>
                 <div className="info-item">
                   <span className="label">Droplets:</span>
-                  <span className="value">{diagnosis.cluster.droplets.length}</span>
+                  <span className="value">{diagnosis.cluster.droplets?.length || 0}</span>
                 </div>
               </div>
             </div>
@@ -98,7 +98,7 @@ export function DiagnosisPanel() {
             <div className="insights-card">
               <h2>AI Insights</h2>
               <ul className="insights-list">
-                {diagnosis.insights.map((insight, index) => (
+                {(diagnosis.insights || []).map((insight, index) => (
                   <li key={index} className="insight-item">
                     <span className="bullet">•</span>
                     <span>{insight}</span>
@@ -110,7 +110,7 @@ export function DiagnosisPanel() {
             <div className="recommendations-card">
               <h2>Recommendations</h2>
               <ul className="recommendations-list">
-                {diagnosis.recommendations.map((recommendation, index) => (
+                {(diagnosis.recommendations || []).map((recommendation, index) => (
                   <li key={index} className="recommendation-item">
                     <span className="bullet">→</span>
                     <span>{recommendation}</span>

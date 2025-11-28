@@ -30,39 +30,40 @@ export function Dashboard() {
         provisioningService.listDroplets(),
         jobService.listJobs(),
       ]);
-      setDroplets(dropletsData);
-      setJobs(jobsData);
+      setDroplets(dropletsData || []);
+      setJobs(jobsData || []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
+      setDroplets([]);
+      setJobs([]);
     }
   };
 
   const checkBackendStatus = async () => {
     try {
-      // Simple backend connectivity check
-      await new Promise((resolve, reject) => {
-        const client = new (window as any).proto.clustergenie.HelloServiceClient('http://localhost:8080');
-        const request = new (globalThis as any).proto.clustergenie.HelloRequest();
-        request.setName('Dashboard');
-
-        client.sayHello(request, {}, (err: any, response: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(response);
-          }
-        });
+      // Simple backend connectivity check using REST API
+      const response = await fetch('http://localhost:8080/api/v1/hello', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: 'Dashboard' }),
       });
-      setBackendStatus('online');
+
+      if (response.ok) {
+        setBackendStatus('online');
+      } else {
+        throw new Error('API returned non-OK status');
+      }
     } catch (error) {
       console.error('Backend check failed:', error);
       setBackendStatus('offline');
     }
   };
 
-  const recentJobs = jobs.slice(-5).reverse();
-  const activeJobs = jobs.filter(job => job.status === 'running' || job.status === 'pending');
-  const healthyDroplets = droplets.filter(droplet => droplet.status === 'active');
+  const recentJobs = (jobs || []).slice(-5).reverse();
+  const activeJobs = (jobs || []).filter(job => job.status === 'running' || job.status === 'pending');
+  const healthyDroplets = (droplets || []).filter(droplet => droplet.status === 'active');
 
   return (
     <div className="dashboard">
@@ -122,7 +123,7 @@ export function Dashboard() {
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    gRPC Services
+                    REST API
                   </span>
                   <span className="status-value">Active</span>
                 </div>
@@ -131,7 +132,7 @@ export function Dashboard() {
               <div className="status-card compact">
                 <div className="status-header">
                   <h3>Droplets</h3>
-                  <span className="status-count">{droplets.length}</span>
+                  <span className="status-count">{(droplets || []).length}</span>
                 </div>
                 <div className="status-details">
                   <span className="detail-item">
@@ -147,7 +148,7 @@ export function Dashboard() {
               <div className="status-card compact">
                 <div className="status-header">
                   <h3>Jobs</h3>
-                  <span className="status-count">{jobs.length}</span>
+                  <span className="status-count">{(jobs || []).length}</span>
                 </div>
                 <div className="status-details">
                   <span className="detail-item">

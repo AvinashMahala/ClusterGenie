@@ -13,6 +13,13 @@ export class MetricRepositoryImpl implements MetricRepository {
       (params as any).type = type;
     }
     const response = await axios.get(`${baseURL}/metrics`, { params });
-    return response.data;
+    const metricsResponse = response.data;
+    return {
+      ...metricsResponse,
+      metrics: metricsResponse.metrics.map((metric: any) => ({
+        ...metric,
+        timestamp: new Date(metric.timestamp),
+      })),
+    };
   }
 }

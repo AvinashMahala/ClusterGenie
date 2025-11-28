@@ -1,5 +1,11 @@
 package main
 
+// @title ClusterGenie API
+// @version 1.0
+// @description REST API for ClusterGenie - DigitalOcean droplet management and monitoring
+// @host localhost:8080
+// @BasePath /api/v1
+
 import (
 	"log"
 
@@ -34,6 +40,14 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		// Hello
+		// @Summary Say hello
+		// @Description Returns a greeting message
+		// @Tags hello
+		// @Accept json
+		// @Produce json
+		// @Param request body models.HelloRequest true "Hello request"
+		// @Success 200 {object} models.HelloResponse
+		// @Router /hello [post]
 		api.POST("/hello", func(c *gin.Context) {
 			var req models.HelloRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
