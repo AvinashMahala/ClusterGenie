@@ -8,7 +8,7 @@ This document outlines a comprehensive step-by-step plan to migrate the ClusterG
 - **Key Changes**: Replace protobuf/gRPC with JSON/HTTP, update handlers, clients, and configurations.
 - **Timeline Estimate**: 5-7 days for a small team.
 - **Risks**: Data compatibility, performance impacts, potential breaking changes.
-- **Status**: Phase 4 Completed (REST handlers implemented, Swagger updated, docker-compose modified; side-by-side testing ready).
+- **Status**: Phase 5.1 Completed (gRPC code removed from main.go, imports cleaned, go.mod tidied; REST-only server ready).
 
 ## Phase 1: Preparation and Planning
 ### Microphase 1.1: Environment Setup
