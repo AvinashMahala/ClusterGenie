@@ -97,7 +97,32 @@ check_air() {
     fi
 }
 
-# Check if yarn is installed
+# Initialize database schema
+initialize_database() {
+    print_info "Checking database initialization..."
+
+    # Wait for MySQL to be ready
+    print_info "Waiting for MySQL to be ready..."
+    for i in {1..30}; do
+        if docker-compose exec -T mysql mysql -uroot -prootpassword -e "SELECT 1" >/dev/null 2>&1; then
+            break
+        fi
+        sleep 2
+    done
+
+    # Check if tables exist
+    if ! docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie -e "SHOW TABLES;" | grep -q "clusters"; then
+        print_info "Initializing database schema..."
+        if docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie < database/init.sql; then
+            print_status "Database schema initialized"
+        else
+            print_error "Failed to initialize database schema"
+            exit 1
+        fi
+    else
+        print_status "Database schema already exists"
+    fi
+}
 check_yarn() {
     if ! command -v yarn >/dev/null 2>&1; then
         print_error "Yarn not found. Please install Node.js and Yarn first."
@@ -212,6 +237,7 @@ main() {
 
     print_info "Starting services..."
     start_infrastructure
+    initialize_database
     start_backend
     start_frontend
 
