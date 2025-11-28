@@ -122,6 +122,19 @@ initialize_database() {
     else
         print_status "Database schema already exists"
     fi
+
+    # Check if data exists
+    if docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie -e "SELECT COUNT(*) FROM clusters;" | tail -n1 | grep -q "0"; then
+        print_info "Seeding sample data..."
+        if docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie < database/seed.sql; then
+            print_status "Sample data seeded"
+        else
+            print_error "Failed to seed sample data"
+            exit 1
+        fi
+    else
+        print_status "Sample data already exists"
+    fi
 }
 check_yarn() {
     if ! command -v yarn >/dev/null 2>&1; then
