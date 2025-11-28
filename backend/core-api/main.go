@@ -9,6 +9,7 @@ package main
 import (
 	"log"
 
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
@@ -21,11 +22,15 @@ import (
 )
 
 func main() {
+	// Initialize database
+	database.InitDB()
+	defer database.CloseDB()
+
 	// Initialize dependencies
-	dropletRepo := repositories.NewDropletRepository()
-	clusterRepo := repositories.NewClusterRepository()
-	jobRepo := repositories.NewJobRepository()
-	metricRepo := repositories.NewMetricRepository()
+	dropletRepo := repositories.NewDropletRepository(database.DB, database.Redis)
+	clusterRepo := repositories.NewClusterRepository(database.DB, database.Redis)
+	jobRepo := repositories.NewJobRepository(database.DB, database.Redis)
+	metricRepo := repositories.NewMetricRepository(database.DB, database.Redis)
 	producer := eventbus.NewProducer([]string{"localhost:9092"})
 
 	provisioningSvc := services.NewProvisioningService(dropletRepo, producer)
