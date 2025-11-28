@@ -10,7 +10,7 @@ export interface Cluster {
 }
 
 export interface DiagnosisRequest {
-  clusterId: string;
+  cluster_id: string;
 }
 
 export interface DiagnosisResponse {
