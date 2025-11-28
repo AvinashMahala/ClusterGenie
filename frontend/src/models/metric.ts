@@ -9,6 +9,11 @@ export interface Metric {
   unit: string;
 }
 
+export interface GetMetricsRequest {
+  clusterId: string;
+  type: string;
+}
+
 export interface MetricsResponse {
   metrics: Metric[];
   period: string;
