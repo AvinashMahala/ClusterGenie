@@ -1,8 +1,7 @@
 import './App.css'
 // @ts-ignore
 import { HelloServiceClient } from './hello_grpc_web_pb';
-// @ts-ignore
-import * as hello_pb from './hello_pb';
+import './hello_pb';
 import { useState } from 'react';
 
 function App() {
@@ -10,7 +9,7 @@ function App() {
 
   const callHello = () => {
     const client = new HelloServiceClient('http://localhost:8080'); // gRPC-Web proxy
-    const request = new hello_pb.HelloRequest();
+    const request = new (globalThis as any).proto.clustergenie.HelloRequest();
     request.setName('User');
 
     client.sayHello(request, {}, (err: any, response: any) => {
