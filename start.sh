@@ -312,6 +312,11 @@ if [ ! -f "frontend/src/hello_grpc_web_pb.js" ]; then
     ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-grpc-web=/Users/avinashmahala/.nvm/versions/node/v20.19.5/bin/protoc-gen-grpc-web --grpc-web_out=import_style=commonjs,mode=grpcwebtext:. hello.proto ) >> "$LOG_FILE" 2>&1
     echo "TypeScript protobuf code generation completed." >> "$LOG_FILE"
     echo "✅ TypeScript protobuf code generated!"
+    # Fix CommonJS require for ES modules
+    echo "🔧 Fixing CommonJS imports for ES modules..."
+    ( cd frontend/src && sed -i '' 's/const grpc = {};/import * as grpcWeb from '\''grpc-web'\'';\nconst grpc = {};/g' hello_grpc_web_pb.js )
+    ( cd frontend/src && sed -i '' 's/grpc\.web = require('\''grpc-web'\'');/grpc.web = grpcWeb.default || grpcWeb;/g' hello_grpc_web_pb.js )
+    echo "✅ CommonJS imports fixed!"
 fi
 
 if [ ! -f "frontend/src/hello_pb.js" ]; then
