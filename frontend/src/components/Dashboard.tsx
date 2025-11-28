@@ -7,6 +7,7 @@ import { JobService } from '../services/jobService';
 import type { Droplet, Job } from '../models';
 import { Hero } from './Hero';
 import TabularSection from './TabularSection';
+import { StatusBadge } from './common';
 import '../styles/Dashboard.scss';
 
 const provisioningService = new ProvisioningService();
@@ -254,34 +255,7 @@ export function Dashboard() {
                   sortable: true,
                   className: 'status-cell',
                   render: (value) => {
-                    const getStatusColor = (status: string) => {
-                      switch (status) {
-                        case 'completed':
-                          return { bg: '#dcfce7', text: '#166534', indicator: '#16a34a' };
-                        case 'running':
-                          return { bg: '#fef3c7', text: '#92400e', indicator: '#f59e0b' };
-                        case 'failed':
-                          return { bg: '#fee2e2', text: '#991b1b', indicator: '#dc2626' };
-                        default:
-                          return { bg: '#f3f4f6', text: '#374151', indicator: '#6b7280' };
-                      }
-                    };
-                    const statusColors = getStatusColor(value as string);
-                    return (
-                      <span
-                        className="status-badge"
-                        style={{
-                          backgroundColor: statusColors.bg,
-                          color: statusColors.text
-                        }}
-                      >
-                        <div
-                          className="status-indicator"
-                          style={{ backgroundColor: statusColors.indicator }}
-                        ></div>
-                        {value}
-                      </span>
-                    );
+                    return <StatusBadge status={value as string} />;
                   }
                 },
                 {

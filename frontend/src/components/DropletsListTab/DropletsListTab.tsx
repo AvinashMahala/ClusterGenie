@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { Droplet } from '../../models';
 import TabularSection, { type Column, type FilterOption } from '../TabularSection';
+import { StatusBadge } from '../common';
 import './DropletsListTab.scss';
 
 export interface DropletsListTabProps {
@@ -38,35 +39,7 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete }: Drop
       label: 'Status',
       sortable: true,
       className: 'status-cell',
-      render: (value) => {
-        const getStatusColor = (status: string) => {
-          switch (status) {
-            case 'active':
-              return { bg: '#dcfce7', text: '#166534', indicator: '#16a34a' };
-            case 'provisioning':
-              return { bg: '#fef3c7', text: '#92400e', indicator: '#f59e0b' };
-            default:
-              return { bg: '#fee2e2', text: '#991b1b', indicator: '#dc2626' };
-          }
-        };
-
-        const statusColors = getStatusColor(value as string);
-        return (
-          <span
-            className="status-badge"
-            style={{
-              backgroundColor: statusColors.bg,
-              color: statusColors.text
-            }}
-          >
-            <div
-              className="status-indicator"
-              style={{ backgroundColor: statusColors.indicator }}
-            ></div>
-            {value}
-          </span>
-        );
-      }
+      render: (value) => <StatusBadge status={value as string} />
     },
     {
       key: 'region',

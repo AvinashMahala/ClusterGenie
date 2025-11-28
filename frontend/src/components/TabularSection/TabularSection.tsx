@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { EmptyState } from '../common';
 import './TabularSection.scss';
 
 export interface Column<T> {
@@ -199,17 +200,11 @@ function TabularSection<T extends Record<string, any>>({
           </table>
         </div>
       ) : (
-        <div className="empty-state">
-          <div className="empty-icon">
-            {emptyStateIcon || (
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-5v2m0 0v2m0-2h2m-2 0h-2" />
-              </svg>
-            )}
-          </div>
-          <h3>{emptyStateTitle}</h3>
-          <p>{emptyStateDescription}</p>
-        </div>
+        <EmptyState
+          title={emptyStateTitle}
+          description={emptyStateDescription}
+          icon={emptyStateIcon}
+        />
       )}
     </div>
   );

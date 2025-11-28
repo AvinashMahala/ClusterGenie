@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { JobService } from '../services/jobService';
 import type { Job, CreateJobRequest } from '../models/job';
-import { Panel, PanelHeader, PanelContent, FormSection, FormField, FormGrid, ActionButton, EmptyState, ErrorMessage } from './common';
+import { Panel, PanelHeader, PanelContent, FormSection, FormField, FormGrid, ActionButton, EmptyState, Alert, StatusBadge, Select } from './common';
 import '../styles/JobPanel.scss';
 
 const jobService = new JobService();
@@ -78,15 +78,16 @@ export function JobPanel() {
         <FormSection title="Create New Job">
           <FormGrid>
             <FormField label="Job Type">
-              <select
+              <Select
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as Job['type'] })}
-              >
-                <option value="provision">Provision</option>
-                <option value="diagnose">Diagnose</option>
-                <option value="scale">Scale</option>
-                <option value="monitor">Monitor</option>
-              </select>
+                options={[
+                  { value: 'provision', label: 'Provision' },
+                  { value: 'diagnose', label: 'Diagnose' },
+                  { value: 'scale', label: 'Scale' },
+                  { value: 'monitor', label: 'Monitor' }
+                ]}
+              />
             </FormField>
           </FormGrid>
 
@@ -101,7 +102,7 @@ export function JobPanel() {
           </div>
         </FormSection>
 
-        {error && <ErrorMessage message={error} />}
+        {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
         <div className="list-section">
           <h2>Recent Jobs</h2>
@@ -122,7 +123,7 @@ export function JobPanel() {
                 <div key={job.id} className="job-card">
                   <div className="job-header">
                     <span className="job-id">Job {job.id}</span>
-                    <span className={`status-badge ${job.status}`}>{job.status}</span>
+                    <StatusBadge status={job.status} />
                   </div>
                   <div className="job-details">
                     <span className="job-type">{job.type}</span>

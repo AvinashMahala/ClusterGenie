@@ -12,6 +12,7 @@ export interface HeroProps {
   }>;
   variant?: 'default' | 'compact' | 'minimal';
   className?: string;
+  animated?: boolean;
 }
 
 export function Hero({ 
@@ -20,10 +21,11 @@ export function Hero({
   icon, 
   stats, 
   variant = 'default',
-  className = '' 
+  className = '',
+  animated = true
 }: HeroProps) {
   return (
-    <div className={`hero hero--${variant} ${className}`}>
+    <div className={`hero hero--${variant} ${animated ? 'fade-in' : ''} ${className}`}>
       <div className="hero__content">
         {(icon || title) && (
           <div className="hero__header">
@@ -38,7 +40,7 @@ export function Hero({
         {stats && stats.length > 0 && (
           <div className="hero__stats">
             {stats.map((stat, index) => (
-              <div key={index} className="hero__stat-item">
+              <div key={index} className={`hero__stat-item ${animated ? 'slide-in' : ''}`} style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className="hero__stat-value">{stat.value}</div>
                 <div className="hero__stat-label">{stat.label}</div>
               </div>
