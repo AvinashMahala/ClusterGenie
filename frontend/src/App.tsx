@@ -1,6 +1,4 @@
 import './App.css'
-// @ts-ignore
-import './hello_pb';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProvisioningPanel } from './components/ProvisioningPanel';
 import { DiagnosisPanel } from './components/DiagnosisPanel';
