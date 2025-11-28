@@ -146,6 +146,12 @@ check_prerequisites() {
         ( go install github.com/air-verse/air@latest ) >> "$LOG_FILE" 2>&1
         echo "Air installation completed." >> "$LOG_FILE"
         echo "✅ Air installed!"
+        # Install Swag for Swagger documentation
+        echo "📦 Installing Swag for Swagger docs (1 minute)..."
+        echo "Starting Swag installation..." >> "$LOG_FILE"
+        ( go install github.com/swaggo/swag/cmd/swag@latest ) >> "$LOG_FILE" 2>&1
+        echo "Swag installation completed." >> "$LOG_FILE"
+        echo "✅ Swag installed!"
     else
         echo "✅ Go already installed."
     fi
@@ -336,16 +342,22 @@ if ! docker-compose ps | grep -q "Up"; then
 fi
 
 # Initiate backend with error handling
-if [ ! -f "backend/core-api/go.sum" ]; then
+if [ ! -f "backend/go.sum" ]; then
     echo "🔧 Setting up backend dependencies..."
     echo "Starting backend setup..." >> "$LOG_FILE"
-    ( cd backend/core-api && go mod tidy ) >> "$LOG_FILE" 2>&1
+    ( cd backend && go mod tidy ) >> "$LOG_FILE" 2>&1
     echo "Backend setup completed." >> "$LOG_FILE"
     if [ $? -ne 0 ]; then
         echo "❌ Failed to initiate backend. Check $LOG_FILE for details."
         exit 1
     fi
     echo "✅ Backend dependencies ready!"
+    # Generate Swagger docs if swag is available
+    if command -v swag >/dev/null 2>&1; then
+        echo "🔧 Generating Swagger documentation..."
+        ( cd backend/core-api && swag init ) >> "$LOG_FILE" 2>&1
+        echo "Swagger docs generated." >> "$LOG_FILE"
+    fi
 fi
 
 # Initiate frontend with error handling
