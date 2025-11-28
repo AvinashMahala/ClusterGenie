@@ -1,16 +1,21 @@
 module github.com/AvinashMahala/ClusterGenie/backend
 
-go 1.21
+go 1.24.0
+
+toolchain go1.24.10
 
 require (
-	google.golang.org/grpc v1.59.0
-	google.golang.org/protobuf v1.31.0
+	github.com/AvinashMahala/ClusterGenie/backend/shared/proto v0.0.0-00010101000000-000000000000
+	google.golang.org/grpc v1.77.0
 )
 
 require (
-	github.com/golang/protobuf v1.5.3 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20231016165738-49dd2c1f3d0b // indirect
+	github.com/golang/protobuf v1.5.4 // indirect
+	golang.org/x/net v0.46.1-0.20251013234738-63d1a5100f82 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
+	google.golang.org/protobuf v1.36.10 // indirect
 )
+
+replace github.com/AvinashMahala/ClusterGenie/backend/shared/proto => ../shared/proto

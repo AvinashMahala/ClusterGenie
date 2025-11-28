@@ -1,5 +1,7 @@
 import './App.css'
-import { HelloServiceClient } from './HelloServiceClientPb';
+// @ts-ignore
+import { HelloServiceClient } from './hello_grpc_web_pb';
+// @ts-ignore
 import * as hello_pb from './hello_pb';
 import { useState } from 'react';
 
@@ -11,7 +13,7 @@ function App() {
     const request = new hello_pb.HelloRequest();
     request.setName('User');
 
-    client.sayHello(request, {}, (err, response) => {
+    client.sayHello(request, {}, (err: any, response: any) => {
       if (err) {
         console.error('Error:', err);
         setMessage('Error calling backend');

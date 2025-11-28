@@ -306,10 +306,10 @@ if [ ! -f "backend/shared/proto/hello.pb.go" ]; then
     echo "✅ Go protobuf code generated!"
 fi
 
-if [ ! -f "frontend/src/HelloServiceClientPb.ts" ]; then
+if [ ! -f "frontend/src/hello_grpc_web_pb.js" ]; then
     echo "🔧 Generating TypeScript protobuf code..."
     echo "Starting TypeScript protobuf code generation..." >> "$LOG_FILE"
-    ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-grpc-web=/Users/avinashmahala/.nvm/versions/node/v20.19.5/bin/protoc-gen-grpc-web --grpc-web_out=import_style=typescript,mode=grpcwebtext:. hello.proto ) >> "$LOG_FILE" 2>&1
+    ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-grpc-web=/Users/avinashmahala/.nvm/versions/node/v20.19.5/bin/protoc-gen-grpc-web --grpc-web_out=import_style=commonjs,mode=grpcwebtext:. hello.proto ) >> "$LOG_FILE" 2>&1
     echo "TypeScript protobuf code generation completed." >> "$LOG_FILE"
     echo "✅ TypeScript protobuf code generated!"
 fi

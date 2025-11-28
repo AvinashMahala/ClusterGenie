@@ -112,5 +112,6 @@ build-errors.log
 
 # Frontend generated protobuf files
 **/HelloServiceClientPb.ts
+**/hello_grpc_web_pb.js
 **/hello_pb.js
 **/hello_pb.d.ts
