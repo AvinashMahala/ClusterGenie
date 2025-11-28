@@ -12,15 +12,13 @@ export class ClusterRepositoryImpl implements ClusterRepository {
     return response.data;
   }
 
-  async getCluster(_id: string): Promise<Cluster> {
-    // For now, we'll need to implement this when the backend supports it
-    // This is a placeholder implementation
-    throw new Error('Get cluster by ID not yet implemented in backend');
+  async getCluster(id: string): Promise<Cluster> {
+    const response = await axios.get(`${baseURL}/clusters/${id}`);
+    return response.data.cluster;
   }
 
   async listClusters(): Promise<Cluster[]> {
-    // For now, we'll need to implement this when the backend supports it
-    // This is a placeholder implementation
-    throw new Error('List clusters not yet implemented in backend');
+    const response = await axios.get(`${baseURL}/clusters`);
+    return response.data.clusters || [];
   }
 }

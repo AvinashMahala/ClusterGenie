@@ -1461,4 +1461,158 @@
             }
         }
     }
+
+    // Clusters Tab
+    .clusters-tab {
+        .clusters-header {
+            margin-bottom: 2rem;
+
+            h3 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #111827;
+                margin: 0 0 0.5rem 0;
+            }
+
+            p {
+                color: #6b7280;
+                margin: 0;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+
+            svg {
+                width: 4rem;
+                height: 4rem;
+                color: #d1d5db;
+                margin-bottom: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #111827;
+                margin: 0 0 0.5rem 0;
+            }
+
+            p {
+                color: #6b7280;
+                margin-bottom: 2rem;
+            }
+
+            .action-button {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                background-color: #3b82f6;
+                color: white;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-weight: 500;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: #2563eb;
+                }
+            }
+        }
+
+        .clusters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+
+            .cluster-card {
+                display: block;
+                background: white;
+                padding: 1.5rem;
+                border-radius: 12px;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                text-decoration: none;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+                    border-color: #3b82f6;
+                }
+
+                .cluster-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 1rem;
+
+                    h4 {
+                        font-size: 1.25rem;
+                        font-weight: 600;
+                        color: #111827;
+                        margin: 0;
+                    }
+
+                    .cluster-status {
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 9999px;
+                        font-size: 0.75rem;
+                        font-weight: 500;
+                        text-transform: uppercase;
+
+                        &.healthy {
+                            background-color: #dcfce7;
+                            color: #166534;
+                        }
+
+                        &.warning {
+                            background-color: #fef3c7;
+                            color: #92400e;
+                        }
+
+                        &.critical {
+                            background-color: #fee2e2;
+                            color: #991b1b;
+                        }
+                    }
+                }
+
+                .cluster-details {
+                    margin-bottom: 1rem;
+
+                    .detail-item {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 0.5rem 0;
+
+                        .label {
+                            font-weight: 500;
+                            color: #6b7280;
+                        }
+
+                        .value {
+                            color: #111827;
+                        }
+                    }
+                }
+
+                .cluster-actions {
+                    border-top: 1px solid #e5e7eb;
+                    padding-top: 1rem;
+
+                    .view-cluster {
+                        color: #3b82f6;
+                        font-weight: 500;
+                        font-size: 0.875rem;
+                    }
+                }
+            }
+        }
+    }
 }

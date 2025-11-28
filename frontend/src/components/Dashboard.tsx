@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ProvisioningService } from '../services/provisioningService';
 import { JobService } from '../services/jobService';
-import type { Droplet, Job } from '../models';
+import { ClusterService } from '../services/clusterService';
+import type { Droplet, Job, Cluster } from '../models';
 import { Hero } from './Hero';
 import TabularSection from './TabularSection';
 import { StatusBadge } from './common';
@@ -12,12 +13,14 @@ import '../styles/Dashboard.scss';
 
 const provisioningService = new ProvisioningService();
 const jobService = new JobService();
+const clusterService = new ClusterService();
 
 export function Dashboard() {
   const [droplets, setDroplets] = useState<Droplet[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
-  const [activeTab, setActiveTab] = useState<'status' | 'actions' | 'activity'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'actions' | 'activity' | 'clusters'>('status');
 
   useEffect(() => {
     loadDashboardData();
@@ -26,16 +29,19 @@ export function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [dropletsData, jobsData] = await Promise.all([
+      const [dropletsData, jobsData, clustersData] = await Promise.all([
         provisioningService.listDroplets(),
         jobService.listJobs(),
+        clusterService.listClusters(),
       ]);
       setDroplets(dropletsData || []);
       setJobs(jobsData || []);
+      setClusters(clustersData || []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setDroplets([]);
       setJobs([]);
+      setClusters([]);
     }
   };
 
@@ -103,6 +109,15 @@ export function Dashboard() {
           </svg>
           Recent Activity
         </button>
+        <button
+          className={`tab-button ${activeTab === 'clusters' ? 'active' : ''}`}
+          onClick={() => setActiveTab('clusters')}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          Clusters ({(clusters || []).length})
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -142,6 +157,22 @@ export function Dashboard() {
                     Healthy
                   </span>
                   <span className="status-value">{healthyDroplets.length}</span>
+                </div>
+              </div>
+
+              <div className="status-card compact">
+                <div className="status-header">
+                  <h3>Clusters</h3>
+                  <span className="status-count">{(clusters || []).length}</span>
+                </div>
+                <div className="status-details">
+                  <span className="detail-item">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Total
+                  </span>
+                  <span className="status-value">{(clusters || []).length}</span>
                 </div>
               </div>
 
@@ -288,6 +319,60 @@ export function Dashboard() {
                 </svg>
               }
             />
+          </div>
+        )}
+
+        {activeTab === 'clusters' && (
+          <div className="clusters-tab">
+            <div className="clusters-header">
+              <h3>Your Clusters</h3>
+              <p>Manage and monitor your infrastructure clusters</p>
+            </div>
+
+            {clusters.length === 0 ? (
+              <div className="empty-state">
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <h3>No clusters yet</h3>
+                <p>Create your first cluster to get started with organized infrastructure management.</p>
+                <Link to="/provisioning" className="action-button primary">
+                  Create First Cluster
+                </Link>
+              </div>
+            ) : (
+              <div className="clusters-grid">
+                {clusters.map(cluster => (
+                  <Link key={cluster.id} to={`/clusters/${cluster.id}`} className="cluster-card">
+                    <div className="cluster-header">
+                      <h4>{cluster.name}</h4>
+                      <span className={`cluster-status ${cluster.status}`}>
+                        {cluster.status}
+                      </span>
+                    </div>
+                    <div className="cluster-details">
+                      <div className="detail-item">
+                        <span className="label">Region:</span>
+                        <span className="value">{cluster.region}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="label">Droplets:</span>
+                        <span className="value">{cluster.droplets.length}</span>
+                      </div>
+                      <div className="detail-item">
+                        <span className="label">Last Checked:</span>
+                        <span className="value">
+                          {new Date(cluster.lastChecked).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="cluster-actions">
+                      <span className="view-cluster">View Details →</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

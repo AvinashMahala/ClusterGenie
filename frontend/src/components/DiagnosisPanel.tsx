@@ -20,8 +20,12 @@ interface DiagnosisHistory {
   metrics?: Metric[];
 }
 
-export function DiagnosisPanel() {
-  const [clusterId, setClusterId] = useState('test-cluster-1');
+interface DiagnosisPanelProps {
+  clusterId?: string;
+}
+
+export function DiagnosisPanel({ clusterId: propClusterId }: DiagnosisPanelProps = {}) {
+  const [clusterId, setClusterId] = useState(propClusterId || 'test-cluster-1');
   const [diagnosis, setDiagnosis] = useState<DiagnosisResponse | null>(null);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [loading, setLoading] = useState(false);

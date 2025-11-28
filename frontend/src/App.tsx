@@ -4,6 +4,7 @@ import { ProvisioningPanel } from './components/ProvisioningPanel';
 import { DiagnosisPanel } from './components/DiagnosisPanel';
 import { JobPanel } from './components/JobPanel';
 import { MonitoringPanel } from './components/MonitoringPanel';
+import { ClusterPanel } from './components/ClusterPanel';
 import { Dashboard } from './components/Dashboard';
 import Layout from './components/Layout';
 
@@ -17,6 +18,7 @@ function App() {
           <Route path="/diagnosis" element={<DiagnosisPanel />} />
           <Route path="/jobs" element={<JobPanel />} />
           <Route path="/monitoring" element={<MonitoringPanel />} />
+          <Route path="/clusters/:id" element={<ClusterPanel />} />
         </Routes>
       </Layout>
     </Router>

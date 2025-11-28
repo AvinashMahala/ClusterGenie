@@ -35,8 +35,13 @@ func main() {
 
 	provisioningSvc := services.NewProvisioningService(dropletRepo, producer)
 	diagnosisSvc := services.NewDiagnosisService(clusterRepo)
+	clusterSvc := services.NewClusterService(clusterRepo)
 	jobSvc := services.NewJobService(jobRepo)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
+
+	// Set service dependencies
+	jobSvc.SetProvisioningService(provisioningSvc)
+	jobSvc.SetClusterService(clusterSvc)
 
 	// Initialize event handler and consumers
 	eventHandler := services.NewEventHandler(jobSvc, monitoringSvc, provisioningSvc)
@@ -123,6 +128,61 @@ func main() {
 				return
 			}
 			resp, err := diagnosisSvc.DiagnoseCluster(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, resp)
+		})
+
+		// Clusters
+		api.POST("/clusters", func(c *gin.Context) {
+			var req models.CreateClusterRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp, err := clusterSvc.CreateCluster(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(201, resp)
+		})
+		api.GET("/clusters/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			cluster, err := clusterSvc.GetCluster(id)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Cluster not found"})
+				return
+			}
+			c.JSON(200, &models.ClusterResponse{Cluster: cluster, Message: "Cluster retrieved"})
+		})
+		api.GET("/clusters", func(c *gin.Context) {
+			clusters, err := clusterSvc.ListClusters()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, &models.ListClustersResponse{Clusters: clusters})
+		})
+		api.PUT("/clusters/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			var req models.UpdateClusterRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp, err := clusterSvc.UpdateCluster(id, &req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, resp)
+		})
+		api.DELETE("/clusters/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			resp, err := clusterSvc.DeleteCluster(id)
 			if err != nil {
 				c.JSON(500, gin.H{"error": err.Error()})
 				return
