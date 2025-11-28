@@ -297,13 +297,7 @@ func main() {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	api := r.Group("/api/v1")
 	{
-		// @Summary Say Hello
-		// @Description Say hello to the user
-		// @Accept json
-		// @Produce json
-		// @Param request body models.HelloRequest true "Hello Request"
-		// @Success 200 {object} models.HelloResponse
-		// @Router /api/v1/hello [post]
+		// Hello
 		api.POST("/hello", func(c *gin.Context) {
 			var req models.HelloRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
@@ -313,7 +307,110 @@ func main() {
 			resp := &models.HelloResponse{Message: "Hello, " + req.Name + " from ClusterGenie!"}
 			c.JSON(200, resp)
 		})
-		// Add more routes here as implemented
+
+		// Provisioning
+		api.POST("/droplets", func(c *gin.Context) {
+			var req models.CreateDropletRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp, err := provisioningSvc.CreateDroplet(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(201, resp)
+		})
+		api.GET("/droplets/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			droplet, err := provisioningSvc.GetDroplet(id)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Droplet not found"})
+				return
+			}
+			c.JSON(200, &models.DropletResponse{Droplet: droplet, Message: "Droplet retrieved"})
+		})
+		api.GET("/droplets", func(c *gin.Context) {
+			droplets, err := provisioningSvc.ListDroplets()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, &models.ListDropletsResponse{Droplets: droplets})
+		})
+		api.DELETE("/droplets/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			err := provisioningSvc.DeleteDroplet(id)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, &models.DeleteDropletResponse{Message: "Droplet deleted"})
+		})
+
+		// Diagnosis
+		api.POST("/diagnosis/diagnose", func(c *gin.Context) {
+			var req models.DiagnoseClusterRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp, err := diagnosisSvc.DiagnoseCluster(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, resp)
+		})
+
+		// Jobs
+		api.POST("/jobs", func(c *gin.Context) {
+			var req models.CreateJobRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp, err := jobSvc.CreateJob(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(201, resp)
+		})
+		api.GET("/jobs/:id", func(c *gin.Context) {
+			id := c.Param("id")
+			job, err := jobSvc.GetJob(id)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Job not found"})
+				return
+			}
+			c.JSON(200, &models.JobResponse{Job: job, Message: "Job retrieved"})
+		})
+		api.GET("/jobs", func(c *gin.Context) {
+			jobs, err := jobSvc.ListJobs()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, &models.ListJobsResponse{Jobs: jobs})
+		})
+
+		// Monitoring
+		api.GET("/metrics", func(c *gin.Context) {
+			clusterID := c.Query("cluster_id")
+			metricType := c.Query("type")
+			req := &models.GetMetricsRequest{
+				ClusterID: clusterID,
+				Type:      metricType,
+			}
+			resp, err := monitoringSvc.GetMetrics(req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, resp)
+		})
 	}
 
 	// Start REST server in a goroutine
