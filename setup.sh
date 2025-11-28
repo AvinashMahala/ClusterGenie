@@ -19,7 +19,7 @@ echo "Setting up backend..."
 
 # Setup frontend (placeholder)
 echo "Setting up frontend..."
-# Add npm install, etc., when frontend is implemented
+# Add yarn install, etc., when frontend is implemented
 
 # Start services
 echo "Starting Docker services..."

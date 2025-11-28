@@ -108,7 +108,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 
 - Docker & Docker Compose (for services).
 - Go 1.21+ (for backend development).
-- Node.js 18+ & npm (for frontend).
+- Node.js 18+ & Yarn (for frontend).
 - Git (for cloning).
 
 ## Installation & Setup
@@ -116,15 +116,16 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 1. Clone the repo: `git clone https://github.com/AvinashMahala/ClusterGenie.git && cd ClusterGenie`.
 2. Run the one-command setup: `./setup.sh` (or `python setup.py` if using Python script).
    - Checks prerequisites.
-   - Installs dependencies (Go modules, npm packages).
+   - Installs dependencies (Go modules, Yarn packages).
    - Builds Docker images.
    - Starts services via Docker Compose.
-   - Launches frontend at `http://localhost:3000`.
-3. Access the app: Open browser to `http://localhost:3000`. Backend gRPC at `localhost:50051`.
+3. Run `./start.sh` to initiate and start backend/frontend in separate terminals.
+4. Access the app: Open browser to `http://localhost:3000`. Backend gRPC at `localhost:50051`.
+5. To stop: Run `./stop.sh` in any terminal.
 
 For manual setup:
 - Backend: `cd backend && go mod tidy && docker-compose up`.
-- Frontend: `cd frontend && npm install && npm run dev`.
+- Frontend: `cd frontend && yarn install && yarn dev`.
 
 ## Usage
 
@@ -135,7 +136,7 @@ For manual setup:
 ## Development
 
 - **Backend**: Each service in `backend/` has its own `main.go`. Use `go run` for local dev.
-- **Frontend**: `npm run dev` in `frontend/`. Hot-reload enabled.
+- **Frontend**: `yarn dev` in `frontend/`. Hot-reload enabled.
 - **Testing**: Run `make test` (unit tests) or `docker-compose exec <service> go test`.
 - **Debugging**: Use VS Code debugger for Go/React. Logs via `docker-compose logs`.
 
