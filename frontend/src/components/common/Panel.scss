@@ -1,0 +1,71 @@
+.panel {
+  max-width: 1400px;
+  margin: 0 auto;
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+
+    .panel-header-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .panel-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 3rem;
+        height: 3rem;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border-radius: 10px;
+        color: white;
+
+        svg {
+          width: 1.5rem;
+          height: 1.5rem;
+        }
+      }
+
+      .panel-title-section {
+        .panel-title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #111827;
+          margin: 0 0 0.25rem 0;
+        }
+
+        .panel-subtitle {
+          font-size: 1rem;
+          color: #6b7280;
+          margin: 0;
+        }
+      }
+    }
+
+    .panel-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+
+  .panel-content {
+    // Default styling, can be overridden
+  }
+
+  // Responsive
+  @media (max-width: 768px) {
+    .panel-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+
+      .panel-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+  }
+}

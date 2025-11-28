@@ -1,6 +1,6 @@
 // frontend/src/components/ProvisioningPanel.tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ProvisioningService } from '../services/provisioningService';
 import type { Droplet, CreateDropletRequest } from '../models';
 import { Hero } from './Hero';
@@ -22,6 +22,10 @@ export function ProvisioningPanel() {
     size: 's-1vcpu-1gb',
     image: 'ubuntu-20-04-x64',
   });
+
+  useEffect(() => {
+    loadDroplets();
+  }, []);
 
   const handleCreate = async () => {
     setLoading(true);

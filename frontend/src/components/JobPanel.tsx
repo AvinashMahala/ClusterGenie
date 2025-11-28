@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { JobService } from '../services/jobService';
 import type { Job, CreateJobRequest } from '../models/job';
+import { Panel, PanelHeader, PanelContent, FormSection, FormField, FormGrid, ActionButton, EmptyState, ErrorMessage } from './common';
+import '../styles/JobPanel.scss';
 
 const jobService = new JobService();
 
@@ -52,75 +54,72 @@ export function JobPanel() {
   };
 
   return (
-    <div className="job-panel">
-      {/* Compact Header */}
-      <div className="compact-header">
-        <h1>Job Management</h1>
-        <p>Monitor and control background tasks</p>
-      </div>
+    <Panel>
+      <PanelHeader
+        title="Job Management"
+        subtitle="Monitor and control background tasks"
+        icon={
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        }
+        actions={
+          <ActionButton
+            onClick={loadJobs}
+            disabled={loading}
+            variant="secondary"
+          >
+            {loading ? 'Loading...' : 'Refresh'}
+          </ActionButton>
+        }
+      />
 
-      <div className="panel-content">
-        {/* Create Job Form */}
-        <div className="form-section compact">
-          <h2>Create New Job</h2>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="jobType">Job Type</label>
+      <PanelContent>
+        <FormSection title="Create New Job">
+          <FormGrid>
+            <FormField label="Job Type">
               <select
-                id="jobType"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as Job['type'] })}
-                className="form-input"
               >
                 <option value="provision">Provision</option>
                 <option value="diagnose">Diagnose</option>
                 <option value="scale">Scale</option>
                 <option value="monitor">Monitor</option>
               </select>
-            </div>
-            <div className="form-actions">
-              <button
-                onClick={handleCreateJob}
-                disabled={creating}
-                className="btn-primary compact"
-              >
-                {creating ? 'Creating...' : 'Create Job'}
-              </button>
-            </div>
-          </div>
-        </div>
+            </FormField>
+          </FormGrid>
 
-        {/* Jobs List */}
-        <div className="list-section compact">
-          <div className="section-header">
-            <h2>Recent Jobs</h2>
-            <button
-              onClick={loadJobs}
-              disabled={loading}
-              className="btn-secondary compact"
+          <div className="form-actions">
+            <ActionButton
+              onClick={handleCreateJob}
+              disabled={creating}
+              loading={creating}
             >
-              {loading ? 'Loading...' : 'Refresh'}
-            </button>
+              {creating ? 'Creating...' : 'Create Job'}
+            </ActionButton>
           </div>
+        </FormSection>
 
-          {error && (
-            <div className="error-message compact">
-              <p>{error}</p>
-            </div>
-          )}
+        {error && <ErrorMessage message={error} />}
+
+        <div className="list-section">
+          <h2>Recent Jobs</h2>
 
           <div className="jobs-grid">
             {jobs.length === 0 ? (
-              <div className="empty-state compact">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3>No jobs found</h3>
-                <p>Create your first job to get started</p>
-              </div>
+              <EmptyState
+                title="No jobs found"
+                description="Create your first job to get started"
+                icon={
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+              />
             ) : (
               jobs.map((job) => (
-                <div key={job.id} className="job-card compact">
+                <div key={job.id} className="job-card">
                   <div className="job-header">
                     <span className="job-id">Job {job.id}</span>
                     <span className={`status-badge ${job.status}`}>{job.status}</span>
@@ -142,7 +141,7 @@ export function JobPanel() {
             )}
           </div>
         </div>
-      </div>
-    </div>
-);
+      </PanelContent>
+    </Panel>
+  );
 }

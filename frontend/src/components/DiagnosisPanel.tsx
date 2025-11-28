@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { DiagnosisService } from '../services/diagnosisService';
 import type { DiagnosisResponse } from '../models/cluster';
+import { Panel, PanelHeader, PanelContent, FormSection, FormField, ActionButton, ErrorMessage } from './common';
+import '../styles/DiagnosisPanel.scss';
 
 const diagnosisService = new DiagnosisService();
 
@@ -32,47 +34,44 @@ export function DiagnosisPanel() {
   };
 
   return (
-    <div className="diagnosis-panel">
-      {/* Compact Header */}
-      <div className="compact-header">
-        <h1>Cluster Diagnosis</h1>
-        <p>AI-powered cluster analysis and recommendations</p>
-      </div>
+    <Panel>
+      <PanelHeader
+        title="Cluster Diagnosis"
+        subtitle="AI-powered cluster analysis and recommendations"
+        icon={
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        }
+      />
 
-      <div className="panel-content">
-        {/* Diagnosis Form */}
-        <div className="form-section compact">
-          <div className="form-group">
-            <label htmlFor="clusterId">Cluster ID</label>
+      <PanelContent>
+        <FormSection
+          actions={
+            <ActionButton
+              onClick={handleDiagnose}
+              disabled={loading}
+              loading={loading}
+            >
+              {loading ? 'Diagnosing...' : 'Diagnose Cluster'}
+            </ActionButton>
+          }
+        >
+          <FormField label="Cluster ID" required>
             <input
               type="text"
-              id="clusterId"
               value={clusterId}
               onChange={(e) => setClusterId(e.target.value)}
               placeholder="Enter cluster ID (e.g., cluster-prod)"
-              className="form-input"
             />
-          </div>
-          <button
-            onClick={handleDiagnose}
-            disabled={loading}
-            className="btn-primary compact"
-          >
-            {loading ? 'Diagnosing...' : 'Diagnose Cluster'}
-          </button>
+          </FormField>
 
-          {error && (
-            <div className="error-message compact">
-              <p>{error}</p>
-            </div>
-          )}
-        </div>
+          {error && <ErrorMessage message={error} />}
+        </FormSection>
 
-        {/* Diagnosis Results */}
         {diagnosis && (
           <div className="results-section">
-            {/* Cluster Info */}
-            <div className="info-card compact">
+            <div className="info-card">
               <h2>Cluster Information</h2>
               <div className="info-grid">
                 <div className="info-item">
@@ -96,8 +95,7 @@ export function DiagnosisPanel() {
               </div>
             </div>
 
-            {/* AI Insights */}
-            <div className="insights-card compact">
+            <div className="insights-card">
               <h2>AI Insights</h2>
               <ul className="insights-list">
                 {diagnosis.insights.map((insight, index) => (
@@ -109,8 +107,7 @@ export function DiagnosisPanel() {
               </ul>
             </div>
 
-            {/* Recommendations */}
-            <div className="recommendations-card compact">
+            <div className="recommendations-card">
               <h2>Recommendations</h2>
               <ul className="recommendations-list">
                 {diagnosis.recommendations.map((recommendation, index) => (
@@ -123,7 +120,7 @@ export function DiagnosisPanel() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </PanelContent>
+    </Panel>
   );
 };
