@@ -38,6 +38,17 @@ func main() {
 	jobSvc := services.NewJobService(jobRepo)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
 
+	// Initialize event handler and consumers
+	eventHandler := services.NewEventHandler(jobSvc, monitoringSvc, provisioningSvc)
+	consumer := eventbus.NewConsumer([]string{"localhost:9092"}, "cluster-events", "cluster-genie-group")
+
+	// Start event consumer in background
+	go func() {
+		log.Println("Starting event consumer...")
+		consumer.ConsumeEvents(eventHandler.HandleClusterEvent)
+	}()
+	defer consumer.Close()
+
 	// Initialize Gin router for REST API
 	r := gin.Default()
 	r.Use(cors.Default())
@@ -112,6 +123,17 @@ func main() {
 				return
 			}
 			resp, err := diagnosisSvc.DiagnoseCluster(&req)
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(200, resp)
+		})
+
+		// Health Check
+		api.GET("/health/:clusterId", func(c *gin.Context) {
+			clusterID := c.Param("clusterId")
+			resp, err := monitoringSvc.PerformHealthCheck(clusterID)
 			if err != nil {
 				c.JSON(500, gin.H{"error": err.Error()})
 				return
