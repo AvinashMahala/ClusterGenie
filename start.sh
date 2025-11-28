@@ -318,6 +318,33 @@ osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/backend && 
 echo "Opening terminal for Docker overview logs..."
 osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && docker-compose logs -f\"" > /dev/null 2>&1
 
+# Central monitor terminal
+echo "Opening central monitor terminal..."
+osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  ClusterGenie Central Monitor'; echo ''; echo '🚀 Services Status:'; echo '   Frontend: http://localhost:3000'; echo '   Backend API: http://localhost:8080'; echo '   Swagger: http://localhost:8080/swagger/index.html'; echo ''; echo '🐳 Docker Services:'; echo '   MySQL: localhost:3306'; echo '   Redis: localhost:6379'; echo '   Kafka: localhost:9092'; echo ''; echo '🔄 Hot Reload Active:'; echo '   Backend: Air (Go)'; echo '   Frontend: Vite (React/TypeScript)'; echo ''; echo '💡 Commands:'; echo '   Stop all: ./stop.sh'; echo '   View logs: Check other terminals'; echo ''; echo '📄 Setup logs: $LOG_FILE'; echo ''; sleep infinity\"" > /dev/null 2>&1
+
+echo ""
+echo "🚀 ClusterGenie Development Environment Started!"
+echo ""
+echo "📱 Frontend:"
+echo "   URL: http://localhost:3000"
+echo "   Hot Reload: Enabled (Vite auto-reloads on .ts/.tsx changes)"
+echo ""
+echo "🔧 Backend REST API:"
+echo "   URL: http://localhost:8080"
+echo "   Swagger Docs: http://localhost:8080/swagger/index.html"
+echo "   Hot Reload: Enabled (Air auto-reloads on .go changes)"
+echo ""
+echo "🐳 Docker Services:"
+echo "   MySQL: localhost:3306"
+echo "   Redis: localhost:6379"
+echo "   Kafka: localhost:9092"
+echo ""
+echo "📊 Monitoring:"
+echo "   All service logs are in separate terminals"
+echo "   Use ./stop.sh to stop all services"
+echo "   Setup logs: $LOG_FILE"
+echo ""
+
 echo "🎉 All terminals opened successfully!"
-echo "💡 Use ./stop.sh in the central monitor to stop all services."
+echo "💡 Development environment is ready - make changes and see them auto-reload!"
 echo "📄 Detailed setup logs are in $LOG_FILE"
