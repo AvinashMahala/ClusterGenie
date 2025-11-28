@@ -4,94 +4,203 @@
 
 set -e  # Exit on error
 
-echo "Starting ClusterGenie services..."
+# Setup logging
+LOG_FILE="setup.log"
+SESSION_START=$(date '+%Y-%m-%d %H:%M:%S')
+echo "==========================================" >> "$LOG_FILE"
+echo "🚀 ClusterGenie Setup Session - $SESSION_START" >> "$LOG_FILE"
+echo "==========================================" >> "$LOG_FILE"
+echo "" >> "$LOG_FILE"
+
+echo "🚀 Starting ClusterGenie setup..."
+echo "This is an interactive setup process. Detailed logs are saved to $LOG_FILE"
+echo "Session: $SESSION_START"
+echo ""
+
+# Flag to prevent duplicate prerequisite checks
+CHECKED_PREREQS=false
 
 # Function to check prerequisites
 check_prerequisites() {
-    echo "Checking prerequisites..."
+    if [ "$CHECKED_PREREQS" = true ]; then
+        return
+    fi
+    CHECKED_PREREQS=true
+
+    echo "🔍 Checking prerequisites..."
+    echo "We'll install any missing tools automatically."
+    echo ""
+
+    # Xcode Command Line Tools
+    if ! xcode-select -p >/dev/null 2>&1; then
+        echo "📦 Installing Xcode Command Line Tools (5-10 minutes)..."
+        echo "💡 This requires manual completion. Follow the prompts."
+        xcode-select --install >> "$LOG_FILE" 2>&1
+        echo "✅ Please complete the installation in the dialog and press Enter here."
+        read -p ""
+        if ! xcode-select -p >/dev/null 2>&1; then
+            echo "❌ Command Line Tools installation failed. Check $LOG_FILE for details."
+            exit 1
+        fi
+        echo "✅ Command Line Tools installed!"
+    else
+        echo "✅ Xcode Command Line Tools already installed."
+        echo "🔄 Checking for updates..."
+        if softwareupdate --list 2>/dev/null | grep -q "Command Line Tools"; then
+            echo "📦 Updating Command Line Tools (2-5 minutes)..."
+            echo "💡 You can open Activity Monitor to watch progress."
+            sudo softwareupdate --install --all --force >> "$LOG_FILE" 2>&1
+            echo "✅ Command Line Tools updated!"
+        else
+            echo "✅ Command Line Tools are up to date."
+        fi
+    fi
+    echo ""
 
     # Homebrew
     if ! command -v brew >/dev/null 2>&1; then
-        echo "Homebrew not found. Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "📦 Installing Homebrew (1-2 minutes)..."
+        echo "Starting Homebrew installation..." >> "$LOG_FILE"
+        ( /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" ) >> "$LOG_FILE" 2>&1
+        echo "Homebrew installation completed." >> "$LOG_FILE"
         if ! command -v brew >/dev/null 2>&1; then
-            echo "Error: Failed to install Homebrew. Please install manually."
+            echo "❌ Homebrew installation failed. Check $LOG_FILE for details."
             exit 1
         fi
-        echo "Homebrew installed."
+        echo "✅ Homebrew installed!"
+    else
+        echo "✅ Homebrew already installed."
     fi
+    echo ""
 
     # Docker
     if ! command -v docker >/dev/null 2>&1; then
-        echo "Docker not found. Installing Docker..."
-        brew install --cask docker
+        echo "📦 Installing Docker Desktop (2-3 minutes)..."
+        echo "Starting Docker installation..." >> "$LOG_FILE"
+        ( brew install --cask docker ) >> "$LOG_FILE" 2>&1
+        echo "Docker installation completed." >> "$LOG_FILE"
         if ! command -v docker >/dev/null 2>&1; then
-            echo "Error: Failed to install Docker. Please install Docker Desktop manually from https://www.docker.com/products/docker-desktop"
+            echo "❌ Docker installation failed. Check $LOG_FILE for details."
+            echo "💡 Try installing manually from https://www.docker.com/products/docker-desktop"
             exit 1
         fi
-        echo "Docker installed. Please ensure Docker Desktop is running."
+        echo "✅ Docker installed! Starting Docker Desktop..."
+        open -a Docker
+        sleep 5
+    else
+        echo "✅ Docker already installed."
     fi
 
     if ! docker info >/dev/null 2>&1; then
-        echo "Docker not running. Attempting to start Docker..."
+        echo "🐳 Docker not running. Attempting to start..."
         open -a Docker
         sleep 10
         if ! docker info >/dev/null 2>&1; then
-            echo "Error: Docker still not running. Please start Docker Desktop manually."
+            echo "❌ Docker still not running. Please start Docker Desktop manually."
             exit 1
         fi
     fi
+    echo "✅ Docker is running!"
+    echo ""
 
     # Docker Compose
     if ! command -v docker-compose >/dev/null 2>&1; then
-        echo "Docker Compose not found. Installing via pip..."
+        echo "📦 Installing Docker Compose..."
         if command -v pip3 >/dev/null 2>&1; then
-            pip3 install docker-compose
+            pip3 install docker-compose >> "$LOG_FILE" 2>&1
         else
-            echo "Error: pip3 not found. Please install Docker Compose manually."
+            echo "❌ pip3 not found. Installing Docker Compose manually required."
             exit 1
         fi
         if ! command -v docker-compose >/dev/null 2>&1; then
-            echo "Error: Failed to install Docker Compose."
+            echo "❌ Docker Compose installation failed."
             exit 1
         fi
-        echo "Docker Compose installed."
+        echo "✅ Docker Compose installed!"
+    else
+        echo "✅ Docker Compose already installed."
     fi
+    echo ""
 
     # Go
     if ! command -v go >/dev/null 2>&1; then
-        echo "Go not found. Installing Go..."
-        brew install go
+        echo "📦 Installing Go (1-2 minutes)..."
+        echo "Starting Go installation..." >> "$LOG_FILE"
+        ( brew install go ) >> "$LOG_FILE" 2>&1
+        echo "Go installation completed." >> "$LOG_FILE"
         if ! command -v go >/dev/null 2>&1; then
-            echo "Error: Failed to install Go."
+            echo "❌ Go installation failed. Check $LOG_FILE for details."
             exit 1
         fi
-        echo "Go installed."
+        echo "✅ Go installed!"
+        # Install Go protobuf plugins
+        echo "📦 Installing Go protobuf plugins (1 minute)..."
+        echo "Starting Go protobuf plugins installation..." >> "$LOG_FILE"
+        ( go install google.golang.org/protobuf/cmd/protoc-gen-go@latest ) >> "$LOG_FILE" 2>&1
+        ( go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest ) >> "$LOG_FILE" 2>&1
+        echo "Go protobuf plugins installation completed." >> "$LOG_FILE"
+        echo "✅ Go protobuf plugins installed!"
+    else
+        echo "✅ Go already installed."
     fi
+    echo ""
 
     # Node.js
     if ! command -v node >/dev/null 2>&1; then
-        echo "Node.js not found. Installing Node.js..."
-        brew install node
+        echo "📦 Installing Node.js (1-2 minutes)..."
+        echo "Starting Node.js installation..." >> "$LOG_FILE"
+        ( brew install node ) >> "$LOG_FILE" 2>&1
+        echo "Node.js installation completed." >> "$LOG_FILE"
         if ! command -v node >/dev/null 2>&1; then
-            echo "Error: Failed to install Node.js."
+            echo "❌ Node.js installation failed. Check $LOG_FILE for details."
             exit 1
         fi
-        echo "Node.js installed."
+        echo "✅ Node.js installed!"
+        # Install gRPC-Web plugin
+        echo "📦 Installing gRPC-Web plugin (1 minute)..."
+        echo "Starting gRPC-Web plugin installation..." >> "$LOG_FILE"
+        ( npm install -g protoc-gen-grpc-web ) >> "$LOG_FILE" 2>&1
+        echo "gRPC-Web plugin installation completed." >> "$LOG_FILE"
+        echo "✅ gRPC-Web plugin installed!"
+    else
+        echo "✅ Node.js already installed."
     fi
+    echo ""
 
     # Yarn
     if ! command -v yarn >/dev/null 2>&1; then
-        echo "Yarn not found. Installing Yarn..."
-        brew install yarn
+        echo "📦 Installing Yarn (30 seconds)..."
+        echo "Starting Yarn installation..." >> "$LOG_FILE"
+        ( brew install yarn ) >> "$LOG_FILE" 2>&1
+        echo "Yarn installation completed." >> "$LOG_FILE"
         if ! command -v yarn >/dev/null 2>&1; then
-            echo "Error: Failed to install Yarn."
+            echo "❌ Yarn installation failed. Check $LOG_FILE for details."
             exit 1
         fi
-        echo "Yarn installed."
+        echo "✅ Yarn installed!"
+    else
+        echo "✅ Yarn already installed."
+    fi
+    echo ""
+
+    # Protobuf
+    if ! command -v protoc >/dev/null 2>&1; then
+        echo "📦 Installing Protobuf (5-10 minutes)..."
+        echo "💡 This compiles from source. You can open Activity Monitor to watch CPU usage."
+        echo "Starting Protobuf installation..." >> "$LOG_FILE"
+        ( brew install protobuf ) >> "$LOG_FILE" 2>&1
+        echo "Protobuf installation completed." >> "$LOG_FILE"
+        if ! command -v protoc >/dev/null 2>&1; then
+            echo "❌ Protobuf installation failed. Check $LOG_FILE for details."
+            exit 1
+        fi
+        echo "✅ Protobuf installed!"
+    else
+        echo "✅ Protobuf already installed."
     fi
 
-    echo "All prerequisites OK."
+    echo "🎉 All prerequisites ready!"
+    echo ""
 }
 
 # Function to start Docker services with retry
@@ -133,30 +242,36 @@ check_prerequisites
 
 # Start Docker services if not running
 if ! docker-compose ps | grep -q "Up"; then
-    start_docker_services
-    wait_for_services
+    echo "🐳 Starting Docker services..."
+    start_docker_services >> "$LOG_FILE" 2>&1
+    wait_for_services >> "$LOG_FILE" 2>&1
+    echo "✅ Docker services started!"
 fi
 
 # Initiate backend with error handling
 if [ ! -f "backend/core-api/go.sum" ]; then
-    echo "Initiating backend..."
-    cd backend/core-api
-    if ! go mod tidy; then
-        echo "Failed to initiate backend. Check Go installation."
+    echo "🔧 Setting up backend dependencies..."
+    echo "Starting backend setup..." >> "$LOG_FILE"
+    ( cd backend/core-api && go mod tidy ) >> "$LOG_FILE" 2>&1
+    echo "Backend setup completed." >> "$LOG_FILE"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to initiate backend. Check $LOG_FILE for details."
         exit 1
     fi
-    cd ../..
+    echo "✅ Backend dependencies ready!"
 fi
 
 # Initiate frontend with error handling
 if [ ! -d "frontend/node_modules" ]; then
-    echo "Initiating frontend..."
-    cd frontend
-    if ! yarn install; then
-        echo "Failed to initiate frontend. Check Yarn installation."
+    echo "🔧 Setting up frontend dependencies..."
+    echo "Starting frontend setup..." >> "$LOG_FILE"
+    ( cd frontend && yarn install ) >> "$LOG_FILE" 2>&1
+    echo "Frontend setup completed." >> "$LOG_FILE"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to initiate frontend. Check $LOG_FILE for details."
         exit 1
     fi
-    cd ..
+    echo "✅ Frontend dependencies ready!"
 fi
 
 #!/bin/bash
@@ -212,7 +327,9 @@ echo "Opening terminal for Docker overview logs..."
 osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && docker-compose logs -f\"" > /dev/null 2>&1
 
 # Central monitor terminal
-echo "Opening central monitor terminal..."
-osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo 'Central Monitor: Run ./stop.sh to stop all services.'; sleep infinity\"" > /dev/null 2>&1
+echo "📺 Opening central monitor terminal..."
+osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  Central Monitor: Run ./stop.sh to stop all services.'; echo '📄 Setup logs: $LOG_FILE'; sleep infinity\"" > /dev/null 2>&1
 
-echo "All terminals opened. Use ./stop.sh in the central monitor to stop all."
+echo "🎉 All terminals opened successfully!"
+echo "💡 Use ./stop.sh in the central monitor to stop all services."
+echo "📄 Detailed setup logs are in $LOG_FILE"
