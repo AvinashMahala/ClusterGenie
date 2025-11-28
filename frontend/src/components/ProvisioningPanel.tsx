@@ -48,7 +48,8 @@ export function ProvisioningPanel() {
   };
 
   return (
-    <div className="p-4 border rounded-lg">
+    <div className="provisioning-panel">
+      <div className="panel-container">
       <h2 className="text-xl font-bold mb-4">Provisioning</h2>
 
       <div className="mb-4">
@@ -114,6 +115,7 @@ export function ProvisioningPanel() {
               </button>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>

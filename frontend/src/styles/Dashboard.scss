@@ -1,9 +1,7 @@
 // Dashboard.scss - Custom styles for Dashboard component
 
 .dashboard {
-  padding: 2rem 0;
-  max-width: 1400px;
-  margin: 0 auto;
+  // Container styling removed - now handled by Layout component
 
   .hero-section {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

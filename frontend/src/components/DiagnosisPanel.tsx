@@ -45,90 +45,92 @@ export function DiagnosisPanel() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Cluster Diagnosis</h2>
+    <div className="diagnosis-panel">
+      <div className="panel-container">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Cluster Diagnosis</h2>
 
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="clusterId" className="block text-sm font-medium text-gray-700 mb-2">
-            Cluster ID
-          </label>
-          <input
-            type="text"
-            id="clusterId"
-            value={clusterId}
-            onChange={(e) => setClusterId(e.target.value)}
-            placeholder="Enter cluster ID (e.g., cluster-prod)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        <button
-          onClick={handleDiagnose}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Diagnosing...' : 'Diagnose Cluster'}
-        </button>
-
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800">{error}</p>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="clusterId" className="block text-sm font-medium text-gray-700 mb-2">
+              Cluster ID
+            </label>
+            <input
+              type="text"
+              id="clusterId"
+              value={clusterId}
+              onChange={(e) => setClusterId(e.target.value)}
+              placeholder="Enter cluster ID (e.g., cluster-prod)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            />
           </div>
-        )}
 
-        {diagnosis && (
-          <div className="space-y-6">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Cluster Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Name:</span>
-                  <p className="text-sm text-gray-900">{diagnosis.cluster.name}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Region:</span>
-                  <p className="text-sm text-gray-900">{diagnosis.cluster.region}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Status:</span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(diagnosis.cluster.status)}`}>
-                    {diagnosis.cluster.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Droplets:</span>
-                  <p className="text-sm text-gray-900">{diagnosis.cluster.droplets.length}</p>
+          <button
+            onClick={handleDiagnose}
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Diagnosing...' : 'Diagnose Cluster'}
+          </button>
+
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
+
+          {diagnosis && (
+            <div className="space-y-6">
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Cluster Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Name:</span>
+                    <p className="text-sm text-gray-900">{diagnosis.cluster.name}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Region:</span>
+                    <p className="text-sm text-gray-900">{diagnosis.cluster.region}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Status:</span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(diagnosis.cluster.status)}`}>
+                      {diagnosis.cluster.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Droplets:</span>
+                    <p className="text-sm text-gray-900">{diagnosis.cluster.droplets.length}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">AI Insights</h3>
-              <ul className="space-y-2">
-                {diagnosis.insights.map((insight, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></span>
-                    <span className="text-sm text-gray-700">{insight}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">AI Insights</h3>
+                <ul className="space-y-2">
+                  {diagnosis.insights.map((insight, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3"></span>
+                      <span className="text-sm text-gray-700">{insight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Recommendations</h3>
-              <ul className="space-y-2">
-                {diagnosis.recommendations.map((recommendation, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></span>
-                    <span className="text-sm text-gray-700">{recommendation}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="border border-gray-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Recommendations</h3>
+                <ul className="space-y-2">
+                  {diagnosis.recommendations.map((recommendation, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></span>
+                      <span className="text-sm text-gray-700">{recommendation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
-  );
+      </div>
+      );
 }
