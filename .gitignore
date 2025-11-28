@@ -106,6 +106,11 @@ pids
 # Yarn Integrity file
 .yarn-integrity
 
+# Air (Go hot reload) build artifacts
+tmp/
+build-errors.log
+
 # Frontend generated protobuf files
 **/HelloServiceClientPb.ts
+**/hello_pb.js
 **/hello_pb.d.ts

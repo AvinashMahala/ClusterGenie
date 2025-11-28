@@ -140,6 +140,12 @@ check_prerequisites() {
         ( go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest ) >> "$LOG_FILE" 2>&1
         echo "Go protobuf plugins installation completed." >> "$LOG_FILE"
         echo "✅ Go protobuf plugins installed!"
+        # Install Air for hot reloading
+        echo "📦 Installing Air for Go hot reloading (1 minute)..."
+        echo "Starting Air installation..." >> "$LOG_FILE"
+        ( go install github.com/air-verse/air@latest ) >> "$LOG_FILE" 2>&1
+        echo "Air installation completed." >> "$LOG_FILE"
+        echo "✅ Air installed!"
     else
         echo "✅ Go already installed."
     fi
@@ -162,6 +168,12 @@ check_prerequisites() {
         ( npm install -g protoc-gen-grpc-web ) >> "$LOG_FILE" 2>&1
         echo "gRPC-Web plugin installation completed." >> "$LOG_FILE"
         echo "✅ gRPC-Web plugin installed!"
+hello_pb.js:14 Uncaught ReferenceError: global is not defined
+        echo "📦 Installing protobuf TypeScript plugin (1 minute)..."
+        echo "Starting protobuf TypeScript plugin installation..." >> "$LOG_FILE"
+        ( cd frontend && yarn add --dev @protobuf-ts/protoc ) >> "$LOG_FILE" 2>&1
+        echo "Protobuf TypeScript plugin installation completed." >> "$LOG_FILE"
+        echo "✅ Protobuf TypeScript plugin installed!"
     else
         echo "✅ Node.js already installed."
     fi
@@ -302,6 +314,14 @@ if [ ! -f "frontend/src/HelloServiceClientPb.ts" ]; then
     echo "✅ TypeScript protobuf code generated!"
 fi
 
+if [ ! -f "frontend/src/hello_pb.js" ]; then
+    echo "🔧 Generating JavaScript protobuf messages..."
+    echo "Starting JS protobuf message generation..." >> "$LOG_FILE"
+    ( cd frontend/src && protoc -I ../../backend/shared/proto --plugin=protoc-gen-js=../node_modules/.bin/protoc-gen-js --js_out=import_style=es6,binary:. hello.proto ) >> "$LOG_FILE" 2>&1
+    echo "JS protobuf message generation completed." >> "$LOG_FILE"
+    echo "✅ JS protobuf messages generated!"
+fi
+
 # Start Docker services if not running
 if ! docker-compose ps | grep -q "Up"; then
     echo "🐳 Starting Docker services..."
@@ -383,6 +403,10 @@ osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && docker-c
 # Frontend terminal
 echo "Opening terminal for Frontend dev server..."
 osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/frontend && yarn dev\"" > /dev/null 2>&1
+
+# Backend terminal
+echo "Opening terminal for Backend dev server..."
+osascript -e "tell application \"Terminal\" to do script \"cd $(pwd)/backend/core-api && air\"" > /dev/null 2>&1
 
 # Docker overview terminal
 echo "Opening terminal for Docker overview logs..."

@@ -1,6 +1,6 @@
 import './App.css'
 import { HelloServiceClient } from './HelloServiceClientPb';
-import { HelloRequest } from './hello_pb';
+import * as hello_pb from './hello_pb';
 import { useState } from 'react';
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
 
   const callHello = () => {
     const client = new HelloServiceClient('http://localhost:8080'); // gRPC-Web proxy
-    const request = new HelloRequest();
+    const request = new hello_pb.HelloRequest();
     request.setName('User');
 
     client.sayHello(request, {}, (err, response) => {
