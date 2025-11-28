@@ -161,12 +161,6 @@ check_prerequisites() {
             exit 1
         fi
         echo "✅ Node.js installed!"
-        # Install protobuf TypeScript plugin
-        echo "📦 Installing protobuf TypeScript plugin (1 minute)..."
-        echo "Starting protobuf TypeScript plugin installation..." >> "$LOG_FILE"
-        ( cd frontend && yarn add --dev @protobuf-ts/protoc ) >> "$LOG_FILE" 2>&1
-        echo "Protobuf TypeScript plugin installation completed." >> "$LOG_FILE"
-        echo "✅ Protobuf TypeScript plugin installed!"
     else
         echo "✅ Node.js already installed."
     fi
@@ -187,45 +181,6 @@ check_prerequisites() {
         echo "✅ Yarn already installed."
     fi
     echo ""
-
-    # Protobuf
-    if ! command -v protoc >/dev/null 2>&1; then
-        echo "📦 Installing Protobuf (5-10 minutes)..."
-        echo "💡 This compiles from source. You can open Activity Monitor to watch CPU usage."
-        echo "Starting Protobuf installation..." >> "$LOG_FILE"
-        ( brew install protobuf ) >> "$LOG_FILE" 2>&1
-        echo "Protobuf installation completed." >> "$LOG_FILE"
-        if ! command -v protoc >/dev/null 2>&1; then
-            echo "❌ Protobuf installation failed. Check $LOG_FILE for details."
-            exit 1
-        fi
-        echo "✅ Protobuf installed!"
-    else
-        echo "✅ Protobuf already installed."
-    fi
-
-    # Go protobuf plugins (if not already installed)
-    if ! command -v protoc-gen-go >/dev/null 2>&1; then
-        echo "📦 Installing Go protobuf plugins..."
-        echo "Starting Go protobuf plugins installation..." >> "$LOG_FILE"
-        ( go install google.golang.org/protobuf/cmd/protoc-gen-go@latest ) >> "$LOG_FILE" 2>&1
-        ( go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest ) >> "$LOG_FILE" 2>&1
-        echo "Go protobuf plugins installation completed." >> "$LOG_FILE"
-        echo "✅ Go protobuf plugins installed!"
-    else
-        echo "✅ Go protobuf plugins already installed."
-    fi
-
-    # gRPC-Web plugin
-    if ! command -v protoc-gen-grpc-web >/dev/null 2>&1; then
-        echo "📦 Installing gRPC-Web plugin..."
-        echo "Starting gRPC-Web plugin installation..." >> "$LOG_FILE"
-        ( npm install -g protoc-gen-grpc-web ) >> "$LOG_FILE" 2>&1
-        echo "gRPC-Web plugin installation completed." >> "$LOG_FILE"
-        echo "✅ gRPC-Web plugin installed!"
-    else
-        echo "✅ gRPC-Web plugin already installed."
-    fi
 
     echo "🎉 All prerequisites ready!"
     echo ""
