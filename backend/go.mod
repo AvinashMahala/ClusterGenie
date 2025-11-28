@@ -6,10 +6,13 @@ toolchain go1.24.10
 
 require (
 	github.com/AvinashMahala/ClusterGenie/backend/shared/proto v0.0.0-00010101000000-000000000000
+	github.com/segmentio/kafka-go v0.4.49
 	google.golang.org/grpc v1.77.0
 )
 
 require (
+	github.com/klauspost/compress v1.15.9 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	golang.org/x/net v0.46.1-0.20251013234738-63d1a5100f82 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
