@@ -3,12 +3,19 @@
 import { useState } from 'react';
 import { ProvisioningService } from '../services/provisioningService';
 import type { Droplet, CreateDropletRequest } from '../models';
+import { Hero } from './Hero';
+import { TabNavigation, type TabType } from './TabNavigation';
+import { OverviewTab } from './OverviewTab';
+import { CreateDropletTab } from './CreateDropletTab';
+import { DropletsListTab } from './DropletsListTab';
+import './ProvisioningPanel.scss';
 
 const provisioningService = new ProvisioningService();
 
 export function ProvisioningPanel() {
   const [droplets, setDroplets] = useState<Droplet[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [form, setForm] = useState<CreateDropletRequest>({
     name: '',
     region: 'nyc1',
@@ -47,76 +54,59 @@ export function ProvisioningPanel() {
     }
   };
 
+  const handleQuickDeploy = (config: Partial<CreateDropletRequest>) => {
+    setForm({
+      ...form,
+      ...config
+    });
+    setActiveTab('create');
+  };
+
   return (
     <div className="provisioning-panel">
-      <div className="panel-container">
-      <h2 className="text-xl font-bold mb-4">Provisioning</h2>
+      <Hero
+        title="Cloud Infrastructure"
+        subtitle="Deploy and manage DigitalOcean droplets"
+        icon={
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+          </svg>
+        }
+        stats={[
+          { value: droplets.length, label: 'Droplets' },
+          { value: droplets.filter(d => d.status === 'active').length, label: 'Active' },
+          { value: droplets.filter(d => d.status === 'provisioning').length, label: 'Pending' }
+        ]}
+        variant="compact"
+      />
 
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-2">Create Droplet</h3>
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          <input
-            type="text"
-            placeholder="Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Region"
-            value={form.region}
-            onChange={(e) => setForm({ ...form, region: e.target.value })}
-            className="p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Size"
-            value={form.size}
-            onChange={(e) => setForm({ ...form, size: e.target.value })}
-            className="p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Image"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-            className="p-2 border rounded"
-          />
-        </div>
-        <button
-          onClick={handleCreate}
-          disabled={loading || !form.name}
-          className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-        >
-          {loading ? 'Creating...' : 'Create Droplet'}
-        </button>
-      </div>
+      <TabNavigation
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-      <div>
-        <h3 className="text-lg font-semibold mb-2">Droplets</h3>
-        <button onClick={loadDroplets} className="mb-2 px-4 py-2 bg-green-500 text-white rounded">
-          Load Droplets
-        </button>
-        <div className="space-y-2">
-          {droplets.map((droplet) => (
-            <div key={droplet.id} className="p-2 border rounded flex justify-between items-center">
-              <div>
-                <div className="font-semibold">{droplet.name}</div>
-                <div className="text-sm text-gray-600">
-                  {droplet.region} • {droplet.size} • {droplet.status}
-                </div>
-              </div>
-              <button
-                onClick={() => handleDelete(droplet.id)}
-                className="px-2 py-1 bg-red-500 text-white rounded text-sm"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
-        </div>
+      <div className="tab-content">
+        {activeTab === 'overview' && (
+          <OverviewTab onQuickDeploy={handleQuickDeploy} />
+        )}
+
+        {activeTab === 'create' && (
+          <CreateDropletTab
+            form={form}
+            loading={loading}
+            onFormChange={setForm}
+            onCreate={handleCreate}
+          />
+        )}
+
+        {activeTab === 'droplets' && (
+          <DropletsListTab
+            droplets={droplets}
+            loading={loading}
+            onRefresh={loadDroplets}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
     </div>
   );

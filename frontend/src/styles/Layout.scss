@@ -2,6 +2,7 @@
 
 .layout {
   min-height: 100vh;
+  width: 97vw;
   display: flex;
   background: #f8fafc;
 
@@ -100,7 +101,32 @@
     .sidebar-footer {
       padding: 1rem;
       border-top: 1px solid #e2e8f0;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+
+      .user-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: scale(1.05);
+        }
+
+        svg {
+          width: 1.25rem;
+          height: 1.25rem;
+          color: white;
+        }
+      }
 
       .demo-badge {
         display: inline-flex;
@@ -120,52 +146,6 @@
     margin-left: 256px;
     display: flex;
     flex-direction: column;
-
-    .header {
-      background: white;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      border-bottom: 1px solid #e2e8f0;
-      padding: 1rem 1.5rem;
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-
-        .page-title {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .header-right {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-
-          .welcome-text {
-            font-size: 0.875rem;
-            color: #64748b;
-          }
-
-          .user-avatar {
-            width: 2rem;
-            height: 2rem;
-            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            svg {
-              width: 1rem;
-              height: 1rem;
-              color: white;
-            }
-          }
-        }
-      }
-    }
 
     .content {
       flex: 1;

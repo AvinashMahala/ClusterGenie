@@ -1,0 +1,113 @@
+// frontend/src/components/OverviewTab/OverviewTab.scss
+
+.overview-tab {
+  .overview-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+
+    .overview-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+
+      .card-header {
+        margin-bottom: 1.5rem;
+
+        h3 {
+          font-size: 1.125rem;
+          font-weight: 600;
+          margin: 0 0 0.5rem 0;
+          color: #111827;
+        }
+
+        p {
+          color: #6b7280;
+          margin: 0;
+          font-size: 0.875rem;
+        }
+      }
+
+      .quick-options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+
+        .quick-option {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          background: #f9fafb;
+          transition: all 0.2s ease;
+          cursor: pointer;
+
+          &:hover {
+            border-color: #6366f1;
+            background: #eef2ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+          }
+
+          .option-icon {
+            flex-shrink: 0;
+            color: #6366f1;
+          }
+
+          .option-content {
+            .option-title {
+              font-weight: 600;
+              color: #111827;
+              font-size: 0.875rem;
+              margin-bottom: 0.125rem;
+            }
+
+            .option-desc {
+              color: #6b7280;
+              font-size: 0.75rem;
+            }
+          }
+        }
+      }
+
+      h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 1rem 0;
+        color: #111827;
+      }
+
+      .resource-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .resource-link {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem;
+          border-radius: 6px;
+          color: #6b7280;
+          text-decoration: none;
+          transition: all 0.2s ease;
+
+          svg {
+            width: 1rem;
+            height: 1rem;
+            color: #6366f1;
+          }
+
+          &:hover {
+            color: #374151;
+            background: #f3f4f6;
+          }
+        }
+      }
+    }
+  }
+}

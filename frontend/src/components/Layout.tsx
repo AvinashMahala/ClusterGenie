@@ -97,6 +97,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {/* Footer in Sidebar */}
         <div className="sidebar-footer">
+          <div className="user-avatar">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
           <div className="demo-badge">
             Demo Mode
           </div>
@@ -105,27 +110,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Main Content Area */}
       <div className="main-content">
-        {/* Top Header */}
-        <header className="header">
-          <div className="header-content">
-            <div>
-              <h2 className="page-title">
-                {navigationItems.find(item => item.href === location.pathname)?.name || 'Dashboard'}
-              </h2>
-            </div>
-            <div className="header-right">
-              <div className="welcome-text">
-                Welcome to ClusterGenie
-              </div>
-              <div className="user-avatar">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* Main Content */}
         <main className="content">
           {children}

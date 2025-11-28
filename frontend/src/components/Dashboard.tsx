@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { ProvisioningService } from '../services/provisioningService';
 import { JobService } from '../services/jobService';
 import type { Droplet, Job } from '../models';
+import { Hero } from './Hero';
+import TabularSection from './TabularSection';
 import '../styles/Dashboard.scss';
 
 const provisioningService = new ProvisioningService();
@@ -63,13 +65,12 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      {/* Compact Hero Section */}
-      <div className="compact-hero">
-        <div className="hero-content">
-          <h1>Welcome to ClusterGenie</h1>
-          <p>AI-powered cluster management for DigitalOcean infrastructure</p>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <Hero
+        title="Welcome to ClusterGenie"
+        subtitle="AI-powered cluster management for DigitalOcean infrastructure"
+        variant="compact"
+      />
 
       {/* Tab Navigation */}
       <div className="tab-navigation">
@@ -233,39 +234,85 @@ export function Dashboard() {
 
         {activeTab === 'activity' && (
           <div className="activity-tab">
-            <div className="activity-list">
-              {recentJobs.length > 0 ? (
-                recentJobs.map((job) => (
-                  <div key={job.id} className="activity-item compact">
-                    <div className="activity-icon">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="activity-content">
-                      <div className="activity-header">
-                        <span className="activity-title">{job.type}</span>
-                        <span className={`activity-status ${job.status}`}>{job.status}</span>
-                      </div>
-                      <div className="activity-details">
-                        <span>Job ID: {job.id}</span>
-                        <span className="activity-time">
-                          {job.createdAt.toLocaleDateString()} {job.createdAt.toLocaleTimeString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="empty-state compact">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h3>No recent activity</h3>
-                  <p>Get started by creating your first job or provisioning a droplet.</p>
-                </div>
-              )}
-            </div>
+            <TabularSection
+              title="Recent Activity"
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              count={recentJobs.length}
+              columns={[
+                {
+                  key: 'type',
+                  label: 'Type',
+                  sortable: true
+                },
+                {
+                  key: 'status',
+                  label: 'Status',
+                  sortable: true,
+                  className: 'status-cell',
+                  render: (value) => {
+                    const getStatusColor = (status: string) => {
+                      switch (status) {
+                        case 'completed':
+                          return { bg: '#dcfce7', text: '#166534', indicator: '#16a34a' };
+                        case 'running':
+                          return { bg: '#fef3c7', text: '#92400e', indicator: '#f59e0b' };
+                        case 'failed':
+                          return { bg: '#fee2e2', text: '#991b1b', indicator: '#dc2626' };
+                        default:
+                          return { bg: '#f3f4f6', text: '#374151', indicator: '#6b7280' };
+                      }
+                    };
+                    const statusColors = getStatusColor(value as string);
+                    return (
+                      <span
+                        className="status-badge"
+                        style={{
+                          backgroundColor: statusColors.bg,
+                          color: statusColors.text
+                        }}
+                      >
+                        <div
+                          className="status-indicator"
+                          style={{ backgroundColor: statusColors.indicator }}
+                        ></div>
+                        {value}
+                      </span>
+                    );
+                  }
+                },
+                {
+                  key: 'id',
+                  label: 'Job ID',
+                  sortable: true
+                },
+                {
+                  key: 'createdAt',
+                  label: 'Created',
+                  sortable: true,
+                  render: (value) => new Date(value as string).toLocaleDateString() + ' ' + new Date(value as string).toLocaleTimeString()
+                }
+              ]}
+              data={recentJobs}
+              searchPlaceholder="Search jobs..."
+              filterOptions={[
+                { value: 'running', label: 'Running' },
+                { value: 'completed', label: 'Completed' },
+                { value: 'failed', label: 'Failed' },
+                { value: 'pending', label: 'Pending' }
+              ]}
+              filterKey="status"
+              emptyStateTitle="No recent activity"
+              emptyStateDescription="Get started by creating your first job or provisioning a droplet."
+              emptyStateIcon={
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+            />
           </div>
         )}
       </div>
