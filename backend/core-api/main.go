@@ -6,11 +6,15 @@ import (
 	"net"
 	"time"
 
+	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/repositories"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/services"
 	proto "github.com/AvinashMahala/ClusterGenie/backend/shared/proto"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"google.golang.org/grpc"
 )
 
@@ -288,6 +292,39 @@ func main() {
 	jobSvc := services.NewJobService(jobRepo)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
 
+	// Initialize Gin router for REST API
+	r := gin.Default()
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	api := r.Group("/api/v1")
+	{
+		// @Summary Say Hello
+		// @Description Say hello to the user
+		// @Accept json
+		// @Produce json
+		// @Param request body models.HelloRequest true "Hello Request"
+		// @Success 200 {object} models.HelloResponse
+		// @Router /api/v1/hello [post]
+		api.POST("/hello", func(c *gin.Context) {
+			var req models.HelloRequest
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": err.Error()})
+				return
+			}
+			resp := &models.HelloResponse{Message: "Hello, " + req.Name + " from ClusterGenie!"}
+			c.JSON(200, resp)
+		})
+		// Add more routes here as implemented
+	}
+
+	// Start REST server in a goroutine
+	go func() {
+		log.Println("REST API server listening on :8080")
+		if err := r.Run(":8080"); err != nil {
+			log.Fatalf("Failed to start REST server: %v", err)
+		}
+	}()
+
+	// gRPC server
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
@@ -306,9 +343,9 @@ func main() {
 	proto.RegisterJobServiceServer(s, server)
 	proto.RegisterMonitoringServiceServer(s, server)
 
-	log.Println("Core API server listening on :50051")
+	log.Println("gRPC server listening on :50051")
 	log.Println("Hot reload enabled with Air")
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatalf("Failed to serve gRPC: %v", err)
 	}
 }
