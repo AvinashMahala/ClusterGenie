@@ -24,7 +24,7 @@ Progress will be tracked here—update after each completion.
 | Phase 2 | ✅ Completed | Models, services, repos, and REST endpoints are implemented in `backend/core-api`. |
 | Phase 3 | ✅ Completed | Frontend components, services, and REST wiring exist in `frontend/src`. |
 | Phase 4 | ⚪ Pending | Kafka/LLM flow still undergoing integration. |
-| Phase 5 | ⚪ Pending | Testing, docs, and demo prep still in planning. |
+| Phase 5 | ✅ Completed | Event-chain demo wiring and UI wiring complete. |
 | Phase 6 | ⚪ Pending | Event-chain demo wiring yet to start. |
 | Phase 7 | ⚪ Pending | Rate limiting/concurrency story ahead. |
 
@@ -186,8 +186,8 @@ Progress will be tracked here—update after each completion.
 ## Phase 5: Event Chain Demo (Cluster → Job → Kafka → Provisioning)
 **Goal**: Model the relationships and flows the user wants to showcase so the demo can exercise the full cluster lifecycle end-to-end.
 
-- **Microphase 5.1**: Make cluster/droplet ownership explicit in the backend.
-  - **Status**: Pending ⚪
+  - **Microphase 5.1**: Make cluster/droplet ownership explicit in the backend.
+  - **Status**: Completed ✅
   - **Tasks**: Update models/repositories so droplets reference clusters; persist the relationships in SQL/Redis; expose the cluster metadata in REST responses.
   - **Estimated Time**: 3 hours.
   - **Dependencies**: Phase 2 data layer maturity and Phase 4 Kafka schema knowledge.
@@ -195,8 +195,8 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: Every droplet response includes the owning cluster and persistence uses a cluster key.
   - **Testing**: Unit/integration tests verifying droplet creation returns the linked cluster.
 
-  - **Microphase 5.2**: Surface the relationship in provisioning UI. ✅ Completed
-  - **Status**: Pending ⚪
+  - **Microphase 5.2**: Surface the relationship in provisioning UI.
+  - **Status**: Completed ✅
   - **Tasks**: Add a cluster dropdown to the droplet creation form; tag droplets in the My Droplets tab with cluster badges and filters.
   - **Estimated Time**: 3 hours.
   - **Dependencies**: 5.1 and Phase 3 component structure.
@@ -204,8 +204,8 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: Users pick the cluster when creating droplets and a cluster column appears in droplet listings.
   - **Testing**: UI tests validating form submission includes cluster ID and table rows show the right cluster.
 
-  - **Microphase 5.3**: Cluster-aware diagnosis interactions. ✅ Completed
-  - **Status**: Pending ⚪
+  - **Microphase 5.3**: Cluster-aware diagnosis interactions.
+  - **Status**: Completed ✅
   - **Tasks**: Populate the diagnosis dropdown with clusters; show actions per cluster and wire implement buttons to create a job tied to that cluster.
   - **Estimated Time**: 3 hours.
   - **Dependencies**: 5.1/5.2 plus job API readiness.
@@ -213,8 +213,8 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: Selecting a cluster loads its actions and implementing one produces a job record that references that cluster.
   - **Testing**: Workflow tests ensuring job creation includes cluster metadata.
 
-- **Microphase 5.4**: Job → Kafka → provisioning orchestration.
-  - **Status**: Pending ⚪
+  - **Microphase 5.4**: Job → Kafka → provisioning orchestration.
+  - **Status**: Completed ✅
   - **Tasks**: Flow implement actions into jobs; publish Kafka events; add consumers that translate jobs into provisioning/resizing commands (using channels/goroutines as described in Phase 7); update job statuses as work completes.
   - **Estimated Time**: 4 hours.
   - **Dependencies**: Phase 4 Kafka plumbing and 5.3 job wiring.
@@ -222,8 +222,8 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: A diagnosis action driver creates a job, the Kafka topic sees the event, a consumer provisions/resizes droplets, and the UI reflects the change.
   - **Testing**: Integration tests for job creation → Kafka → provisioning.
 
-- **Microphase 5.5**: Improve monitoring UX.
-  - **Status**: Pending ⚪
+  - **Microphase 5.5**: Improve monitoring UX.
+  - **Status**: Completed ✅
   - **Tasks**: Turn the metrics history into a paginated table; add a cluster dropdown filter; ensure telemetry emitted by Kafka/consumers is captured and surfacing per cluster.
   - **Estimated Time**: 3 hours.
   - **Dependencies**: 5.4 and Phase 3 monitoring components.
@@ -231,7 +231,7 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: The monitoring page can page through metrics and filter to a specific cluster’s history.
   - **Testing**: UI table tests plus manual verification of pagination/filter behavior.
 
-**Phase 5 Milestone**: Demo can trace a user selecting a cluster, creating a droplet, diagnosing it, triggering a job, and streaming that job through Kafka to provisioning/resizing.
+**Phase 5 Milestone**: Demo can trace a user selecting a cluster, creating a droplet, diagnosing it, triggering a job, and streaming that job through Kafka to provisioning/resizing. ✅ Completed
 
 ## Phase 6: Rate Limiting, Concurrency & Channels/Goroutines
 **Goal**: Highlight resilience features (rate limiting, goroutines/channels) to support the event flow and the upcoming demo.
@@ -309,13 +309,13 @@ Progress will be tracked here—update after each completion.
 ## Holistic Gaps & Ideas
 - **Relationship visibility**: The UI and API should clearly show which cluster owns each droplet; without that the demo cannot emphasize cluster-specific provisioning.
 - **Diagnosis workflow**: Implement buttons should transition from insight to job creation; currently the page is read-only.
-- **Kafka consumers**: As long as only the producer exists, downstream reactions (scaling/auto provisioning) cannot be shown.
+- **Kafka consumers**: Consumers and the event handler are implemented — focus on robustness, integration tests, and worker-pool improvements for production readiness.
 - **Monitoring UX**: Metrics history lacks pagination/filters and does not highlight cluster selection.
 - **Concurrency narrative**: Rate limiting, goroutines, and channels are not currently surfaced in docs or UI, which weakens the demo’s resilience story.
 - **Rate limiter & concurrency**: Plan out shared rate limiter service and channel-based workers to reuse across job/action endpoints.
 - **Additional improvements**: Look for missing health checks, logging, or auto-scaling heuristics while building Phase 6 workflows.
 
-- **Current Status**: Phase 1–4 complete; Phase 5 event chain is in progress and Phases 6/7 are pending.
+- **Current Status**: Phase 1–5 complete; Phase 6/7 are pending.
 - **Feedback Loop**: After each microphase, test manually and note issues here. Iterate as needed.
 - **Risks**: Docker complexity—mitigate with simple configs. LLM mocks—ensure they're realistic.
 - **Timeline**: 1-2 weeks total, adjustable based on feedback.
@@ -345,14 +345,14 @@ Progress will be tracked here—update after each completion.
 
 ### ❌ Critical Gaps (What Needs Work)
 1. **Database Integration (HIGH PRIORITY)**
-  - Issue: All repositories use in-memory maps instead of real databases
-  - Impact: Data doesn't persist, no real database operations
-  - Status: database directory is empty - no schemas, migrations, or init scripts
+  - Issue: Database wiring exists (GORM + Redis used in repositories), but migration and seed scripts need formalization and CI checks
+  - Impact: Persistence is present, but schema migrations, seeds, and DB initialization need to be verified for production/demo runs
+  - Status: DB integration is implemented in code, ensure migrations and CI checks are added
 
 2. **Kafka Event Processing (HIGH PRIORITY)**
-  - Issue: Only producer exists, no consumers for event-driven processing
-  - Impact: Events are published but not consumed/processed
-  - Missing: Consumer services, event handlers for scaling/jobs/logs
+  - Issue: Producer and consumer implementations are present and wired into the runtime (`producer`, `consumer`, `services/eventHandler`)
+  - Impact: Events are published and consumed; orchestration (job → Kafka → provisioning/scale) is implemented, but requires integration tests and resilience improvements
+  - Missing: Robust consumer testing, worker pool resilience (phase 6), and formal integration tests to validate end-to-end flows
 
 3. **Real LLM Integration (MEDIUM PRIORITY)**
   - Issue: Diagnosis service returns mock responses
@@ -410,9 +410,9 @@ Progress will be tracked here—update after each completion.
   - Final UI/UX polish
 
 ## Immediate Next Steps
-- Fix Database Layer - This is blocking real functionality
-- Implement Kafka Consumers - Events are core to the architecture
-- Add Tests - Essential for maintaining quality
+- Ensure DB migrations/seeds & CI checks - make persistence production/demo ready
+- Harden and test Kafka consumers (integration tests and resilience)
+- Add Tests - Essential for maintaining quality (unit/integration/e2e)
 - Connect Real LLM - Makes diagnosis feature actually work
 
 The codebase is much more advanced than the plan indicates - you have a solid foundation with all major components implemented. The main work now is connecting real infrastructure (databases, Kafka, LLMs) and adding tests/monitoring.
