@@ -31,4 +31,30 @@ Demo script:
 ./monitoring/demo/demo.sh alice 100 50
 ```
 
+Advanced generator: there's a Go-based load generator in `monitoring/demo/loadgen` that can simulate large volumes of mixed traffic with configurable concurrency and QPS. See `monitoring/demo/loadgen/README.md` for usage.
+New: full demo script — `monitoring/demo/demo_full.sh`
+
+This script runs a more comprehensive demo that:
+ - Creates multiple demo clusters
+ - Calls `/metrics` for each cluster so the backend seeds DB-backed metrics
+ - Seeds per-user limiter configs
+ - Submits a large number of jobs across different users/clusters/job types (generates job queue, queued/completed/fail metrics and histograms)
+ - Calls the diagnosis endpoint rapidly to generate rate-limit events and rejections
+
+Usage example (adjust values to taste):
+
+```bash
+# API URL (default http://localhost:8080/api/v1)
+./monitoring/demo/demo_full.sh http://localhost:8080/api/v1 200 150 8 6
+```
+
+Note: demo_full.sh uses `jq` and `curl`. Make the script executable:
+
+```bash
+chmod +x monitoring/demo/demo_full.sh
+```
+
+Run the script after you've started Prometheus + Grafana + core-api (see above). The script should quickly populate metrics and you can open Grafana (http://localhost:3001) to see dashboards update.
+
+
 This will create 100 jobs at roughly 50 req/s as user alice which should trigger rate-limit rejects depending on your limiter config.

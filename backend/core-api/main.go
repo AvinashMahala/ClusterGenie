@@ -139,6 +139,9 @@ func main() {
 	// Register Prometheus metrics
 	services.RegisterPrometheusMetrics()
 
+	// Start periodic exporter that converts DB-stored cluster metrics into Prometheus gauges
+	services.StartClusterMetricsExporter(clusterRepo, metricRepo, 30*time.Second)
+
 	// start a background goroutine to sync worker pool & limiter stats into Prometheus
 	go func() {
 		for {
@@ -176,6 +179,24 @@ func main() {
 	// Initialize Gin router for REST API
 	// expose observability now that worker pool and limiter exist
 	r := gin.Default()
+	// Instrument HTTP requests so Prometheus can collect request counts and latency distributions.
+	// Use route template (FullPath) when available to avoid high cardinality caused by IDs in paths.
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		durationSeconds := time.Since(start).Seconds()
+
+		method := c.Request.Method
+		path := c.FullPath()
+		if path == "" { // fallback - e.g., 404s or unmatched routes
+			path = c.Request.URL.Path
+		}
+		status := strconv.Itoa(c.Writer.Status())
+
+		// record metrics
+		services.HTTPRequestDuration.WithLabelValues(method, path, status).Observe(durationSeconds)
+		services.HTTPRequestTotal.WithLabelValues(method, path, status).Inc()
+	})
 	r.Use(cors.Default())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	api := r.Group("/api/v1")

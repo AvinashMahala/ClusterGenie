@@ -1,0 +1,40 @@
+groups:
+  - name: clustergenie_recording_rules
+    rules:
+      - record: clustergenie_job_processing_seconds_p95
+        expr: histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))
+
+      - record: clustergenie_http_request_rate_by_path
+        expr: sum(rate(clustergenie_http_requests_total[1m])) by (path, status)
+
+      - record: clustergenie_rate_limit_exceeded_per_endpoint
+        expr: sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (endpoint)
+
+  - name: clustergenie_alerts
+    rules:
+      - alert: HighJobLatencyP95
+        expr: clustergenie_job_processing_seconds_p95 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 job processing latency is high (>5s)"
+          description: "{{ $labels }} P95 processing latency over 5s for more than 2 minutes."
+
+      - alert: HighWorkerPoolQueueLength
+        expr: clustergenie_workerpool_queue_length > 50
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Worker pool queue length is high"
+          description: "Worker pool queue length is above 50 for more than 5 minutes. This may indicate backpressure or downstream slowness."
+
+      - alert: RateLimiterSpike
+        expr: sum(rate(clustergenie_rate_limit_exceeded_total[5m])) by (endpoint) > 5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limiter spike detected"
+          description: "Rate limiting spikes (>5/m) detected for endpoint {{ $labels.endpoint }}."
