@@ -24,7 +24,6 @@ dist/
 build/
 .next/
 out/
-backend
 
 # Logs
 logs/
