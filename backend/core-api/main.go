@@ -356,12 +356,28 @@ func main() {
 			c.JSON(200, &models.JobResponse{Job: job, Message: "Job retrieved"})
 		})
 		api.GET("/jobs", func(c *gin.Context) {
-			jobs, err := jobSvc.ListJobs()
+			page := 1
+			pageSize := 5
+			sortBy := c.Query("sort_by")
+			sortDir := c.Query("sort_dir")
+			if p := c.Query("page"); p != "" {
+				if v, err := strconv.Atoi(p); err == nil && v > 0 {
+					page = v
+				}
+			}
+			if ps := c.Query("page_size"); ps != "" {
+				if v, err := strconv.Atoi(ps); err == nil && v > 0 {
+					pageSize = v
+				}
+			}
+
+			req := &models.GetJobsRequest{Page: page, PageSize: pageSize, SortBy: sortBy, SortDir: sortDir}
+			resp, err := jobSvc.ListJobs(req)
 			if err != nil {
 				c.JSON(500, gin.H{"error": err.Error()})
 				return
 			}
-			c.JSON(200, &models.ListJobsResponse{Jobs: jobs})
+			c.JSON(200, resp)
 		})
 
 		// Monitoring

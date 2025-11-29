@@ -1,6 +1,7 @@
 // frontend/src/components/JobPanel.tsx
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { JobService } from '../services/jobService';
 import type { Job, CreateJobRequest } from '../models/job';
 import { Panel, PanelHeader, PanelContent, FormSection, FormField, FormGrid, ActionButton, EmptyState, Alert, StatusBadge, Select } from './common';
@@ -21,15 +22,21 @@ export function JobPanel() {
 
   // Table / pagination state
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(8);
+  const [pageSize, setPageSize] = useState<number>(5);
   const [sortField, setSortField] = useState<'createdAt' | 'id'>('createdAt');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+
+  const [total, setTotal] = useState<number>(0);
+  const navigate = useNavigate();
 
   const loadJobs = async () => {
     setLoading(true);
     try {
-      const jobList = await jobService.listJobs();
-      setJobs(jobList);
+      // send server-side pagination and sorting preferences
+      const sortBy = sortField === 'createdAt' ? 'created_at' : 'id';
+      const res = await jobService.listJobs(page, pageSize, sortBy, sortDir);
+      setJobs(res.jobs);
+      setTotal(res.total ?? res.jobs.length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load jobs');
     } finally {
@@ -45,7 +52,7 @@ export function JobPanel() {
       await loadJobs();
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [page, pageSize, sortField, sortDir]);
 
   const handleCreateJob = async () => {
     setCreating(true);
@@ -81,22 +88,13 @@ export function JobPanel() {
       setSortDir('desc');
     }
     setPage(1);
+    // immediate reload will happen due to effect dependency
   };
 
-  // derive sorted + paginated
-  const sortedJobs = [...jobs].sort((a, b) => {
-    let val = 0;
-    if (sortField === 'createdAt') {
-      val = +new Date(a.createdAt).getTime() - +new Date(b.createdAt).getTime();
-    } else {
-      val = a.id.localeCompare(b.id);
-    }
-    return sortDir === 'desc' ? -val : val;
-  });
-
-  const total = sortedJobs.length;
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const pagedJobs = sortedJobs.slice((page - 1) * pageSize, page * pageSize);
+  const visibleRows = 5; // default visible rows
+  const rowHeight = 64;
+  const pageCount = Math.max(1, Math.ceil((total || 0) / pageSize));
+  const pagedJobs = jobs; // server returns current page
 
   return (
     <Panel>
@@ -205,9 +203,9 @@ export function JobPanel() {
                         <th className="col-details">Details</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody style={{ display: 'block', maxHeight: `${Math.min(pageSize, visibleRows) * rowHeight}px`, overflowY: jobs.length > visibleRows ? 'auto' : 'hidden' }}>
                       {pagedJobs.map((job) => (
-                        <tr key={job.id} className="job-row">
+                        <tr key={job.id} className="job-row" onClick={() => navigate(`/jobs/${job.id}`)} style={{ cursor: 'pointer' }}>
                           <td className="col-id">{job.id}</td>
                           <td className="col-type">{job.type}</td>
                           <td className="col-status"><StatusBadge status={job.status} /></td>

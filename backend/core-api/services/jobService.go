@@ -95,8 +95,8 @@ func (s *JobService) GetJob(id string) (*models.Job, error) {
 	return s.jobRepo.GetJob(id)
 }
 
-func (s *JobService) ListJobs() ([]*models.Job, error) {
-	return s.jobRepo.ListJobs()
+func (s *JobService) ListJobs(req *models.GetJobsRequest) (*models.ListJobsResponse, error) {
+	return s.jobRepo.ListJobs(req)
 }
 
 // ProcessJob handles actual job processing based on type

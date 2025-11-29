@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ProvisioningPanel } from './components/ProvisioningPanel';
 import { DiagnosisPanel } from './components/DiagnosisPanel';
 import { JobPanel } from './components/JobPanel';
+import { JobDetails } from './components/JobDetails';
 import { MonitoringPanel } from './components/MonitoringPanel';
 import { LimiterRulesPanel } from './components/LimiterRulesPanel';
 import { ClusterPanel } from './components/ClusterPanel';
@@ -20,6 +21,7 @@ function App() {
           <Route path="/provisioning" element={<ProvisioningPanel />} />
           <Route path="/diagnosis" element={<DiagnosisPanel />} />
           <Route path="/jobs" element={<JobPanel />} />
+          <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/monitoring" element={<MonitoringPanel />} />
           <Route path="/admin/limiter-rules" element={<LimiterRulesPanel />} />
           <Route path="/clusters" element={<ClustersPanel />} />

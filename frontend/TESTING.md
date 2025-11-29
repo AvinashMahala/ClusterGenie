@@ -21,11 +21,20 @@ Frontend will start (typically at http://localhost:3000). Ensure backend API is 
 1. Open http://localhost:3000/jobs -> the "Recent Jobs" area should now be shown as a table (not cards).
 2. By default the newest job should be at the top (sorted by Created date descending).
 3. Pagination controls appear at the bottom: change the rows-per-page dropdown and verify correct items are shown and the summary updates (Showing X - Y of Z).
+	- By default 5 rows should be shown. If a page contains more than 5 rows (e.g. choose rows-per-page = 8) the table body will enable a vertical scroll so the header remains fixed and rows scroll.
 4. Sorting: click the Date header or the Sort buttons to toggle ascending/descending order. Check IDs sorting by clicking "ID" Sort.
 5. Progress values display as a small inline progress bar and percentage.
 6. Error or Result values display in-line in the Details column.
 7. Use the "Refresh" button at top-right of the panel to reload the latest jobs.
 8. Responsive: shrink the viewport and confirm table has an overflow/scroll or looks reasonable on smaller screens.
+
+## New server-side pagination & job details
+
+The API now supports server-side pagination and sorting for jobs.
+- Query params: `page`, `page_size`, `sort_by` (created_at | id), `sort_dir` (asc | desc)
+- Example: `GET /api/v1/jobs?page=2&page_size=5&sort_by=created_at&sort_dir=desc`
+
+The UI has a Job details view available at `/jobs/:id`. Click any row in the Recent Jobs table to open the job's details page.
 
 ## Notes
 

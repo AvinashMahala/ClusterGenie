@@ -30,7 +30,16 @@ func (f *fakeJobRepo) CreateJob(req *models.CreateJobRequest) (*models.JobRespon
 	return &models.JobResponse{Job: f.save, Message: "ok"}, nil
 }
 func (f *fakeJobRepo) GetJob(id string) (*models.Job, error) { return f.save, nil }
-func (f *fakeJobRepo) ListJobs() ([]*models.Job, error)      { return []*models.Job{f.save}, nil }
+func (f *fakeJobRepo) ListJobs(req *models.GetJobsRequest) (*models.ListJobsResponse, error) {
+	// simple fake implementation: return single saved job, respect pagination defaults
+	if req.PageSize <= 0 {
+		req.PageSize = 50
+	}
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	return &models.ListJobsResponse{Jobs: []*models.Job{f.save}, Page: req.Page, PageSize: req.PageSize, Total: 1}, nil
+}
 func (f *fakeJobRepo) UpdateJobStatus(id string, status string) error {
 	if f.save != nil {
 		f.save.Status = status

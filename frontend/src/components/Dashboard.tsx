@@ -26,12 +26,12 @@ export function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [dropletsData, jobsData] = await Promise.all([
+      const [dropletsData, jobsResp] = await Promise.all([
         provisioningService.listDroplets(),
-        jobService.listJobs(),
+        jobService.listJobs(1, 5),
       ]);
       setDroplets(dropletsData || []);
-      setJobs(jobsData || []);
+      setJobs(jobsResp?.jobs || []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setDroplets([]);

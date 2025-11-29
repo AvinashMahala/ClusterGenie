@@ -1,7 +1,7 @@
 // frontend/src/services/jobService.ts
 
 import type { JobRepository } from '../interfaces/jobRepository';
-import type { Job, CreateJobRequest, JobResponse } from '../models/job';
+import type { Job, CreateJobRequest, JobResponse, ListJobsResponse } from '../models/job';
 import { JobRepositoryImpl } from '../repositories/jobRepository';
 
 export class JobService {
@@ -25,7 +25,7 @@ export class JobService {
     return this.jobRepo.getJob(id);
   }
 
-  async listJobs(): Promise<Job[]> {
-    return this.jobRepo.listJobs();
+  async listJobs(page?: number, pageSize?: number, sortBy?: string, sortDir?: string): Promise<ListJobsResponse> {
+    return this.jobRepo.listJobs(page, pageSize, sortBy, sortDir);
   }
 }

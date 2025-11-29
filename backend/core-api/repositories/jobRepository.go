@@ -70,12 +70,55 @@ func (r *JobRepository) GetJob(id string) (*models.Job, error) {
 	return &job, nil
 }
 
-func (r *JobRepository) ListJobs() ([]*models.Job, error) {
+func (r *JobRepository) ListJobs(req *models.GetJobsRequest) (*models.ListJobsResponse, error) {
 	var jobs []*models.Job
-	if err := r.db.Find(&jobs).Error; err != nil {
+
+	// Pagination defaults
+	if req.PageSize <= 0 {
+		req.PageSize = 50
+	}
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+
+	query := r.db.Model(&models.Job{})
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
 		return nil, err
 	}
-	return jobs, nil
+
+	offset := (req.Page - 1) * req.PageSize
+
+	// Sorting
+	order := "created_at desc"
+	if req.SortBy != "" {
+		// allow only a few known sort fields for safety
+		switch req.SortBy {
+		case "created_at":
+			order = "created_at"
+		case "id":
+			order = "id"
+		default:
+			order = "created_at"
+		}
+	}
+	if req.SortDir == "desc" || req.SortDir == "" {
+		order = order + " desc"
+	} else {
+		order = order + " asc"
+	}
+
+	if err := query.Order(order).Limit(req.PageSize).Offset(offset).Find(&jobs).Error; err != nil {
+		return nil, err
+	}
+
+	return &models.ListJobsResponse{
+		Jobs:     jobs,
+		Page:     req.Page,
+		PageSize: req.PageSize,
+		Total:    total,
+	}, nil
 }
 
 func (r *JobRepository) UpdateJobStatus(id string, status string) error {

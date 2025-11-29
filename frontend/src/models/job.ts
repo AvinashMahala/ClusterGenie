@@ -20,3 +20,10 @@ export interface JobResponse {
   job: Job;
   message: string;
 }
+
+export interface ListJobsResponse {
+  jobs: Job[];
+  page: number;
+  page_size: number;
+  total: number;
+}
