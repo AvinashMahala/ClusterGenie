@@ -14,15 +14,19 @@ export interface CreateDropletTabProps {
   clusters?: Cluster[];
   error?: string | null;
   onClearError?: () => void;
+  // inline cluster validation message (shown under selector)
+  clusterError?: string | null;
+  onClearClusterError?: () => void;
 }
 
-export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters, error, onClearError }: CreateDropletTabProps) {
+export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters, error, onClearError, clusterError, onClearClusterError }: CreateDropletTabProps) {
   const handleInputChange = (field: keyof CreateDropletRequest, value: string | undefined) => {
     onFormChange({
       ...form,
       [field]: value
     } as any);
     if (error && typeof onClearError === 'function') onClearError();
+    if (clusterError && typeof onClearClusterError === 'function') onClearClusterError();
   };
 
   return (
@@ -53,6 +57,7 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
                 </div>
                 <select
                   id="cluster"
+                  className={clusterError ? 'invalid' : ''}
                   value={form["cluster_id"] || ''}
                   onChange={(e) => handleInputChange('cluster_id' as keyof CreateDropletRequest, e.target.value === '' ? undefined : e.target.value)}
                 >
@@ -62,6 +67,16 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
                   ))}
                 </select>
               </div>
+              {clusterError && (
+                <div className="inline-error">
+                  <p>{clusterError}</p>
+                  <div className="suggestions">
+                    <a href="/clusters/new" className="suggest-link">Create a cluster</a>
+                    <span className="separator">·</span>
+                    <button type="button" className="suggest-link" onClick={() => { if (typeof onClearClusterError === 'function') onClearClusterError(); }}>Pick another</button>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="form-field">
               <label htmlFor="name">Droplet Name</label>

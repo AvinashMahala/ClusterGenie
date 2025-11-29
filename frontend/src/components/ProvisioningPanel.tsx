@@ -28,6 +28,7 @@ export function ProvisioningPanel() {
   });
   const [clusters, setClusters] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [clusterError, setClusterError] = useState<string | null>(null);
 
   useEffect(() => {
     loadDroplets();
@@ -50,7 +51,12 @@ export function ProvisioningPanel() {
       setForm({ name: '', "cluster_id": undefined, region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
     } catch (err: any) {
       console.error('Failed to create droplet:', err);
-      setError(err instanceof Error ? err.message : String(err));
+      const msg = err instanceof Error ? err.message : String(err);
+      if (typeof msg === 'string' && msg.toLowerCase().includes('cluster not found')) {
+        setClusterError(msg);
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -118,6 +124,8 @@ export function ProvisioningPanel() {
             clusters={clusters}
             error={error}
             onClearError={() => setError(null)}
+            clusterError={clusterError}
+            onClearClusterError={() => setClusterError(null)}
             onFormChange={setForm}
             onCreate={handleCreate}
           />
