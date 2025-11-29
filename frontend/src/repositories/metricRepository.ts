@@ -15,13 +15,26 @@ export class MetricRepositoryImpl implements MetricRepository {
     if (page && page > 0) params.page = page;
     if (pageSize && pageSize > 0) params.page_size = pageSize;
     const response = await axios.get(`${baseURL}/metrics`, { params });
-    const metricsResponse = response.data;
+    const metricsResponse = response.data || {};
+
+    // normalize numeric/pagination fields (support different casing from backend)
+    const resolvedPage = metricsResponse.page ?? metricsResponse.Page ?? page ?? 1;
+    const resolvedPageSize = metricsResponse.page_size ?? metricsResponse.PageSize ?? pageSize ?? 50;
+    const total = metricsResponse.total_count ?? metricsResponse.Total ?? metricsResponse.total ?? 0;
+
     return {
-      ...metricsResponse,
-      metrics: metricsResponse.metrics.map((metric: any) => ({
-        ...metric,
+      metrics: (metricsResponse.metrics || []).map((metric: any) => ({
+        id: metric.id,
+        clusterId: metric.cluster_id ?? metric.clusterId ?? '',
+        type: metric.type,
+        value: metric.value,
         timestamp: new Date(metric.timestamp),
+        unit: metric.unit,
       })),
+      period: metricsResponse.period ?? metricsResponse.Period ?? '',
+      page: resolvedPage,
+      page_size: resolvedPageSize,
+      total_count: total,
     };
   }
 }

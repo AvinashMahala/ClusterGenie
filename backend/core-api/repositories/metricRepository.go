@@ -34,7 +34,10 @@ func (r *MetricRepository) GetMetrics(req *models.GetMetricsRequest) (*models.Ge
 		req.Page = 1
 	}
 
-	query := r.db.Where("cluster_id = ?", req.ClusterID)
+	query := r.db.Model(&models.Metric{})
+	if req.ClusterID != "" {
+		query = query.Where("cluster_id = ?", req.ClusterID)
+	}
 	if req.Type != "" {
 		query = query.Where("type = ?", req.Type)
 	}

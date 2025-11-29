@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { MonitoringService } from '../services/monitoringService';
 import type { Metric, MetricsResponse } from '../models/metric';
-import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Input, Select, ActionButton, Alert, LoadingSpinner } from './common';
+import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Select, ActionButton, Alert, LoadingSpinner } from './common';
+import { ClusterRepositoryImpl } from '../repositories/clusterRepository';
+import type { Cluster } from '../models/cluster';
 import './MonitoringPanel.scss';
 
 const monitoringService = new MonitoringService();
 
 export function MonitoringPanel() {
-  const [clusterId, setClusterId] = useState('cluster-demo');
+  const [clusterId, setClusterId] = useState('');
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [selectedType, setSelectedType] = useState<Metric['type'] | ''>('');
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
   const [page, setPage] = useState(1);
@@ -18,8 +21,9 @@ export function MonitoringPanel() {
   const [error, setError] = useState<string | null>(null);
 
   const loadMetrics = async () => {
-    if (!clusterId.trim()) {
-      setError('Please enter a cluster ID');
+    // allow listing across all clusters when clusterId is empty
+    if (clusterId !== '' && !clusterId.trim()) {
+      setError('Please choose a cluster');
       return;
     }
 
@@ -39,6 +43,20 @@ export function MonitoringPanel() {
   useEffect(() => {
     loadMetrics();
   }, [clusterId, selectedType, page, pageSize]);
+
+  useEffect(() => {
+    // fetch clusters list for the dropdown
+    const repo = new ClusterRepositoryImpl();
+    repo.listClusters().then((c) => {
+      setClusters(c || []);
+      if (c && c.length && !clusterId) {
+        // default to first cluster if none selected yet
+        setClusterId(c[0].id);
+      }
+    }).catch(() => {
+      // ignore - we'll allow manual cluster selection via text if cluster list unavailable
+    });
+  }, []);
 
   const getMetricColor = (type: string) => {
     switch (type) {
@@ -94,11 +112,11 @@ export function MonitoringPanel() {
 
       <PanelContent>
         <div className="monitoring-controls">
-          <Input
-            label="Cluster ID"
+          <Select
+            label="Cluster"
             value={clusterId}
             onChange={(e) => setClusterId(e.target.value)}
-            placeholder="Enter cluster ID"
+            options={[{ value: '', label: 'All Clusters' }, ...(clusters.map(cl => ({ value: cl.id, label: cl.name || cl.id }))) ]}
           />
 
           <Select
@@ -163,6 +181,7 @@ export function MonitoringPanel() {
                 <table className="metrics-table">
                   <thead>
                     <tr>
+                      <th>Cluster</th>
                       <th>Type</th>
                       <th>Value</th>
                       <th>Timestamp</th>
@@ -171,29 +190,53 @@ export function MonitoringPanel() {
                   <tbody>
                     {metrics.metrics.map((metric) => (
                       <tr key={`${metric.id}-${metric.timestamp.getTime()}`}>
-                        <td>{metric.type}</td>
+                        <td>
+                          <div className="cluster-cell">
+                            <div className="cluster-id">{metric.clusterId || 'unknown'}</div>
+                          </div>
+                        </td>
+                        <td style={{ textTransform: 'capitalize' }}>{metric.type}</td>
                         <td>{formatValue(metric.value, metric.unit)}</td>
                         <td>{metric.timestamp.toLocaleString()}</td>
                       </tr>
-                      ))}
+                    ))}
                   </tbody>
                 </table>
               </div>
                 {/* Pagination controls */}
                 <div className="metrics-pagination">
                   <div className="page-controls">
-                    <ActionButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-                      Previous
+                    <ActionButton onClick={() => setPage(1)} disabled={(metrics.page || page) <= 1}>
+                      « First
                     </ActionButton>
-                    <div className="page-info">Page {metrics.page || page} of {Math.max(1, Math.ceil(((metrics.total_count || 0) / (metrics.page_size || pageSize)) || 1))}</div>
-                    <ActionButton onClick={() => setPage((p) => p + 1)} disabled={(metrics.page || page) * (metrics.page_size || pageSize) >= (metrics.total_count || 0)}>
-                      Next
+                    <ActionButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={(metrics.page || page) <= 1}>
+                      ‹ Prev
+                    </ActionButton>
+
+                    <div className="page-info">
+                      {(() => {
+                        const current = metrics.page || page;
+                        const size = metrics.page_size || pageSize;
+                        const total = metrics.total_count ?? (metrics.total || 0);
+                        const start = total === 0 ? 0 : (current - 1) * size + 1;
+                        const end = Math.min(total, current * size);
+                        const totalPages = Math.max(1, Math.ceil((total || 0) / size));
+
+                        return (`Showing ${start}-${end} of ${total} — Page ${current} / ${totalPages}`);
+                      })()}
+                    </div>
+
+                    <ActionButton onClick={() => setPage((p) => p + 1)} disabled={(metrics.page || page) * (metrics.page_size || pageSize) >= (metrics.total_count || (metrics.total || 0))}>
+                      Next ›
+                    </ActionButton>
+                    <ActionButton onClick={() => setPage(Math.max(1, Math.ceil(((metrics.total_count || (metrics.total || 0)) / (metrics.page_size || pageSize)) || 1)))} disabled={(metrics.page || page) * (metrics.page_size || pageSize) >= (metrics.total_count || (metrics.total || 0))}>
+                      Last »
                     </ActionButton>
                   </div>
 
                   <div className="page-size-control">
                     <label>Page size</label>
-                    <Select value={pageSize.toString()} onChange={(e) => { setPageSize(parseInt(e.target.value)); setPage(1); }} options={[{ value: '10', label: '10' }, { value: '20', label: '20' }, { value: '50', label: '50' }, { value: '100', label: '100' }]} />
+                    <Select value={(metrics.page_size || pageSize).toString()} onChange={(e) => { setPageSize(parseInt(e.target.value)); setPage(1); }} options={[{ value: '10', label: '10' }, { value: '20', label: '20' }, { value: '50', label: '50' }, { value: '100', label: '100' }]} />
                   </div>
                 </div>
             </CardContent>

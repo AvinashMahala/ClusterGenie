@@ -73,6 +73,11 @@ func (s *MonitoringService) PerformHealthCheck(clusterID string) (*models.Health
 	}, nil
 }
 
+// CreateMetric allows other services/event handlers to persist a metric
+func (s *MonitoringService) CreateMetric(metric *models.Metric) error {
+	return s.metricRepo.CreateMetric(metric)
+}
+
 func (s *MonitoringService) generateMockMetricsIfNeeded(clusterID string) {
 	// Check if we have recent metrics (last 5 minutes)
 	hasRecent, err := s.metricRepo.HasRecentMetrics(clusterID)

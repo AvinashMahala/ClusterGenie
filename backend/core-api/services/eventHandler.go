@@ -4,6 +4,8 @@ package services
 
 import (
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/events"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
@@ -28,6 +30,80 @@ func (h *EventHandler) HandleClusterEvent(event map[string]interface{}) error {
 	if !ok {
 		log.Printf("Invalid event type: %v", event["type"])
 		return nil
+	}
+
+	// If payload contains telemetry/metrics, persist them per-cluster
+	e := events.FromMap(event)
+	if e != nil && e.ClusterID != "" {
+		// handle structured metrics array in payload
+		if rawMetrics, ok := e.Payload["metrics"].([]interface{}); ok {
+			for _, rm := range rawMetrics {
+				if mm, ok := rm.(map[string]interface{}); ok {
+					m := &models.Metric{
+						ID:        generateMetricID(e.ClusterID, mm["type"].(string), time.Now()),
+						ClusterID: e.ClusterID,
+						Type:      mm["type"].(string),
+						Unit:      mm["unit"].(string),
+					}
+					if v, ok := mm["value"].(float64); ok {
+						m.Value = v
+					} else if v, ok := mm["value"].(int); ok {
+						m.Value = float64(v)
+					}
+					// optional timestamp
+					if ts, ok := mm["timestamp"].(string); ok {
+						if parsed, err := time.Parse(time.RFC3339, ts); err == nil {
+							m.Timestamp = parsed
+						}
+					}
+					if m.Timestamp.IsZero() {
+						m.Timestamp = time.Now()
+					}
+					_ = h.metricSvc.CreateMetric(m)
+				}
+			}
+		} else {
+			// support single-value telemetry keys like cpu/memory/disk/network
+			metricKeys := []string{"cpu", "memory", "disk", "network"}
+			for _, key := range metricKeys {
+				if val, ok := e.Payload[key]; ok {
+					var fv float64
+					switch v := val.(type) {
+					case float64:
+						fv = v
+					case int:
+						fv = float64(v)
+					case int64:
+						fv = float64(v)
+					case string:
+						// try parse
+						if parsed, err := strconv.ParseFloat(v, 64); err == nil {
+							fv = parsed
+						} else {
+							continue
+						}
+					default:
+						continue
+					}
+
+					m := &models.Metric{
+						ID:        generateMetricID(e.ClusterID, key, time.Now()),
+						ClusterID: e.ClusterID,
+						Type:      key,
+						Value:     fv,
+						Timestamp: time.Now(),
+						Unit: func() string {
+							if key == "network" {
+								return "Mbps"
+							} else {
+								return "%"
+							}
+						}(),
+					}
+					_ = h.metricSvc.CreateMetric(m)
+				}
+			}
+		}
 	}
 
 	switch eventType {
