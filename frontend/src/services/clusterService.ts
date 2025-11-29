@@ -1,7 +1,13 @@
 // frontend/src/services/clusterService.ts
 
 import type { ClusterRepository } from '../interfaces/clusterRepository';
-import type { Cluster, DiagnosisRequest, DiagnosisResponse } from '../models/cluster';
+import type {
+  Cluster,
+  CreateClusterRequest,
+  DiagnosisRequest,
+  DiagnosisResponse,
+  UpdateClusterRequest,
+} from '../models/cluster';
 import { ClusterRepositoryImpl } from '../repositories/clusterRepository';
 
 export class ClusterService {
@@ -21,5 +27,17 @@ export class ClusterService {
 
   async listClusters(): Promise<Cluster[]> {
     return this.clusterRepo.listClusters();
+  }
+
+  async createCluster(request: CreateClusterRequest): Promise<Cluster> {
+    return this.clusterRepo.createCluster(request);
+  }
+
+  async updateCluster(id: string, request: UpdateClusterRequest): Promise<Cluster> {
+    return this.clusterRepo.updateCluster(id, request);
+  }
+
+  async deleteCluster(id: string): Promise<void> {
+    return this.clusterRepo.deleteCluster(id);
   }
 }

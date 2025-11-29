@@ -9,6 +9,31 @@ export interface Cluster {
   lastChecked: Date;
 }
 
+export interface CreateClusterRequest {
+  name: string;
+  region: string;
+}
+
+export interface CreateClusterResponse {
+  cluster: Cluster;
+  message: string;
+}
+
+export interface UpdateClusterRequest {
+  name?: string;
+  region?: string;
+  status?: Cluster['status'];
+}
+
+export interface UpdateClusterResponse {
+  cluster: Cluster;
+  message: string;
+}
+
+export interface DeleteClusterResponse {
+  message: string;
+}
+
 export interface DiagnosisRequest {
   cluster_id: string;
 }

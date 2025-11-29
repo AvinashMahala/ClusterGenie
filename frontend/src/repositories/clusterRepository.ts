@@ -1,7 +1,13 @@
 // frontend/src/repositories/clusterRepository.ts
 
 import type { ClusterRepository } from '../interfaces/clusterRepository';
-import type { Cluster, DiagnosisRequest, DiagnosisResponse } from '../models/cluster';
+import type {
+  Cluster,
+  CreateClusterRequest,
+  DiagnosisRequest,
+  DiagnosisResponse,
+  UpdateClusterRequest,
+} from '../models/cluster';
 import axios from 'axios';
 
 const baseURL = 'http://localhost:8080/api/v1';
@@ -14,19 +20,40 @@ export class ClusterRepositoryImpl implements ClusterRepository {
 
   async getCluster(id: string): Promise<Cluster> {
     const response = await axios.get(`${baseURL}/clusters/${id}`);
-    const cluster = response.data.cluster;
-    return {
-      ...cluster,
-      lastChecked: cluster.last_checked ? new Date(cluster.last_checked) : new Date()
-    };
+    return mapCluster(response.data.cluster);
   }
 
   async listClusters(): Promise<Cluster[]> {
     const response = await axios.get(`${baseURL}/clusters`);
     const clusters = response.data.clusters || [];
-    return clusters.map((cluster: any) => ({
-      ...cluster,
-      lastChecked: cluster.last_checked ? new Date(cluster.last_checked) : new Date()
-    }));
+    return clusters.map(mapCluster);
   }
+
+  async createCluster(request: CreateClusterRequest): Promise<Cluster> {
+    const response = await axios.post(`${baseURL}/clusters`, request);
+    return mapCluster(response.data.cluster);
+  }
+
+  async updateCluster(id: string, request: UpdateClusterRequest): Promise<Cluster> {
+    const response = await axios.put(`${baseURL}/clusters/${id}`, request);
+    return mapCluster(response.data.cluster);
+  }
+
+  async deleteCluster(id: string): Promise<void> {
+    await axios.delete(`${baseURL}/clusters/${id}`);
+  }
+}
+
+function mapCluster(cl: any): Cluster {
+  const lastCheckedRaw = cl?.last_checked ?? cl?.lastChecked;
+  const lastChecked = lastCheckedRaw ? new Date(lastCheckedRaw) : new Date();
+
+  return {
+    id: cl?.id ?? '',
+    name: cl?.name ?? '',
+    region: cl?.region ?? '',
+    droplets: Array.isArray(cl?.droplets) ? cl.droplets : [],
+    status: cl?.status ?? 'healthy',
+    lastChecked,
+  };
 }

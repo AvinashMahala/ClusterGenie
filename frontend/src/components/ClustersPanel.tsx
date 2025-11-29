@@ -4,10 +4,26 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ClusterService } from '../services/clusterService';
 import type { Cluster } from '../models/cluster';
+import { Input } from './common/Input';
+import { Select } from './common/Select';
 import { StatusBadge } from './common';
+import '../styles/buttons.scss';
 import './ClustersPanel.scss';
 
 const clusterService = new ClusterService();
+
+const REGION_OPTIONS = [
+  { value: 'nyc1', label: 'New York (nyc1)' },
+  { value: 'sfo3', label: 'San Francisco (sfo3)' },
+  { value: 'ams3', label: 'Amsterdam (ams3)' },
+  { value: 'lon1', label: 'London (lon1)' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'healthy', label: 'Healthy' },
+  { value: 'warning', label: 'Warning' },
+  { value: 'critical', label: 'Critical' },
+];
 
 export function ClustersPanel() {
   const [clusters, setClusters] = useState<Cluster[]>([]);
@@ -16,6 +32,14 @@ export function ClustersPanel() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'healthy' | 'warning' | 'critical'>('all');
   const [sortKey, setSortKey] = useState<'name' | 'region' | 'lastChecked'>('name');
+  const [editingClusterId, setEditingClusterId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    region: 'nyc1',
+    status: 'healthy' as Cluster['status'],
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
@@ -31,6 +55,56 @@ export function ClustersPanel() {
       setLoading(false);
     }
   }
+
+  const startEditing = (cluster: Cluster) => {
+    setEditingClusterId(cluster.id);
+    setEditForm({
+      name: cluster.name,
+      region: cluster.region,
+      status: cluster.status,
+    });
+    setEditError(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingClusterId(null);
+    setEditError(null);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingClusterId) return;
+    setEditLoading(true);
+    setEditError(null);
+    try {
+      await clusterService.updateCluster(editingClusterId, {
+        name: editForm.name,
+        region: editForm.region,
+        status: editForm.status,
+      });
+      await load();
+      cancelEditing();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update cluster');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDeleteCluster = async (clusterId: string) => {
+    if (!window.confirm('Delete this cluster? This cannot be undone.')) {
+      return;
+    }
+    try {
+      await clusterService.deleteCluster(clusterId);
+      await load();
+      if (editingClusterId === clusterId) {
+        cancelEditing();
+      }
+    } catch (err) {
+      console.error('Failed to delete cluster:', err);
+      setError(err instanceof Error ? err.message : 'Delete failed');
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -134,9 +208,58 @@ export function ClustersPanel() {
           <button className="btn btn-ghost" onClick={load} disabled={loading} title="Refresh">
             {loading ? 'Refreshing...' : 'Refresh'}
           </button>
-          <Link to="/provisioning" className="btn btn-primary">Create cluster</Link>
+          <Link to="/clusters/new" className="btn btn-primary">Create cluster</Link>
         </div>
       </header>
+
+      {editingClusterId && (
+        <section className="edit-cluster-panel">
+          <div className="edit-cluster-header">
+            <div>
+              <p className="eyebrow">Editing cluster</p>
+              <h2>{editForm.name || 'Untitled cluster'}</h2>
+              <p className="subtitle">Adjust metadata or status to keep the dashboard accurate.</p>
+            </div>
+            <button type="button" className="link" onClick={cancelEditing}>Cancel</button>
+          </div>
+
+          <div className="edit-fields">
+            <Input
+              label="Cluster name"
+              value={editForm.name}
+              onChange={event => setEditForm(prev => ({ ...prev, name: event.target.value }))}
+            />
+            <Select
+              label="Region"
+              value={editForm.region}
+              options={REGION_OPTIONS}
+              onChange={event => setEditForm(prev => ({ ...prev, region: event.target.value }))}
+            />
+            <Select
+              label="Status"
+              value={editForm.status}
+              options={STATUS_OPTIONS}
+              onChange={event => setEditForm(prev => ({ ...prev, status: event.target.value as Cluster['status'] }))}
+            />
+          </div>
+
+          <div className="edit-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleEditSave}
+              disabled={editLoading}
+            >
+              {editLoading ? 'Saving…' : 'Save changes'}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={cancelEditing}>
+              Cancel
+            </button>
+          </div>
+
+          {editError && <p className="edit-error">{editError}</p>}
+        </section>
+      )}
 
       <section className="status-card-grid">
         {statusCards.map(card => (
@@ -238,8 +361,20 @@ export function ClustersPanel() {
                   <td className="muted">{c.lastChecked ? new Date(c.lastChecked).toLocaleString() : '—'}</td>
                   <td className="actions">
                     <Link to={`/clusters/${c.id}`} className="btn btn-small btn-view">View</Link>
-                    <button className="btn btn-small btn-ghost">Edit</button>
-                    <button className="btn btn-small btn-danger">Delete</button>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-ghost"
+                      onClick={() => startEditing(c)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-small btn-danger"
+                      onClick={() => handleDeleteCluster(c.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
