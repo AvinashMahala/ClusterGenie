@@ -26,7 +26,20 @@ Progress will be tracked here—update after each completion.
 | Phase 4 | ⚪ Pending | Kafka/LLM flow still undergoing integration. |
 | Phase 5 | ✅ Completed | Event-chain demo wiring and UI wiring complete. |
 | Phase 6 | ✅ Completed | Rate limiting, worker-pool concurrency, per-scope Redis-backed limiter, Prometheus + Grafana dashboards, frontend UI for limiter rules implemented. |
-| Phase 7 | ⚪ Pending | Rate limiting/concurrency story ahead. |
+| Phase 7 | ⚪ Pending | Security, multi-tenancy, and secrets hardening. |
+| Phase 8 | ⚪ Pending | Advanced scaling, scheduling and multi-cloud demos. |
+| Phase 9 | ⚪ Pending | Reliability, chaos engineering and SLOs. |
+| Phase 10 | ⚪ Pending | Dev tooling & local developer experience improvements. |
+| Phase 11 | ⚪ Pending | Observability & analytics expansion (tracing, analytics dashboards). |
+| Phase 12 | ⚪ Pending | Real LLM integration for diagnosis + prompt engineering. |
+| Phase 13 | ⚪ Pending | Extensibility: plugins, CLI, SDKs and provider adapters. |
+| Phase 14 | ⚪ Pending | CI/CD, release automation and supply-chain checks. |
+| Phase 15 | ⚪ Pending | Performance, benchmarking and load modelling. |
+| Phase 16 | ⚪ Pending | Cloud deployment patterns (Terraform/Helm/k8s demos). |
+| Phase 17 | ⚪ Pending | Integrations with external systems & provider connectors. |
+| Phase 18 | ⚪ Pending | Developer onboarding, tutorials and sample apps. |
+| Phase 19 | ⚪ Pending | Marketplace & plugin ecosystem demos. |
+| Phase 20 | ⚪ Pending | Testing, documentation & demo prep (moved from original Phase 7). |
 
 ## Phase 1: Project Setup (MVP Foundation)
 **Goal**: Establish project structure, tooling, and basic runnable app.
@@ -267,46 +280,358 @@ Progress will be tracked here—update after each completion.
   - **Extras added**: per-user & per-cluster rate limit scoping; Prometheus scrape endpoint; monitoring UI shows queued job IDs and rate-limit per-scope checks. Environment variables added for configuration.
    - **New**: Redis-persisted limiter configs and management endpoints; expanded Grafana with templating variables and latency/reject visualizations; minimal dashboard & demo scene added; frontend UI to manage limiter rules.
 
-## Phase 7: Testing, Documentation & Demo Prep
-**Goal**: Lock in quality assurance, documentation, and demo scripts so the stakeholders can reproduce the solution.
+## Phase 7: Security, Multi-Tenancy & Secrets Hardening
+**Goal**: Harden the stack for demo-level security, enable multi-tenant scenarios and demonstrate safe secrets handling.
 
-- **Microphase 7.1**: Automated tests and CI checks.
+- **Microphase 7.1**: Authentication & Authorization (OAuth2 / OpenID Connect)
+  - **Status**: Pending ⚪
+  - **Tasks**: Add authentication to the API and frontend; implement JWT/OAuth flows; optionally integrate a lightweight identity provider (Keycloak or demo mock) for credential demos.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 7.2**: Role-based access control (RBAC)
+  - **Status**: Pending ⚪
+  - **Tasks**: Implement resource-level permissions (admin, operator, demo-user) and provide UI toggles for switching personas during a demo.
+  - **Estimated Time**: 2-4 hours.
+
+- **Microphase 7.3**: Multi-tenant isolation & quotas
+  - **Status**: Pending ⚪
+  - **Tasks**: Add tenant ids, per-tenant resource quotas (droplets, jobs), tenant-scoped rate-limiting and metrics; ensure cross-tenant isolation in UI and APIs.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 7.4**: Secrets & secure storage
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a secure-secrets flow for demo (integrate Vault mock or simple encrypted store); ensure UI displays masked secrets and runtime retrieval for operations.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 7 Milestone**: The project demonstrates tenant separation, role-based access and secure secrets handling for demo scenarios.
+
+## Phase 8: Advanced Scaling, Scheduling & Multi-cloud
+**Goal**: Extend the demo to show advanced orchestration strategies, provider-aware placement and deployment patterns.
+
+- **Microphase 8.1**: Autoscaling policy engine & strategy editor
+  - **Status**: Pending ⚪
+  - **Tasks**: Implement configurable autoscaling policies (metrics-based, time-of-day, cost constraints) and a small UI editor to toggle strategies during a demo.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 8.2**: Canary / blue-green & rollback simulation
+  - **Status**: Pending ⚪
+  - **Tasks**: Simulate rollout strategies, traffic splits, partial rollouts and safe rollbacks; surface logs/metrics and job flows during rollouts.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 8.3**: Multi-cloud provider simulation & scheduling
+  - **Status**: Pending ⚪
+  - **Tasks**: Simulate multiple providers and scheduling policies (affinity/anti-affinity, capacity classes); demonstrate placement decisions and cross-provider migrations.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 8.4**: Cost estimation, quotas & billing metrics
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a simple cost model and a billing UI showing per-tenant resource usage, cost impact of autoscaling, and optional chargeback demo.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 8 Milestone**: Demo showcases different autoscaling strategies, rollout types and multi-cloud placement with cost visibility.
+
+## Phase 9: Reliability, Chaos Engineering & SLOs
+**Goal**: Prove system robustness using backup/restore, chaos scenarios, SLOs and alerting — compelling for an end-to-end resilience demo.
+
+- **Microphase 9.1**: Backup & disaster recovery (snapshot/restore)
+  - **Status**: Pending ⚪
+  - **Tasks**: Add snapshot/restore flows for cluster/droplet state and show a simulated recovery timeline during demos.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 9.2**: Chaos engineering & failure injection
+  - **Status**: Pending ⚪
+  - **Tasks**: Add toggleable failure injection (message loss, latency, killed workers) and a UI scenario runner to demonstrate detection and recovery.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 9.3**: SLOs, synthetic monitoring & alerting
+  - **Status**: Pending ⚪
+  - **Tasks**: Define basic SLOs, add synthetic probes / health runners, and a simulated alerting channel (webhook/email) for demo clarity.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 9.4**: Replayable audit trail & compliance UI
+  - **Status**: Pending ⚪
+  - **Tasks**: Store an immutable event/audit log; add a UI to replay flows from a given point (useful for demos and post-incident storytelling).
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 9 Milestone**: A resilience narrative complete with backups, chaos tests and SLO-based monitoring is available for the demo.
+
+## Phase 10: Dev Tooling & Local Developer Experience
+**Goal**: Make development, debugging and local demo iteration frictionless so contributors can iterate quickly and reproduce the demo locally.
+
+- **Microphase 10.1**: Local environment & quick-start scripts
+  - **Status**: Pending ⚪
+  - **Tasks**: Improve and document minimal local dev environment (single-command dev-up), seed scripts, database migration helpers and streamlined docker-compose/overrides for low-resource demo machines.
+  - **Estimated Time**: 2-4 hours.
+
+- **Microphase 10.2**: Developer CLI & helper commands
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a small CLI to bootstrap demo scenes, run scenario scripts, manage local snapshots and replay event logs for testing or demo staging.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 10.3**: Fast feedback loops & dev UX
+  - **Status**: Pending ⚪
+  - **Tasks**: Add hot-reload improvements, clear debug logging formats, local breakpoints / inspector guide and a minimal debugging guide for Rust/Go/TS stacks in this repo.
+  - **Estimated Time**: 2-4 hours.
+
+- **Microphase 10.4**: Local demo scenes & snapshots
+  - **Status**: Pending ⚪
+  - **Tasks**: Create reusable local demo snapshot files and a command to load them so the demo can be prepared in seconds (prepopulated clusters, droplets, jobs, events).
+  - **Estimated Time**: 2 hours.
+
+**Phase 10 Milestone**: Contributors can bring up a fully seeded, debug-friendly dev environment in a few minutes for iterative demo work.
+
+## Phase 11: Observability & Analytics Expansion
+**Goal**: Deepen telemetry and analytics so the app can tell a convincing story about runtime behavior, usage patterns and anomalies.
+
+- **Microphase 11.1**: Distributed tracing
+  - **Status**: Pending ⚪
+  - **Tasks**: Add tracing (OpenTelemetry) across services and a local Jaeger or similar demo container for traces; link traces to jobs and UI flows.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 11.2**: Long-term metrics & analytics
+  - **Status**: Pending ⚪
+  - **Tasks**: Add longer-lived metrics (e.g., time-series retention configuration), create tenant-specific analytics dashboards and basic anomaly detection on metric spikes.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 11.3**: Log enrichment & indexing
+  - **Status**: Pending ⚪
+  - **Tasks**: Enrich logs with trace/job metadata, add local log indexing (Loki/ES optional) and wire the frontend to query logs for selected trace/job IDs.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 11.4**: Observability-driven actions
+  - **Status**: Pending ⚪
+  - **Tasks**: Create detect→act demo where a synthetic alert triggers automated remediation (job to scale or restart) visible in the UI.
+  - **Estimated Time**: 3-4 hours.
+
+**Phase 11 Milestone**: Rich observability connects UI flows to traces, logs, metrics and actionable remediation in the demo.
+
+## Phase 12: Real LLM Integration & Prompt Engineering
+**Goal**: Swap mocked diagnosis flows for a real, controlled LLM integration and build tooling for repeatable prompts and explainability.
+
+- **Microphase 12.1**: Secure LLM integration layer
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a dedicated LLM adapter layer with secure configuration, rate-limit and fallback to mocks for offline demos.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 12.2**: Prompt library & prompt tests
+  - **Status**: Pending ⚪
+  - **Tasks**: Build a prompt templating library and unit tests to check QA quality across common failure modes; maintain canned responses for deterministic demos.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 12.3**: Explainability & confidence UI
+  - **Status**: Pending ⚪
+  - **Tasks**: Surface the LLM reasoning steps (in a short, redacted format) and provide confidence/trace links to the telemetry for auditability.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 12.4**: Hybrid local LLM options
+  - **Status**: Pending ⚪
+  - **Tasks**: Add option to use a local tiny LLM or open-source LLM in the dev environment to show offline demos and avoid cloud usage during rehearsals.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 12 Milestone**: Diagnosis uses a real LLM pipeline with safe fallbacks, deterministic prompt tests and explainable outputs for demos.
+
+## Phase 13: Extensibility — Plugins, SDKs & CLI
+**Goal**: Make the platform extensible at runtime and from developers with first-class plugin/CLI/sdk primitives.
+
+- **Microphase 13.1**: Runtime plugin architecture
+  - **Status**: Pending ⚪
+  - **Tasks**: Define a lightweight plugin contract (provider, action, UI extension points) and implement a sample provider plugin (e.g., a mock cloud adapter).
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 13.2**: CLI & SDKs
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a CLI for automating flows, plus lightweight SDKs (Go and TypeScript) for programmatic integration; include a sample script for a CI demo.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 13.3**: Plugin marketplace hooks
+  - **Status**: Pending ⚪
+  - **Tasks**: Create manifest formats and signer checks for plugins and add a UI preview page to install an example plugin into the demo app.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 13.4**: Safety & sandboxing
+  - **Status**: Pending ⚪
+  - **Tasks**: Add sandboxing for plugin execution (rate limits, timeouts) and a logging channel to view plugin activity during demos.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 13 Milestone**: The project can extend at runtime and via SDKs/CLI with sample plugins and safe sandboxed execution for demos.
+
+## Phase 14: CI/CD & Release Automation
+**Goal**: Build repeatable pipelines and secure release processes supporting repeatable demo environments and artifact publishing.
+
+- **Microphase 14.1**: CI pipeline & unit/integration gating
+  - **Status**: Pending ⚪
+  - **Tasks**: Harden CI with unit+integration jobs, test matrix, and coverage gating; ensure infra services (DB) are available in CI for integration tests.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 14.2**: Container build and image promotion
+  - **Status**: Pending ⚪
+  - **Tasks**: Create reproducible container build jobs, sign or scan images, and a promotion pipeline from dev→staging→demo images.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 14.3**: Release notes & change logs
+  - **Status**: Pending ⚪
+  - **Tasks**: Auto-generate changelogs and a lightweight release checklist to ensure demo artifacts are reproducible and safe to publish.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 14.4**: Security/Supply-chain checks
+  - **Status**: Pending ⚪
+  - **Tasks**: Integrate SCA (dependency scan) and simple signing/verification steps into the release pipeline for demo artifacts.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 14 Milestone**: CI/CD is robust, artifacts are reproducible and releases are safe for demos/public preview.
+
+## Phase 15: Performance & Benchmarking
+**Goal**: Measure bottlenecks, create repeatable load tests and tune system behavior for scale-appropriate demos.
+
+- **Microphase 15.1**: Benchmark harness
+  - **Status**: Pending ⚪
+  - **Tasks**: Add an automated benchmark suite for API throughput, worker scaling, Kafka throughput and end-to-end latency scenarios.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 15.2**: Load and stress tests
+  - **Status**: Pending ⚪
+  - **Tasks**: Run load tests simulating multiple tenants and jobs to discover bottlenecks; add smoke tests to CI for basic perf checks.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 15.3**: Resource tuning & cost-performance analysis
+  - **Status**: Pending ⚪
+  - **Tasks**: Tune worker pool configs, rate-limiter semantics, and provide a cost-to-performance report for different demo scales.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 15.4**: Performance regression checks
+  - **Status**: Pending ⚪
+  - **Tasks**: Add performance baselines and alerts for regressions in CI when major changes are introduced.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 15 Milestone**: You can demonstrate throughput & latency behavior and justify tradeoffs for demo audiences.
+
+## Phase 16: Cloud Deployment Patterns & IaC
+**Goal**: Provide concrete, repeatable deployment patterns for cloud demos (Terraform/Helm) and k8s deployment examples.
+
+- **Microphase 16.1**: Terraform example & local provider mapping
+  - **Status**: Pending ⚪
+  - **Tasks**: Provide a Terraform module and examples that represent the demo stack (DB, Kafka, app) in a safe, inexpensive cloud sandbox or mocked env.
+  - **Estimated Time**: 3-5 hours.
+
+- **Microphase 16.2**: Helm charts & k8s manifests
+  - **Status**: Pending ⚪
+  - **Tasks**: Add Helm charts and k8s manifests for the core services and a minimal operator guide for running the demo on a cluster.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 16.3**: Minimal cloud cost demo fixtures
+  - **Status**: Pending ⚪
+  - **Tasks**: Create a guide to run a low-cost cloud demo or a cloud-free simulator so you can show cloud behaviors without large spend.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 16.4**: Multi-region & failover patterns
+  - **Status**: Pending ⚪
+  - **Tasks**: Add simulated multi-region placement and failover examples to show cross-region resilience in a deterministic demo.
+  - **Estimated Time**: 3-4 hours.
+
+**Phase 16 Milestone**: Ready-to-run example IaC & k8s artifacts that illustrate cloud deployment patterns for demos.
+
+## Phase 17: Integrations & Provider Connectors
+**Goal**: Add connectors and simulation hooks to demonstrate third-party integrations and provider-specific features.
+
+- **Microphase 17.1**: External monitoring/alert integrations
+  - **Status**: Pending ⚪
+  - **Tasks**: Add webhook/email/Teams/Slack alerting demos and sample integration code for external monitoring systems.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 17.2**: Provider connector templates
+  - **Status**: Pending ⚪
+  - **Tasks**: Create provider connector templates (AWS/GCP/Mock) that a contributor can implement to demo provider-specific features.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 17.3**: Event bus & integration patterns
+  - **Status**: Pending ⚪
+  - **Tasks**: Add example integration flows (webhooks → job triggers → external system calls) and demo wiring for idempotent retries and backoff strategies.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 17.4**: Cross-system auditing
+  - **Status**: Pending ⚪
+  - **Tasks**: Demonstrate cross-system event correlation and a unified audit view to trace end-to-end operations across connectors.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 17 Milestone**: The demo clearly shows how ClusterGenie integrates with external systems, connectors and standard integration patterns.
+
+## Phase 18: Developer Experience & Onboarding
+**Goal**: Make the project welcoming for new contributors and give a frictionless onboarding/demo experience for the team.
+
+- **Microphase 18.1**: Interactive walkthroughs & quickstarts
+  - **Status**: Pending ⚪
+  - **Tasks**: Build an in-app guided tour and an interactive quickstart walkthrough to bring users from fresh checkout to a running demo in minutes.
+  - **Estimated Time**: 2-4 hours.
+
+- **Microphase 18.2**: Tutorials & sample apps
+  - **Status**: Pending ⚪
+  - **Tasks**: Add step-by-step tutorials for common tasks and a minimal sample app (e.g., sample job producer) showing how to extend the platform.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 18.3**: Contribution-checks & setup docs
+  - **Status**: Pending ⚪
+  - **Tasks**: Improve CONTRIBUTING.md with local checks, developer environment validation and triage guides to reduce onboarding friction.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 18.4**: Community & feedback channels
+  - **Status**: Pending ⚪
+  - **Tasks**: Add templates for contribution issues, a roadmap page and simple feedback mechanisms for demo spectators to report findings.
+  - **Estimated Time**: 2 hours.
+
+**Phase 18 Milestone**: New contributors can get started, extend the demo and add integrations confidently.
+
+## Phase 19: Marketplace & Plugin Ecosystem Demos
+**Goal**: Build a simple marketplace UX so the demo can highlight extensibility and third-party contributions.
+
+- **Microphase 19.1**: Marketplace UI prototype
+  - **Status**: Pending ⚪
+  - **Tasks**: Create a marketplace UI to list plugins and provider connectors with installation/preview flows.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 19.2**: Plugin lifecycle management
+  - **Status**: Pending ⚪
+  - **Tasks**: Add install/uninstall flows and a versioning mechanism so demo operators can swap plugins at runtime.
+  - **Estimated Time**: 3-4 hours.
+
+- **Microphase 19.3**: Sample plugin authoring templates
+  - **Status**: Pending ⚪
+  - **Tasks**: Add templates and a guide for writing a plugin, including how to test it locally and publish to the marketplace.
+  - **Estimated Time**: 2-3 hours.
+
+- **Microphase 19.4**: Plugin security & vetting workflow
+  - **Status**: Pending ⚪
+  - **Tasks**: Add a minimal vetting workflow for plugin vetting, signing and permissions before a plugin is shown in demo marketplace.
+  - **Estimated Time**: 2-3 hours.
+
+**Phase 19 Milestone**: A lightweight marketplace demo conveys extensibility, governance and plugin lifecycle in the project.
+
+## Phase 20: Testing, Documentation & Demo Prep (moved and expanded)
+**Goal**: Consolidate testing, docs and create a highly repeatable demo script and test harness.
+
+ - **Microphase 20.1**: Automated tests and CI checks
   - **Status**: Pending ⚪
   - **Tasks**: Add unit and integration coverage for REST handlers, Kafka flows, and monitoring helpers; create a lightweight pipeline (GitHub Actions or similar) that can execute the suite on push.
   - **Estimated Time**: 4-5 hours.
   - **Dependencies**: Phase 4 APIs and Phase 5 event chain workflows.
-  - **Rollback Plan**: Run scripts locally until pipeline stabilizes.
-  - **Success Metrics**: Tests run reliably in CI; coverage targets met for key modules.
-  - **Testing**: The automated suite itself acts as the deliverable.
 
-- **Microphase 7.2**: End-to-end smoke/demo verification.
+ - **Microphase 20.2**: End-to-end smoke/demo verification
   - **Status**: Pending ⚪
   - **Tasks**: Define and execute a scripted flow (provision → diagnose → job → Kafka → auto-scaling) that can be repeated manually or in automation; capture the data required to demonstrate success.
   - **Estimated Time**: 2-3 hours.
   - **Dependencies**: Phase 5 workflows and Phase 6 resilience controls.
-  - **Rollback Plan**: Provide a manual checklist if automation fails.
-  - **Success Metrics**: Flow runs cleanly with measurable outputs recorded.
-  - **Testing**: Manual/demo runs documented.
 
-- **Microphase 7.3**: Documentation & monitoring narratives.
+ - **Microphase 20.3**: Documentation & monitoring narratives
   - **Status**: Pending ⚪
   - **Tasks**: Update README/Plan/docs with architecture notes, testing guidance, and demo steps; capture monitoring dashboards or runbooks that explain how to interpret telemetry.
   - **Estimated Time**: 2-3 hours.
-  - **Dependencies**: Phase 6 observability metrics and Phase 5 workflow documentation.
-  - **Rollback Plan**: Publish partial docs with TODOs marked.
-  - **Success Metrics**: Stakeholders can reproduce the demo and understand the test results/monitoring story from the docs.
-  - **Testing**: Documentation reviews and sanity checks (links, steps, dashboards).
 
-- **Microphase 7.4**: End-to-end testing.
+ - **Microphase 20.4**: End-to-end testing & demo rehearsal
   - **Status**: Pending ⚪
-  - **Tasks**: Execute the full provision → diagnose → job → Kafka → auto-scaling workflow, automate the run if possible, and capture logs/metrics proving the flow.
+  - **Tasks**: Execute the full provision → diagnose → job → Kafka → auto-scaling workflow, automate the run if possible, and capture logs/metrics proving the flow; write a 15–20 minute demo script and rehearsal checklist.
   - **Estimated Time**: 2-3 hours.
-  - **Dependencies**: Phase 5 workflows and Phase 6 resilience controls.
-  - **Rollback Plan**: Fall back to manual verification checklists with recorded outputs.
-  - **Success Metrics**: Flow completes without errors and recorded output validates each stage.
-  - **Testing**: The documented flow is repeatable with consistent outputs.
 
-**Phase 7 Milestone**: Demo is reproducible, documented, and backed by automated QA checks.
+ **Phase 20 Milestone**: Demo is reproducible, documented, and backed by automated QA checks.
+
 
 ## Holistic Gaps & Ideas
 - **Relationship visibility**: The UI and API should clearly show which cluster owns each droplet; without that the demo cannot emphasize cluster-specific provisioning.

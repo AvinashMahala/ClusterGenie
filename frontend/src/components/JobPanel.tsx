@@ -19,6 +19,12 @@ export function JobPanel() {
     parameters: {},
   });
 
+  // Table / pagination state
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(8);
+  const [sortField, setSortField] = useState<'createdAt' | 'id'>('createdAt');
+  const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
+
   const loadJobs = async () => {
     setLoading(true);
     try {
@@ -65,6 +71,32 @@ export function JobPanel() {
       return 'Invalid date';
     }
   };
+
+  // sorting helpers
+  const toggleSort = (field: 'createdAt' | 'id') => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortField(field);
+      setSortDir('desc');
+    }
+    setPage(1);
+  };
+
+  // derive sorted + paginated
+  const sortedJobs = [...jobs].sort((a, b) => {
+    let val = 0;
+    if (sortField === 'createdAt') {
+      val = +new Date(a.createdAt).getTime() - +new Date(b.createdAt).getTime();
+    } else {
+      val = a.id.localeCompare(b.id);
+    }
+    return sortDir === 'desc' ? -val : val;
+  });
+
+  const total = sortedJobs.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pagedJobs = sortedJobs.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <Panel>
@@ -117,10 +149,10 @@ export function JobPanel() {
 
         {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
-        <div className="list-section">
+        <div className="list-section job-panel">
           <h2>Recent Jobs</h2>
 
-          <div className="jobs-grid">
+          <div className="jobs-table-area">
             {jobs.length === 0 ? (
               <EmptyState
                 title="No jobs found"
@@ -132,33 +164,82 @@ export function JobPanel() {
                 }
               />
             ) : (
-              jobs.map((job) => (
-                <div key={job.id} className="job-card">
-                  <div className="job-header">
-                    <span className="job-id">Job {job.id}</span>
-                    <StatusBadge status={job.status} />
+              <>
+                <div className="table-controls">
+                  <div className="left-controls">
+                    <label>
+                      Rows per page:
+                      <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                        {[5, 8, 10, 20].map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="summary">Showing <strong>{Math.min(total, (page - 1) * pageSize + 1)}</strong> - <strong>{Math.min(total, page * pageSize)}</strong> of <strong>{total}</strong></div>
                   </div>
-                  <div className="job-details">
-                    <span className="job-type">{job.type}</span>
-                    <span className="job-time">
-                      {formatDate(job.createdAt)}
-                    </span>
-                  </div>
-                  {/* Progress bar */}
-                  {typeof job.progress === 'number' && job.progress > 0 && job.status !== 'completed' && (
-                    <div className="job-progress">
-                      <div className="progress-bar" style={{ width: `${job.progress}%` }} />
-                      <div className="progress-label">{job.progress}%</div>
+
+                  <div className="right-controls">
+                    <div className="sort-pill">Sort:
+                      <button className={`sort-btn ${sortField === 'createdAt' ? 'active' : ''}`} onClick={() => toggleSort('createdAt')}>
+                        Date {sortField === 'createdAt' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+                      </button>
+                      <button className={`sort-btn ${sortField === 'id' ? 'active' : ''}`} onClick={() => toggleSort('id')}>
+                        ID {sortField === 'id' ? (sortDir === 'desc' ? '↓' : '↑') : ''}
+                      </button>
                     </div>
-                  )}
-                  {job.error && (
-                    <div className="job-error">Error: {job.error}</div>
-                  )}
-                  {job.result && (
-                    <div className="job-result">Result: {job.result}</div>
-                  )}
+                  </div>
+                  <div className="table-hint">Click a column header or the Sort buttons to change ordering. Newest is shown by default.</div>
                 </div>
-              ))
+
+                <div className="table-wrap">
+                  <table className="jobs-table">
+                    <thead>
+                      <tr>
+                        <th className="col-id">ID</th>
+                        <th className="col-type">Type</th>
+                        <th className="col-status">Status</th>
+                        <th className="col-created" onClick={() => toggleSort('createdAt')}>
+                          Created{sortField === 'createdAt' ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
+                        </th>
+                        <th className="col-progress">Progress</th>
+                        <th className="col-details">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagedJobs.map((job) => (
+                        <tr key={job.id} className="job-row">
+                          <td className="col-id">{job.id}</td>
+                          <td className="col-type">{job.type}</td>
+                          <td className="col-status"><StatusBadge status={job.status} /></td>
+                          <td className="col-created">{formatDate(job.createdAt)}</td>
+                          <td className="col-progress">
+                            {typeof job.progress === 'number' && job.progress >= 0 ? (
+                              <div className="mini-progress">
+                                <div className="mini-bar" style={{ width: `${job.progress}%` }} />
+                                <div className="mini-label">{job.progress}%</div>
+                              </div>
+                            ) : '—'}
+                          </td>
+                          <td className="col-details">
+                            {job.error ? <div className="job-error">{job.error}</div> : (job.result ? <div className="job-result">{String(job.result)}</div> : '—')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="pagination-controls">
+                  <div className="left" />
+                  <div className="right">
+                    <button onClick={() => setPage(1)} disabled={page === 1}>« First</button>
+                    <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+                    <span className="page-indicator">Page {page} of {pageCount}</span>
+                    <button onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount}>Next ›</button>
+                    <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>Last »</button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
