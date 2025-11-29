@@ -16,7 +16,17 @@ export class ProvisioningService {
     if (!request.name || !request.region) {
       throw new Error('Name and region are required');
     }
-    return this.dropletRepo.createDroplet(request);
+    try {
+      return await this.dropletRepo.createDroplet(request);
+    } catch (err: any) {
+      // Map backend message for better UX
+      const backendMsg = err?.response?.data?.error || (err?.message || '').toString();
+      if (typeof backendMsg === 'string' && backendMsg.toLowerCase().includes('cluster not found')) {
+        throw new Error('Cluster not found — please create a cluster first or pick an existing cluster from the dropdown.');
+      }
+      // rethrow original error
+      throw err instanceof Error ? err : new Error('Failed to create droplet');
+    }
   }
 
   async getDroplet(id: string): Promise<Droplet> {

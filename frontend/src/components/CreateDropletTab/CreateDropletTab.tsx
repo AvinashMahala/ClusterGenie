@@ -4,6 +4,7 @@
 import type { CreateDropletRequest } from '../../models';
 import type { Cluster } from '../../models/cluster';
 import './CreateDropletTab.scss';
+import { ErrorMessage } from '../common';
 
 export interface CreateDropletTabProps {
   form: CreateDropletRequest;
@@ -11,14 +12,17 @@ export interface CreateDropletTabProps {
   onFormChange: (form: CreateDropletRequest) => void;
   onCreate: () => void;
   clusters?: Cluster[];
+  error?: string | null;
+  onClearError?: () => void;
 }
 
-export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters }: CreateDropletTabProps) {
-  const handleInputChange = (field: keyof CreateDropletRequest, value: string) => {
+export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters, error, onClearError }: CreateDropletTabProps) {
+  const handleInputChange = (field: keyof CreateDropletRequest, value: string | undefined) => {
     onFormChange({
       ...form,
       [field]: value
-    });
+    } as any);
+    if (error && typeof onClearError === 'function') onClearError();
   };
 
   return (
@@ -37,6 +41,7 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
         </div>
 
         <div className="droplet-form">
+          {error && <ErrorMessage message={error} />}
           <div className="form-grid">
             <div className="form-field">
               <label htmlFor="cluster">Attach to Cluster (optional)</label>
@@ -49,7 +54,7 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
                 <select
                   id="cluster"
                   value={form["cluster_id"] || ''}
-                  onChange={(e) => handleInputChange('cluster_id' as keyof CreateDropletRequest, e.target.value)}
+                  onChange={(e) => handleInputChange('cluster_id' as keyof CreateDropletRequest, e.target.value === '' ? undefined : e.target.value)}
                 >
                   <option value="">(none)</option>
                   {clusters && clusters.map(c => (
