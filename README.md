@@ -124,7 +124,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 4. **For Production-like Testing**: Run `./start.sh` to start the full environment and helper monitor terminals (macOS). `start.sh` is macOS-oriented — it attempts to install missing prerequisites (Homebrew, Xcode CLI, Docker Desktop, Node, Go, Air, Swag) and opens a set of Terminal tabs for logs.
 5. Access the app (local defaults):
 
-- Frontend (Vite dev server): http://localhost:3000
+- Frontend (Vite dev server): http://localhost:5173
 - Backend REST API: http://localhost:8080
 - Swagger / API Docs: http://localhost:8080/swagger/index.html
 
@@ -133,12 +133,28 @@ Docker services and observability ports:
 - Redis: 6379
 - Kafka: 9092
 - Prometheus: 9090
+- Prometheus: 9090 (by default development config scrapes host.docker.internal:8080 so Prometheus can collect metrics from a locally-running backend)
 - Grafana: 3001 (see note below)
+
+Note about core-api host port (COREAPI_PORT)
+-------------------------------------------
+The `core-api` container exposes port 8080 inside the container. When running via `docker-compose` we map a host port to container port 8080 so you can reach the API at http://localhost:<host-port>. The host port defaults to 8080, but if that port is in use on your machine you can override it using the environment variable `COREAPI_PORT`. Example `.env.example` with recommended defaults is provided at the repo root.
+
+Examples:
+
+```bash
+# start core-api mapped to an alternate host port (e.g. 8081):
+COREAPI_PORT=8081 docker-compose up core-api
+
+# Or set in shell / .env before running dev.sh so the dev script will honor it:
+export COREAPI_PORT=8081
+./dev.sh -d
+```
 
 Helpful defaults / credentials:
 
 - MySQL root user: username `root` / password `rootpassword` (docker-compose sets this)
-- Default database name: `clustergenie` (initial schema is in `database/init.sql`, seed data in `database/seed.sql`)
+- Default database name: `clustergenie` (initial schema is in `database/init.sql`, seed data in `database/seed.sql`). Prefer using the versioned migrations in `database/migrations/` for schema changes — these are used for CI and are reversible.
 6. To stop: Run `./stop.sh` in any terminal or press Ctrl+C in the development terminal.
 
 ### Development Workflow
@@ -196,7 +212,7 @@ E2E / Playwright test notes:
 - The Playwright E2E suite (e2e/playwright) may assume a Vite dev server default at port 5173 in its documentation. This repository configures Vite to run on port 3000 — if your frontend is running on port 3000, export the base URL before running tests:
 
 ```bash
-export E2E_BASE_URL='http://localhost:3000'
+export E2E_BASE_URL='http://localhost:5173'
 ```
 
 Then run the e2e tests from the e2e/playwright folder.
@@ -271,6 +287,12 @@ These endpoints store limiter rules in Redis keys like `limiter_config:<name>:us
 - CLUSTERGENIE_WORKER_COUNT — number of workers in job worker pool (default 4)
 - CLUSTERGENIE_WORKER_QUEUE — job queue size (default 100)
 
+Additional runtime configuration used by `core-api` (when running via Docker Compose or local .env):
+- MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE — MySQL connection (defaults: root/rootpassword/mysql/3306/clustergenie)
+- REDIS_ADDR — redis host:port (default: localhost:6379)
+- KAFKA_BROKERS — comma-separated Kafka broker addresses (default: localhost:9092)
+- API_PORT — port the core-api binds to (default: 8080)
+
 The frontend optionally visualizes worker-queue details and rate-limit status under the Monitoring panel.
 
 ### Local .env for backend/core-api
@@ -287,9 +309,16 @@ The frontend optionally visualizes worker-queue details and rate-limit status un
 - **Kafka Not Connecting**: Wait for Zookeeper; check logs with `docker-compose logs kafka`.
 
 Known quirks / developer notes:
-- The repo's Docker Compose maps Grafana to port **3001** (see `docker-compose.yml`) but some local README/docs and the frontend `MonitoringPanel` component reference `http://localhost:3000` for embedded Grafana links. If you see an "unable to load" dashboard in the UI, either:
+- The repo's Docker Compose maps Grafana to port **3001** (see `docker-compose.yml`) but some local README/docs and the frontend `MonitoringPanel` component may reference `http://localhost:3000` or `http://localhost:3001` for embedded Grafana links. If you see an "unable to load" dashboard in the UI, either:
    - Run Grafana on port 3000 instead (adjust docker-compose mapping) or
    - Update `frontend/src/components/MonitoringPanel.tsx` to point to `http://localhost:3001` when running the full stack locally.
+
+The repo's Docker Compose maps Grafana to port **3001** (see `docker-compose.yml`). The frontend now supports configuring Grafana and API endpoints via Vite environment variables:
+
+- VITE_API_URL — base URL for backend API (default: http://localhost:8080)
+   - VITE_GRAFANA_URL — base URL for Grafana embeds and links (default: http://localhost:3001 for local dev; when running full docker-compose you may want to set this to http://localhost:3001 or http://grafana:3001)
+
+If you see an "unable to load" dashboard in the UI adjust `VITE_GRAFANA_URL` to point at the correct Grafana address for your environment.
 
 ## Roadmap
 

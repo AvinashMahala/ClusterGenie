@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ProvisioningService } from '../services/provisioningService';
 import { JobService } from '../services/jobService';
+import { API_BASE } from '../lib/config';
 import type { Droplet, Job } from '../models';
 import { Hero } from './Hero';
 import TabularSection from './TabularSection';
@@ -42,7 +43,7 @@ export function Dashboard() {
   const checkBackendStatus = async () => {
     try {
       // Simple backend connectivity check using REST API
-      const response = await fetch('http://localhost:8080/api/v1/hello', {
+      const response = await fetch(`${API_BASE}/hello`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

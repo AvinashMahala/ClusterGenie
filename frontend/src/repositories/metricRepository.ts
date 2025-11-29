@@ -4,7 +4,8 @@ import type { MetricRepository } from '../interfaces/metricRepository';
 import type { Metric, MetricsResponse } from '../models/metric';
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
+const baseURL = API_BASE;
 
 export class MetricRepositoryImpl implements MetricRepository {
   async getMetrics(clusterId: string, type?: Metric['type'], page?: number, pageSize?: number): Promise<MetricsResponse> {

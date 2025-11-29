@@ -6,7 +6,7 @@ import "time"
 
 type Metric struct {
 	ID        string    `json:"id" gorm:"primaryKey"`
-	ClusterID string    `json:"cluster_id"`
+	ClusterID string    `json:"cluster_id" gorm:"type:varchar(255)"`
 	Type      string    `json:"type"` // cpu, memory, disk, network
 	Value     float64   `json:"value"`
 	Timestamp time.Time `json:"timestamp"`

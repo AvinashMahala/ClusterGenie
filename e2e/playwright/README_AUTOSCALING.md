@@ -10,7 +10,7 @@ yarn install
 yarn dev
 ```
 
-2) Open the UI at http://localhost:3000 and navigate to /autoscaling to manually verify the flows described below.
+2) Open the UI at http://localhost:5173 and navigate to /autoscaling to manually verify the flows described below.
 
 3) To run the new Playwright test (requires Playwright installed and configured):
 

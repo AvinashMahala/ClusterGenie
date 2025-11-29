@@ -8,6 +8,7 @@ import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Select
 import { ClusterRepositoryImpl } from '../repositories/clusterRepository';
 import type { Cluster } from '../models/cluster';
 import './MonitoringPanel.scss';
+import { GRAFANA_URL } from '../lib/config';
 
 const monitoringService = new MonitoringService();
 const obsService = new ObservabilityService();
@@ -271,7 +272,7 @@ export function MonitoringPanel() {
                   <ActionButton onClick={() => setShowGrafanaEmbed((s) => !s)}>
                     {showGrafanaEmbed ? 'Hide' : 'Embed'} Grafana Panel
                   </ActionButton>
-                  <ActionButton onClick={() => window.open(`http://localhost:3000/d/cg-demo?orgId=1${scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeId && scopeType === 'user' ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`)}>
+                  <ActionButton onClick={() => window.open(`${GRAFANA_URL}/d/cg-demo?orgId=1${scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeId && scopeType === 'user' ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`)}>
                     Open Dashboard
                   </ActionButton>
                 </div>
@@ -336,7 +337,7 @@ export function MonitoringPanel() {
               <div style={{ height: 600 }}>
                 <iframe
                   title="ClusterGenie Grafana"
-                  src={`http://localhost:3000/d/cg-demo?orgId=1${scopeType === 'cluster' && scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeType === 'user' && scopeId ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`}
+                  src={`${GRAFANA_URL}/d/cg-demo?orgId=1${scopeType === 'cluster' && scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeType === 'user' && scopeId ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`}
                   style={{ width: '100%', height: '100%', border: 'none' }}
                 />
               </div>

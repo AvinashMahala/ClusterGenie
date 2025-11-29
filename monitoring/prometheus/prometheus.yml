@@ -5,8 +5,14 @@ global:
 scrape_configs:
   - job_name: 'clustergenie-core'
     metrics_path: '/metrics'
+    # When running everything in docker-compose this will scrape the core-api service
+    # When running the backend locally (not containerized) Prometheus can't resolve 'core-api'
+    # so include host.docker.internal:8080 (macOS / Docker Desktop) as an alternate target.
+    # Default for dev/test: scrape the backend running on the host (host.docker.internal).
+    # If you run core-api inside docker-compose and want Prometheus to scrape the container
+    # directly, replace this with ['core-api:8080'] or add it when the core-api container is present.
     static_configs:
-      - targets: ['core-api:8080']
+      - targets: ['host.docker.internal:8080']
 
   - job_name: 'prometheus'
     static_configs:

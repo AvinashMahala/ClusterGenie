@@ -44,8 +44,18 @@ services:
 
   core-api:
     build: ./backend
+    environment:
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=rootpassword
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=clustergenie
+      - REDIS_ADDR=redis:6379
+      - KAFKA_BROKERS=kafka:29092
+      - API_PORT=8080
+    # Allow host port override via COREAPI_PORT env (defaults to 8080)
     ports:
-      - "8080:8080"
+      - "${COREAPI_PORT:-8080}:8080"
     depends_on:
       - mysql
       - redis
@@ -64,9 +74,15 @@ services:
 
   grafana:
     image: grafana/grafana:10.4.0
+    # Grafana listens on container port 3000 by default — map host 3001 -> container 3000
     ports:
-      - "3001:3001"
+      - "3001:3000"
     environment:
+      # Allow embedding dashboards in iframes for local development (frontend running on a different origin)
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      # Enable anonymous viewer access so embedded dashboards can be viewed without manual login in dev
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro

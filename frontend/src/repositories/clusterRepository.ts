@@ -10,7 +10,8 @@ import type {
 } from '../models/cluster';
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
+const baseURL = API_BASE;
 
 export class ClusterRepositoryImpl implements ClusterRepository {
   async diagnoseCluster(request: DiagnosisRequest): Promise<DiagnosisResponse> {

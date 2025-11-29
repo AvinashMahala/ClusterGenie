@@ -1,5 +1,4 @@
 {
-  "dashboard": {
     "id": null,
     "uid": "cg-minimal",
     "title": "ClusterGenie Minimal",
@@ -10,21 +9,21 @@
       {
         "type": "stat",
         "title": "Worker Queue Length",
-        "datasource": "Prometheus",
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
         "targets": [{ "expr": "clustergenie_workerpool_queue_length", "refId": "A" }],
         "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 }
       },
       {
         "type": "stat",
         "title": "Rate-limit rejections/min",
-        "datasource": "Prometheus",
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
         "targets": [{ "expr": "sum(rate(clustergenie_rate_limit_exceeded_total[1m]))", "refId": "A" }],
         "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 }
       },
       {
         "type": "timeseries",
         "title": "Job processing p95",
-        "datasource": "Prometheus",
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
         "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "A" }],
         "gridPos": { "x": 0, "y": 6, "w": 24, "h": 8 }
       }
@@ -32,7 +31,7 @@
       {
         "type": "stat",
         "title": "Latency p95/p99",
-        "datasource": "Prometheus",
+        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
         "targets": [
           { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "A" },
           { "expr": "histogram_quantile(0.99, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "B" }
@@ -42,13 +41,11 @@
       {
         "type": "heatmap",
         "title": "Rate-limit rejects heatmap",
-        "datasource": "Prometheus",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
         "targets": [
           { "expr": "sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (scope_id)", "refId": "A" }
         ],
         "gridPos": { "x": 12, "y": 14, "w": 12, "h": 6 }
       }
     ]
-  },
-  "overwrite": true
-}
+  }

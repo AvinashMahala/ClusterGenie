@@ -3,7 +3,10 @@
 package database
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
@@ -17,9 +20,16 @@ var (
 
 func InitDB() {
 	var err error
+	// MySQL connection (read from environment with sensible defaults)
+	mysqlUser := getEnv("MYSQL_USER", "root")
+	mysqlPassword := getEnv("MYSQL_PASSWORD", "rootpassword")
+	mysqlHost := getEnv("MYSQL_HOST", "localhost")
+	mysqlPort := getEnv("MYSQL_PORT", "3306")
+	mysqlDB := getEnv("MYSQL_DATABASE", "clustergenie")
 
-	// MySQL connection
-	dsn := "root:rootpassword@tcp(localhost:3306)/clustergenie?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		mysqlUser, mysqlPassword, mysqlHost, mysqlPort, mysqlDB)
+
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to MySQL:", err)
@@ -28,11 +38,12 @@ func InitDB() {
 	// Note: Schema is created via database/init.sql, not auto-migration
 	log.Println("Database connection established")
 
-	// Redis connection
+	// Redis connection (env-driven)
+	redisAddr := getEnv("REDIS_ADDR", getEnv("REDIS_HOST", "localhost")+":"+getEnv("REDIS_PORT", "6379"))
 	Redis = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: redisAddr,
 	})
-	_, err = Redis.Ping(DB.Statement.Context).Result()
+	_, err = Redis.Ping(context.Background()).Result()
 	if err != nil {
 		log.Fatal("Failed to connect to Redis:", err)
 	}
@@ -44,4 +55,12 @@ func CloseDB() {
 	sqlDB, _ := DB.DB()
 	sqlDB.Close()
 	Redis.Close()
+}
+
+// getEnv returns value for the environment variable or the provided default
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }

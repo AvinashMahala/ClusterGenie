@@ -192,7 +192,7 @@ ls frontend/src/*Service*.ts
 ## Next Steps
 After completing this setup:
 1. Run `./start.sh` to launch everything
-2. Open http://localhost:3000
+2. Open http://localhost:5173
 3. Click "Call Backend" to test gRPC-Web integration
 4. Proceed to Phase 2: Backend architecture layers
 

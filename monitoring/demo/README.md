@@ -10,6 +10,8 @@ How to run the demo:
 docker-compose up -d prometheus grafana core-api
 ```
 
+Note for local development / testing: the default `prometheus.yml` in this repo is configured to scrape `host.docker.internal:8080` (the host machine) so Prometheus can collect metrics from a backend running locally (e.g. `air`), rather than requiring a `core-api` container. If you run `core-api` as a Docker service and want Prometheus to scrape the container directly, update `monitoring/prometheus/prometheus.yml` to use `core-api:8080` as the target.
+
 2. Open Grafana at http://localhost:3001 (default admin/admin).
 3. Import the minimal dashboard (uid `cg-minimal`) is pre-provisioned under `monitoring/grafana/dashboards/clustergenie_minimal_dashboard.json`.
 4. Simulate load:

@@ -4,7 +4,8 @@ import type { JobRepository } from '../interfaces/jobRepository';
 import type { Job, CreateJobRequest, JobResponse, ListJobsResponse } from '../models/job';
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
+const baseURL = API_BASE;
 
 export class JobRepositoryImpl implements JobRepository {
   async createJob(request: CreateJobRequest): Promise<JobResponse> {

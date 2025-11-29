@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
+const baseURL = API_BASE;
 
 export class ObservabilityRepositoryImpl {
   async getRateLimit(name: string, scopeType?: string, scopeId?: string) {

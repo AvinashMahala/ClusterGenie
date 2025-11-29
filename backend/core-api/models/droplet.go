@@ -6,7 +6,7 @@ import "time"
 
 type Droplet struct {
 	ID        string  `json:"id" gorm:"primaryKey"`
-	ClusterID *string `json:"cluster_id,omitempty" gorm:"column:cluster_id"`
+	ClusterID *string `json:"cluster_id,omitempty" gorm:"column:cluster_id;type:varchar(255)"`
 	// Cluster object (optional) when returning droplet responses
 	Cluster   *Cluster  `json:"cluster,omitempty" gorm:"foreignKey:ClusterID;references:ID"`
 	Name      string    `json:"name" example:"web-01"`

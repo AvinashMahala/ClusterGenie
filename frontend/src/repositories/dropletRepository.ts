@@ -4,7 +4,8 @@ import type { DropletRepository } from '../interfaces/dropletRepository';
 import type { Droplet, CreateDropletRequest, DropletResponse } from '../models/droplet';
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
+const baseURL = API_BASE;
 
 export class DropletRepositoryImpl implements DropletRepository {
   async createDroplet(request: CreateDropletRequest): Promise<DropletResponse> {

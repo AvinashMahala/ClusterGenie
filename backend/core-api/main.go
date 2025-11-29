@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -47,7 +48,10 @@ func main() {
 	deploymentRepo := repositories.NewDeploymentRepository(database.DB, database.Redis)
 	// autoscaler repo/service (demo-mode, Redis-backed)
 	autoscalerRepo := repositories.NewAutoscalerRepository(database.DB, database.Redis)
-	producer := eventbus.NewProducer([]string{"localhost:9092"})
+	// kafka brokers are configurable via KAFKA_BROKERS (comma-separated list)
+	kafkaBrokers := getEnv("KAFKA_BROKERS", "localhost:9092")
+	brokers := nilOrSplit(kafkaBrokers)
+	producer := eventbus.NewProducer(brokers)
 
 	// cluster service must exist before provisioning service to allow cluster validation
 	clusterSvc := services.NewClusterService(clusterRepo)
@@ -67,7 +71,7 @@ func main() {
 
 	// Initialize event handler and consumers
 	eventHandler := services.NewEventHandler(jobSvc, monitoringSvc, provisioningSvc)
-	consumer := eventbus.NewConsumer([]string{"localhost:9092"}, "cluster-events", "cluster-genie-group")
+	consumer := eventbus.NewConsumer(brokers, "cluster-events", "cluster-genie-group")
 
 	// Start event consumer in background
 	go func() {
@@ -330,9 +334,30 @@ func main() {
 	// Prometheus metrics endpoint (scrape target)
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
-	log.Println("REST API server listening on :8080")
-	log.Println("Swagger UI available at http://localhost:8080/swagger/index.html")
-	if err := r.Run(":8080"); err != nil {
+	apiPort := getEnv("API_PORT", "8080")
+	log.Printf("REST API server listening on :%s", apiPort)
+	log.Printf("Swagger UI available at http://localhost:%s/swagger/index.html", apiPort)
+	if err := r.Run(":" + apiPort); err != nil {
 		log.Fatalf("Failed to start REST server: %v", err)
 	}
+}
+
+// getEnv returns value for the environment variable or the provided default
+func getEnv(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
+// nilOrSplit returns a string slice from comma-separated list, or a single default entry
+func nilOrSplit(s string) []string {
+	if s == "" {
+		return []string{}
+	}
+	parts := strings.Split(s, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
 }

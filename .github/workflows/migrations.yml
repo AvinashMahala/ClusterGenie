@@ -1,0 +1,63 @@
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping" 
+          --health-interval=5s 
+          --health-timeout=5s 
+          --health-retries=10
+name: Apply DB Migrations (CI check)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: clustergenie
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent" 
+          --health-interval=5s 
+          --health-timeout=5s 
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for MySQL
+        run: |
+          for i in `seq 1 30`; do
+            if mysql -h 127.0.0.1 -P 3306 -uroot -prootpassword -e 'select 1' >/dev/null 2>&1; then
+              echo 'MySQL is up'; break
+            fi
+            echo 'Waiting for MySQL...'; sleep 2
+          done
+
+      - name: Install migrate CLI
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golang-migrate/migrate/master/install.sh | bash -s -- -b $GOPATH/bin v4.15.2
+
+      - name: Run migrations
+        env:
+          MYSQL_PWD: rootpassword
+        run: |
+          ./bin/migrate -path ./database/migrations -database "mysql://root@tcp(127.0.0.1:3306)/clustergenie?multiStatements=true" up
+
+      - name: Run backend tests (core-api)
+        env:
+          REDIS_ADDR: 127.0.0.1:6379
+          MYSQL_PWD: rootpassword
+        run: |
+          cd backend
+          # run tests; they will skip Redis-dependent tests if Redis isn't reachable
+          go test ./... -v

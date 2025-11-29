@@ -1,10 +1,9 @@
 import axios from 'axios';
-
-const baseURL = 'http://localhost:8080/api/v1';
+import { API_BASE } from '../lib/config';
 
 export class BillingService {
   async estimateCluster(clusterID: string): Promise<any> {
-    const res = await axios.get(`${baseURL}/billing/cluster`, { params: { cluster_id: clusterID } });
+    const res = await axios.get(`${API_BASE}/billing/cluster`, { params: { cluster_id: clusterID } });
     return res.data;
   }
 }

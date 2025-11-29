@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -13,9 +14,13 @@ import (
 // (i.e. token consumption is atomic across instances).
 func TestRedisTokenBucketSharedAcrossInstances(t *testing.T) {
 	ctx := context.Background()
-	client := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	client := redis.NewClient(&redis.Options{Addr: redisAddr})
 	if err := client.Ping(ctx).Err(); err != nil {
-		t.Skip("Redis not available on localhost:6379 - skipping integration test")
+		t.Skipf("Redis not available on %s - skipping integration test", redisAddr)
 	}
 
 	// pre-seed config for the shared scope: capacity 3, refill 0.5 tokens/sec

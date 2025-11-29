@@ -1,6 +1,6 @@
 # Testing the Jobs UI (Manual)
 
-This document describes how to validate the new Jobs table UI at http://localhost:3000/jobs
+This document describes how to validate the new Jobs table UI at the frontend dev server (default http://localhost:5173/jobs).
 
 ## Start the frontend
 
@@ -14,11 +14,11 @@ npm install
 npm run dev
 ```
 
-Frontend will start (typically at http://localhost:3000). Ensure backend API is running at http://localhost:8080 so the jobs endpoint works.
+Frontend will start (typically at http://localhost:5173). Ensure backend API is running and that the frontend is pointed at the API via the Vite env var `VITE_API_URL` (e.g., `VITE_API_URL=http://localhost:8080`).
 
 ## What to check
 
-1. Open http://localhost:3000/jobs -> the "Recent Jobs" area should now be shown as a table (not cards).
+1. Open the frontend app (default http://localhost:5173/jobs) -> the "Recent Jobs" area should now be shown as a table (not cards).
 2. By default the newest job should be at the top (sorted by Created date descending).
 3. Pagination controls appear at the bottom: change the rows-per-page dropdown and verify correct items are shown and the summary updates (Showing X - Y of Z).
 	- By default 5 rows should be shown. If a page contains more than 5 rows (e.g. choose rows-per-page = 8) the table body will enable a vertical scroll so the header remains fixed and rows scroll.

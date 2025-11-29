@@ -29,11 +29,20 @@ for i in {1..30}; do
     sleep 2
 done
 
-# Check if tables exist
+echo "Ensuring schema is applied. Prefer migrations when available."
+
+# Try applying migrations via make (this will use the migrate docker image)
+if command -v make >/dev/null 2>&1; then
+    echo "Attempting to run migrations with 'make migrate-up' (uses migrate docker image)..."
+    # Using host.docker.internal on mac allows the migrate image to reach the MySQL port
+    make migrate-up MYSQL_HOST=host.docker.internal || true
+fi
+
+# Fall back to init.sql if tables don't exist
 if ! docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie -e "SHOW TABLES;" | grep -q "clusters"; then
-    echo "Initializing database schema..."
+    echo "Initializing database schema via database/init.sql (fallback)..."
     docker-compose exec -T mysql mysql -uroot -prootpassword clustergenie < database/init.sql
-    echo "✅ Database schema initialized"
+    echo "✅ Database schema initialized (fallback)"
 else
     echo "✅ Database schema already exists"
 fi

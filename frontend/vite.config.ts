@@ -8,7 +8,8 @@ export default defineConfig({
     global: 'globalThis',
   },
   server: {
-    port: 3000,
+    // Use Vite's default (5173) to avoid conflicts with Grafana (3001) and local ports.
+    port: 5173,
     hmr: {
       overlay: true,
     },

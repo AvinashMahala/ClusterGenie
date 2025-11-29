@@ -6,7 +6,7 @@ import "time"
 
 type Job struct {
 	ID          string     `json:"id" gorm:"primaryKey" example:"job-1234"`
-	ClusterID   string     `json:"cluster_id" example:"cluster-1"`
+	ClusterID   string     `json:"cluster_id" gorm:"type:varchar(255)" example:"cluster-1"`
 	Type        string     `json:"type" example:"provision"` // provision, diagnose, scale, monitor
 	Status      string     `json:"status" example:"pending"` // pending, running, completed, failed
 	CreatedAt   time.Time  `json:"created_at" gorm:"column:created_at"`

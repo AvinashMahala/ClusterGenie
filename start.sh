@@ -1,3 +1,7 @@
+# ClusterGenie Start Script - Initiates and starts backend/frontend in separate terminals with error handling
+
+    osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  ClusterGenie Central Monitor'; echo ''; echo '🚀 Services Status:'; echo '   Frontend: http://localhost:5173'; echo '   Backend API: http://localhost:8080'; echo '   Swagger: http://localhost:8080/swagger/index.html'; echo ''; echo '🐳 Docker Services:'; echo '   MySQL: localhost:3306'; echo '   Redis: localhost:6379'; echo '   Kafka: localhost:9092'; echo ''; echo '🔄 Hot Reload Active:'; echo '   Backend: Air (Go)'; echo '   Frontend: Vite (React/TypeScript)'; echo ''; echo '💡 Commands:'; echo '   Stop all: ./stop.sh'; echo '   View logs: Check other terminals'; echo ''; echo '📄 Setup logs: $LOG_FILE'; echo ''; sleep infinity" > /dev/null 2>&1
+echo "   URL: http://localhost:5173"
 #!/bin/bash
 
 # ClusterGenie Start Script - Initiates and starts backend/frontend in separate terminals with error handling
@@ -320,13 +324,13 @@ osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && docker-c
 
 # Central monitor terminal
 echo "Opening central monitor terminal..."
-osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  ClusterGenie Central Monitor'; echo ''; echo '🚀 Services Status:'; echo '   Frontend: http://localhost:3000'; echo '   Backend API: http://localhost:8080'; echo '   Swagger: http://localhost:8080/swagger/index.html'; echo ''; echo '🐳 Docker Services:'; echo '   MySQL: localhost:3306'; echo '   Redis: localhost:6379'; echo '   Kafka: localhost:9092'; echo ''; echo '🔄 Hot Reload Active:'; echo '   Backend: Air (Go)'; echo '   Frontend: Vite (React/TypeScript)'; echo ''; echo '💡 Commands:'; echo '   Stop all: ./stop.sh'; echo '   View logs: Check other terminals'; echo ''; echo '📄 Setup logs: $LOG_FILE'; echo ''; sleep infinity\"" > /dev/null 2>&1
+osascript -e "tell application \"Terminal\" to do script \"cd $(pwd) && echo '🎛️  ClusterGenie Central Monitor'; echo ''; echo '🚀 Services Status:'; echo '   Frontend: http://localhost:5173'; echo '   Backend API: http://localhost:8080'; echo '   Swagger: http://localhost:8080/swagger/index.html'; echo ''; echo '🐳 Docker Services:'; echo '   MySQL: localhost:3306'; echo '   Redis: localhost:6379'; echo '   Kafka: localhost:9092'; echo ''; echo '🔄 Hot Reload Active:'; echo '   Backend: Air (Go)'; echo '   Frontend: Vite (React/TypeScript)'; echo ''; echo '💡 Commands:'; echo '   Stop all: ./stop.sh'; echo '   View logs: Check other terminals'; echo ''; echo '📄 Setup logs: $LOG_FILE'; echo ''; sleep infinity\"" > /dev/null 2>&1
 
 echo ""
 echo "🚀 ClusterGenie Development Environment Started!"
 echo ""
 echo "📱 Frontend:"
-echo "   URL: http://localhost:3000"
+echo "   URL: http://localhost:5173"
 echo "   Hot Reload: Enabled (Vite auto-reloads on .ts/.tsx changes)"
 echo ""
 echo "🔧 Backend REST API:"
