@@ -117,3 +117,7 @@ build-errors.log
 **/hello_grpc_web_pb.js
 **/hello_pb.js
 **/hello_pb.d.ts
+
+e2e/
+
+tests/

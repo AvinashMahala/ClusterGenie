@@ -70,18 +70,20 @@ test.describe('Autoscaling UI flows', () => {
     await page.locator('[data-testid="editor-save"]').click();
 
     // expect both original and copy
-    await expect(page.locator(`text=${name}`)).toHaveCount(1);
-    await expect(page.locator(`text=${name} (copy)`)).toBeVisible();
+    // Use exact-text searches so we don't match the copy when looking for the original name
+    await expect(page.getByText(name, { exact: true })).toHaveCount(1);
+    await expect(page.getByText(`${name} (copy)`, { exact: true })).toBeVisible();
 
     // delete both
     page.on('dialog', dialog => dialog.accept());
     const delOrig = page.locator(`button[aria-label="Delete ${name}"]`);
     await delOrig.click();
-    await expect(page.locator(`text=${name}`)).toHaveCount(0);
+    // ensure the original (exact) is removed, but the copy remains
+    await expect(page.getByText(name, { exact: true })).toHaveCount(0);
 
     const delCopy = page.locator(`button[aria-label="Delete ${name} (copy)"]`);
     await delCopy.click();
-    await expect(page.locator(`text=${name} (copy)`)).toHaveCount(0);
+    await expect(page.getByText(`${name} (copy)`, { exact: true })).toHaveCount(0);
 
     // Evaluate cluster
     await page.locator('button', { hasText: 'Evaluate' }).click();

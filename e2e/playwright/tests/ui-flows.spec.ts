@@ -3,7 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('ClusterGenie UI flows (sanity)', () => {
   test('clusters listing and navigation', async ({ page, baseURL }) => {
     await page.goto('/clusters');
-    await expect(page.locator('h1')).toHaveText('Clusters');
+    // the app contains multiple h1 elements (brand + page header) so scope to the page header
+    await expect(page.locator('.clusters-header h1')).toHaveText('Clusters');
     // wait for table rows to appear or show empty state
     const table = page.locator('table.clusters-table');
     await expect(table).toBeVisible();
@@ -22,7 +23,8 @@ test.describe('ClusterGenie UI flows (sanity)', () => {
 
   test('provisioning panel and create droplet form', async ({ page }) => {
     await page.goto('/provisioning');
-    await expect(page.locator('h2')).toContainText('Create New Droplet');
+    // scope to droplet create card header to avoid other h2's in the app
+    await expect(page.locator('.create-form-card .form-header h2')).toContainText('Create New Droplet');
 
     // fill the name field (don't rely on cluster id being present)
     const nameInput = page.locator('#name');
