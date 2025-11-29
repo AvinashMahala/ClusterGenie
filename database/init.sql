@@ -14,6 +14,7 @@ CREATE TABLE droplets (
     cluster_id VARCHAR(255),
     name VARCHAR(255) NOT NULL,
     region VARCHAR(255) NOT NULL,
+    provider VARCHAR(255),
     size VARCHAR(255) NOT NULL,
     image VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,

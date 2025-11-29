@@ -20,7 +20,15 @@ Files
 - 05_evaluate_autoscaler.sh — kick off evaluation, which may scale the cluster
 - 06_billing_check.sh — query billing for a cluster
 - 07_migrate_droplet.sh — migrate a droplet to another provider
+- 08_diagnosis_demo.sh — full diagnosis demo (create cluster → sync diagnose → create job → poll progress)
 - run-all.sh — run all scripts in order
+
+Adding the diagnosis demo:
+- Run only the diagnosis demo:
+   chmod +x 08_diagnosis_demo.sh && ./08_diagnosis_demo.sh demo-cluster
+  
+   # Or use a custom base url:
+   BASE=http://localhost:8080/api/v1 ./08_diagnosis_demo.sh my-cluster
 
 Notes
 - Scripts are intentionally simple and use jq for JSON formatting and basic checks. They're meant for local demo purposes, not production tests.

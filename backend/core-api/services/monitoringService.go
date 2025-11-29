@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/interfaces"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 )
@@ -141,5 +143,10 @@ func (s *MonitoringService) getUnitForType(metricType string) string {
 }
 
 func generateMetricID(clusterID, metricType string, timestamp time.Time) string {
-	return clusterID + "-" + metricType + "-" + timestamp.Format("20060102150405")
+	// If clusterID is empty (global metrics or missing), append a UUID suffix
+	base := metricType + "-" + timestamp.Format("20060102150405")
+	if clusterID == "" {
+		return base + "-" + uuid.NewString()
+	}
+	return clusterID + "-" + base
 }
