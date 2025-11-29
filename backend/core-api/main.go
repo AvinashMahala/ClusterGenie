@@ -7,7 +7,6 @@ package main
 // @BasePath /api/v1
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -15,13 +14,10 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"strings"
-
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/middleware"
-	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/repositories"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/services"
 	"github.com/gin-contrib/cors"
@@ -171,65 +167,13 @@ func main() {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	api := r.Group("/api/v1")
 	{
-		// Hello
-		// @Summary Say hello
-		// @Description Returns a greeting message
-		// @Tags hello
-		// @Accept json
-		// @Produce json
-		// @Param request body models.HelloRequest true "Hello request"
-		// @Success 200 {object} models.HelloResponse
-		// @Router /hello [post]
-		api.POST("/hello", func(c *gin.Context) {
-			var req models.HelloRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp := &models.HelloResponse{Message: "Hello, " + req.Name + " from ClusterGenie!"}
-			c.JSON(200, resp)
-		})
+		api.POST("/hello", HelloHandler())
 
 		// Provisioning
-		api.POST("/droplets", func(c *gin.Context) {
-			var req models.CreateDropletRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp, err := provisioningSvc.CreateDroplet(&req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(201, resp)
-		})
-		api.GET("/droplets/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			droplet, err := provisioningSvc.GetDroplet(id)
-			if err != nil {
-				c.JSON(404, gin.H{"error": "Droplet not found"})
-				return
-			}
-			c.JSON(200, &models.DropletResponse{Droplet: droplet, Message: "Droplet retrieved"})
-		})
-		api.GET("/droplets", func(c *gin.Context) {
-			droplets, err := provisioningSvc.ListDroplets()
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, &models.ListDropletsResponse{Droplets: droplets})
-		})
-		api.DELETE("/droplets/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			err := provisioningSvc.DeleteDroplet(id)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, &models.DeleteDropletResponse{Message: "Droplet deleted"})
-		})
+		api.POST("/droplets", CreateDropletHandler(provisioningSvc))
+		api.GET("/droplets/:id", GetDropletHandler(provisioningSvc))
+		api.GET("/droplets", ListDropletsHandler(provisioningSvc))
+		api.DELETE("/droplets/:id", DeleteDropletHandler(provisioningSvc))
 
 		// Diagnosis (scope configurable: cluster/user/global)
 		diagScope := os.Getenv("CLUSTERGENIE_DIAG_SCOPE")
@@ -242,85 +186,17 @@ func main() {
 		} else if diagScope == "user" {
 			diagMiddleware = middleware.RateLimitMiddlewareByUserHeader(limiter, "diagnosis", "X-User-ID")
 		}
-		api.POST("/diagnosis/diagnose", diagMiddleware, func(c *gin.Context) {
-			var req models.DiagnoseClusterRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp, err := diagnosisSvc.DiagnoseCluster(&req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
+		api.POST("/diagnosis/diagnose", diagMiddleware, DiagnoseClusterHandler(diagnosisSvc))
 
 		// Clusters
-		api.POST("/clusters", func(c *gin.Context) {
-			var req models.CreateClusterRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp, err := clusterSvc.CreateCluster(&req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(201, resp)
-		})
-		api.GET("/clusters/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			cluster, err := clusterSvc.GetCluster(id)
-			if err != nil {
-				c.JSON(404, gin.H{"error": "Cluster not found"})
-				return
-			}
-			c.JSON(200, &models.ClusterResponse{Cluster: cluster, Message: "Cluster retrieved"})
-		})
-		api.GET("/clusters", func(c *gin.Context) {
-			clusters, err := clusterSvc.ListClusters()
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, &models.ListClustersResponse{Clusters: clusters})
-		})
-		api.PUT("/clusters/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			var req models.UpdateClusterRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp, err := clusterSvc.UpdateCluster(id, &req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
-		api.DELETE("/clusters/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			resp, err := clusterSvc.DeleteCluster(id)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
+		api.POST("/clusters", CreateClusterHandler(clusterSvc))
+		api.GET("/clusters/:id", GetClusterHandler(clusterSvc))
+		api.GET("/clusters", ListClustersHandler(clusterSvc))
+		api.PUT("/clusters/:id", UpdateClusterHandler(clusterSvc))
+		api.DELETE("/clusters/:id", DeleteClusterHandler(clusterSvc))
 
 		// Health Check
-		api.GET("/health/:clusterId", func(c *gin.Context) {
-			clusterID := c.Param("clusterId")
-			resp, err := monitoringSvc.PerformHealthCheck(clusterID)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
+		api.GET("/health/:clusterId", HealthCheckHandler(monitoringSvc))
 
 		// Jobs (scope configurable: user/cluster/global)
 		jobsScope := os.Getenv("CLUSTERGENIE_JOBS_SCOPE")
@@ -333,306 +209,93 @@ func main() {
 		} else if jobsScope == "cluster" {
 			jobsMiddleware = middleware.RateLimitMiddlewareByClusterFromBody(limiter, "jobs_create", "cluster_id")
 		}
-		api.POST("/jobs", jobsMiddleware, func(c *gin.Context) {
-			var req models.CreateJobRequest
-			if err := c.ShouldBindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": err.Error()})
-				return
-			}
-			resp, err := jobSvc.CreateJob(&req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(201, resp)
-		})
-		api.GET("/jobs/:id", func(c *gin.Context) {
-			id := c.Param("id")
-			job, err := jobSvc.GetJob(id)
-			if err != nil {
-				c.JSON(404, gin.H{"error": "Job not found"})
-				return
-			}
-			c.JSON(200, &models.JobResponse{Job: job, Message: "Job retrieved"})
-		})
-		api.GET("/jobs", func(c *gin.Context) {
-			page := 1
-			pageSize := 5
-			sortBy := c.Query("sort_by")
-			sortDir := c.Query("sort_dir")
-			if p := c.Query("page"); p != "" {
-				if v, err := strconv.Atoi(p); err == nil && v > 0 {
-					page = v
-				}
-			}
-			if ps := c.Query("page_size"); ps != "" {
-				if v, err := strconv.Atoi(ps); err == nil && v > 0 {
-					pageSize = v
-				}
-			}
-
-			req := &models.GetJobsRequest{Page: page, PageSize: pageSize, SortBy: sortBy, SortDir: sortDir}
-			resp, err := jobSvc.ListJobs(req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
+		api.POST("/jobs", jobsMiddleware, CreateJobHandler(jobSvc))
+		api.GET("/jobs/:id", GetJobHandler(jobSvc))
+		api.GET("/jobs", ListJobsHandler(jobSvc))
 
 		// Monitoring
-		api.GET("/metrics", func(c *gin.Context) {
-			clusterID := c.Query("cluster_id")
-			metricType := c.Query("type")
-			page := 1
-			pageSize := 50
-			if p := c.Query("page"); p != "" {
-				if v, err := strconv.Atoi(p); err == nil && v > 0 {
-					page = v
-				}
-			}
-			if ps := c.Query("page_size"); ps != "" {
-				if v, err := strconv.Atoi(ps); err == nil && v > 0 {
-					pageSize = v
-				}
-			}
-
-			req := &models.GetMetricsRequest{
-				ClusterID: clusterID,
-				Type:      metricType,
-				Page:      page,
-				PageSize:  pageSize,
-			}
-			resp, err := monitoringSvc.GetMetrics(req)
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(200, resp)
-		})
+		api.GET("/metrics", GetMetricsHandler(monitoringSvc))
 	}
 
 	// Observability endpoints for Phase 6
-	api.GET("/observability/ratelimit", func(c *gin.Context) {
-		name := c.Query("name")
-		if name == "" {
-			c.JSON(400, gin.H{"error": "name query param required (e.g. diagnosis or jobs_create)"})
-			return
-		}
-		// allow optional scope information
-		scopeType := c.Query("scope_type")
-		scopeId := c.Query("scope_id")
-		var b services.RateLimiter
-		if scopeType != "" && scopeId != "" {
-			scopeKey := scopeId
-			if scopeType == "user" {
-				scopeKey = "user:" + scopeId
-			} else if scopeType == "cluster" {
-				scopeKey = "cluster:" + scopeId
-			}
-			b = limiter.GetOrCreate(name, scopeKey)
-		} else {
-			b = limiter.Get(name)
-		}
-		if b == nil {
-			c.JSON(404, gin.H{"error": "no such limiter"})
-			return
-		}
-		available, capacity, rate := b.Status()
-		c.JSON(200, gin.H{"name": name, "available": available, "capacity": capacity, "rate_per_sec": rate})
-	})
+	// @Summary Query rate limiter status
+	// @Description Get available tokens and configuration for a rate limiter (supports scope filters)
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Param name query string true "Limiter name (e.g. diagnosis or jobs_create)"
+	// @Param scope_type query string false "Optional scope type (global/user/cluster)"
+	// @Param scope_id query string false "Optional scope id for user/cluster"
+	// @Success 200 {object} map[string]interface{} "Limiter status"
+	// @Failure 400 {object} models.ErrorResponse "Missing/invalid input"
+	// @Failure 404 {object} models.ErrorResponse "No such limiter"
+	// @Failure 500 {object} models.ErrorResponse "Server error"
+	// @Router /observability/ratelimit [get]
+	api.GET("/observability/ratelimit", GetRateLimiterStatusHandler(limiter))
 
 	// manage persisted limiter config (stored in Redis)
-	api.POST("/observability/ratelimit/config", func(c *gin.Context) {
-		var body struct {
-			Name      string  `json:"name"`
-			ScopeType string  `json:"scope_type"`
-			ScopeID   string  `json:"scope_id"`
-			Refill    float64 `json:"refill_rate"`
-			Capacity  float64 `json:"capacity"`
-		}
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		if body.Name == "" {
-			c.JSON(400, gin.H{"error": "name is required"})
-			return
-		}
-		// scope key
-		scopeKey := "global"
-		if body.ScopeType == "user" && body.ScopeID != "" {
-			scopeKey = "user:" + body.ScopeID
-		} else if body.ScopeType == "cluster" && body.ScopeID != "" {
-			scopeKey = "cluster:" + body.ScopeID
-		}
+	// @Summary Persist limiter configuration
+	// @Description Store or update refill/capacity for a named limiter and scope
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Param request body object true "Limiter config request" example({"name":"diagnosis","scope_type":"user","scope_id":"u1","refill_rate":0.2,"capacity":5})
+	// @Success 200 {object} map[string]interface{} "Config saved"
+	// @Failure 400 {object} models.ErrorResponse "Invalid request"
+	// @Failure 500 {object} models.ErrorResponse "Server error"
+	// @Router /observability/ratelimit/config [post]
+	api.POST("/observability/ratelimit/config", SaveLimiterConfigHandler(database.Redis))
 
-		if database.Redis == nil {
-			c.JSON(500, gin.H{"error": "redis not configured"})
-			return
-		}
-
-		cfgKey := "limiter_config:" + body.Name + ":" + scopeKey
-		m := map[string]interface{}{}
-		if body.Refill > 0 {
-			m["refill_rate"] = fmt.Sprintf("%f", body.Refill)
-		}
-		if body.Capacity > 0 {
-			m["capacity"] = fmt.Sprintf("%f", body.Capacity)
-		}
-		if len(m) == 0 {
-			c.JSON(400, gin.H{"error": "refill_rate or capacity required"})
-			return
-		}
-		if err := database.Redis.HSet(c.Request.Context(), cfgKey, m).Err(); err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, gin.H{"ok": true, "config_key": cfgKey})
-	})
-
-	api.GET("/observability/ratelimit/config", func(c *gin.Context) {
-		name := c.Query("name")
-		scopeType := c.Query("scope_type")
-		scopeId := c.Query("scope_id")
-		if name == "" {
-			c.JSON(400, gin.H{"error": "name required"})
-			return
-		}
-		scopeKey := "global"
-		if scopeType == "user" && scopeId != "" {
-			scopeKey = "user:" + scopeId
-		} else if scopeType == "cluster" && scopeId != "" {
-			scopeKey = "cluster:" + scopeId
-		}
-		if database.Redis == nil {
-			c.JSON(500, gin.H{"error": "redis not configured"})
-			return
-		}
-		cfgKey := "limiter_config:" + name + ":" + scopeKey
-		vals, err := database.Redis.HGetAll(c.Request.Context(), cfgKey).Result()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		if len(vals) == 0 {
-			c.JSON(404, gin.H{"error": "not found"})
-			return
-		}
-		c.JSON(200, gin.H{"name": name, "scope": scopeKey, "config": vals})
-	})
+	// @Summary Get persisted limiter config
+	// @Description Retrieve persisted limiter config for a name and optional scope
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Param name query string true "Limiter name"
+	// @Param scope_type query string false "Optional scope type"
+	// @Param scope_id query string false "Optional scope id"
+	// @Success 200 {object} map[string]interface{} "Found config"
+	// @Failure 400 {object} models.ErrorResponse "Missing name"
+	// @Failure 404 {object} models.ErrorResponse "Not found"
+	// @Failure 500 {object} models.ErrorResponse "Server error"
+	// @Router /observability/ratelimit/config [get]
+	api.GET("/observability/ratelimit/config", GetLimiterConfigHandler(database.Redis))
 
 	// list persisted limiter configs (supports optional name/scope filters)
-	api.GET("/observability/ratelimit/config/list", func(c *gin.Context) {
-		nameFilter := c.Query("name")
-		scopeType := c.Query("scope_type")
-		scopeId := c.Query("scope_id")
-
-		if database.Redis == nil {
-			c.JSON(500, gin.H{"error": "redis not configured"})
-			return
-		}
-
-		// build pattern
-		pattern := "limiter_config:*"
-		if nameFilter != "" {
-			if scopeType != "" && scopeId != "" {
-				scopeKey := "global"
-				if scopeType == "user" {
-					scopeKey = "user:" + scopeId
-				} else if scopeType == "cluster" {
-					scopeKey = "cluster:" + scopeId
-				}
-				pattern = "limiter_config:" + nameFilter + ":" + scopeKey
-			} else {
-				pattern = "limiter_config:" + nameFilter + ":*"
-			}
-		}
-
-		// scan through keys and return configs
-		var cursor uint64
-		results := []gin.H{}
-		for {
-			keys, cur, err := database.Redis.Scan(c.Request.Context(), cursor, pattern, 100).Result()
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
-				return
-			}
-			cursor = cur
-			for _, k := range keys {
-				// keys like limiter_config:<name>:<scope>
-				parts := strings.SplitN(k, ":", 3)
-				if len(parts) < 3 {
-					continue
-				}
-				name := parts[1]
-				scope := parts[2]
-				vals, err := database.Redis.HGetAll(c.Request.Context(), k).Result()
-				if err != nil {
-					// collect but continue
-					continue
-				}
-				results = append(results, gin.H{"key": k, "name": name, "scope": scope, "config": vals})
-			}
-			if cursor == 0 {
-				break
-			}
-		}
-		c.JSON(200, gin.H{"count": len(results), "items": results})
-	})
+	// @Summary List persisted limiter configs
+	// @Description Returns list of stored limiter configs filtered by name/scope
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Param name query string false "Optional limiter name filter"
+	// @Param scope_type query string false "Optional scope type"
+	// @Param scope_id query string false "Optional scope id"
+	// @Success 200 {object} map[string]interface{} "List of configs"
+	// @Failure 500 {object} models.ErrorResponse "Server error"
+	// @Router /observability/ratelimit/config/list [get]
+	api.GET("/observability/ratelimit/config/list", ListLimiterConfigHandler(database.Redis))
 
 	// delete persisted limiter config
-	api.DELETE("/observability/ratelimit/config", func(c *gin.Context) {
-		var body struct {
-			Name      string `json:"name"`
-			ScopeType string `json:"scope_type"`
-			ScopeID   string `json:"scope_id"`
-			Key       string `json:"key"`
-		}
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
+	// @Summary Delete persisted limiter config
+	// @Description Delete a stored limiter config by key or name+scope
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Param request body object true "Delete config request" example({"name":"diagnosis","scope_type":"global","scope_id":""})
+	// @Success 200 {object} map[string]interface{} "Deletion result"
+	// @Failure 400 {object} models.ErrorResponse "Missing input"
+	// @Failure 500 {object} models.ErrorResponse "Server error"
+	// @Router /observability/ratelimit/config [delete]
+	api.DELETE("/observability/ratelimit/config", DeleteLimiterConfigHandler(database.Redis))
 
-		if database.Redis == nil {
-			c.JSON(500, gin.H{"error": "redis not configured"})
-			return
-		}
-
-		var cfgKey string
-		if body.Key != "" {
-			cfgKey = body.Key
-		} else {
-			if body.Name == "" {
-				c.JSON(400, gin.H{"error": "name or key required"})
-				return
-			}
-			scopeKey := "global"
-			if body.ScopeType == "user" && body.ScopeID != "" {
-				scopeKey = "user:" + body.ScopeID
-			} else if body.ScopeType == "cluster" && body.ScopeID != "" {
-				scopeKey = "cluster:" + body.ScopeID
-			}
-			cfgKey = "limiter_config:" + body.Name + ":" + scopeKey
-		}
-
-		if err := database.Redis.Del(c.Request.Context(), cfgKey).Err(); err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(200, gin.H{"ok": true, "deleted": cfgKey})
-	})
-
-	api.GET("/observability/workerpool", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"worker_count":   workerPool.WorkerCount(),
-			"active_workers": workerPool.ActiveWorkers(),
-			"queue_length":   workerPool.QueueLength(),
-			"queue_capacity": workerPool.QueueCapacity(),
-			"queued_ids":     workerPool.SnapshotQueue(),
-		})
-	})
+	// @Summary Worker pool status
+	// @Description Snapshot of worker pool (counts, queue) for observability
+	// @Tags observability
+	// @Accept json
+	// @Produce json
+	// @Success 200 {object} map[string]interface{} "Worker pool snapshot"
+	// @Router /observability/workerpool [get]
+	api.GET("/observability/workerpool", WorkerPoolHandler(workerPool))
 
 	// Prometheus metrics endpoint (scrape target)
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))

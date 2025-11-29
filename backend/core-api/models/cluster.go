@@ -10,11 +10,11 @@ import (
 )
 
 type Cluster struct {
-	ID          string      `json:"id" gorm:"primaryKey"`
-	Name        string      `json:"name"`
-	Region      string      `json:"region"`
+	ID          string      `json:"id" gorm:"primaryKey" example:"cluster-1"`
+	Name        string      `json:"name" example:"production-cluster"`
+	Region      string      `json:"region" example:"nyc3"`
 	Droplets    StringSlice `json:"droplets" gorm:"type:text"`
-	Status      string      `json:"status"` // healthy, warning, critical
+	Status      string      `json:"status" example:"healthy"` // healthy, warning, critical
 	LastChecked time.Time   `json:"last_checked" gorm:"column:last_checked"`
 }
 

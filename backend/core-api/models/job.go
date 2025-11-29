@@ -5,14 +5,14 @@ package models
 import "time"
 
 type Job struct {
-	ID          string     `json:"id" gorm:"primaryKey"`
-	ClusterID   string     `json:"cluster_id"`
-	Type        string     `json:"type"`   // provision, diagnose, scale, monitor
-	Status      string     `json:"status"` // pending, running, completed, failed
+	ID          string     `json:"id" gorm:"primaryKey" example:"job-1234"`
+	ClusterID   string     `json:"cluster_id" example:"cluster-1"`
+	Type        string     `json:"type" example:"provision"` // provision, diagnose, scale, monitor
+	Status      string     `json:"status" example:"pending"` // pending, running, completed, failed
 	CreatedAt   time.Time  `json:"created_at" gorm:"column:created_at"`
 	CompletedAt *time.Time `json:"completed_at,omitempty" gorm:"column:completed_at"`
-	Result      string     `json:"result,omitempty"`
-	Error       string     `json:"error,omitempty"`
+	Result      string     `json:"result,omitempty" example:"OK"`
+	Error       string     `json:"error,omitempty" example:""`
 	Progress    int        `json:"progress" gorm:"default:0"`
 	TraceID     string     `json:"trace_id,omitempty"`
 	Parameters  string     `json:"parameters,omitempty" gorm:"type:text"` // JSON string of parameters
