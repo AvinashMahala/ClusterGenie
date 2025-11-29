@@ -115,17 +115,30 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 ## Installation & Setup
 
 1. Clone the repo: `git clone https://github.com/AvinashMahala/ClusterGenie.git && cd ClusterGenie`.
-2. Run the one-command setup: `./setup.sh` (or `python setup.py` if using Python script).
-   - Checks prerequisites.
-   - Installs dependencies (Go modules, Yarn packages).
-   - Builds Docker images.
-   - Starts services via Docker Compose.
-3. **For Development**: Run `./dev.sh` for hot-reloading development environment.
-   - Starts infrastructure (MySQL, Redis, Kafka) in Docker
-   - Runs backend with Air (Go hot reloading)
-   - Runs frontend with Vite (React hot reloading)
-4. **For Production-like Testing**: Run `./start.sh` to start full Docker environment.
-5. Access the app: Open browser to `http://localhost:3000`. Backend REST API at `localhost:8080`.
+2. Run the one-command setup (macOS / Docker): `./setup.sh`.
+   - This script ensures Docker is running, starts MySQL and initializes the database schema (from `database/init.sql`) if needed.
+   - It does NOT install system-level prerequisites (Homebrew, Docker) — use `./start.sh` for the full interactive installer on macOS.
+3. **For Development**: Run `./dev.sh` for a macOS-friendly hot-reloading development environment.
+   - `dev.sh` starts infrastructure (MySQL, Redis, Kafka, Zookeeper) in Docker, initializes DB/schema + sample data if missing, and launches backend (Air) + frontend (Vite) in new Terminal tabs.
+   - Note: `dev.sh` uses macOS Terminal scripting (osascript) and assumes a macOS environment; on Linux/Windows run the manual commands instead (see below).
+4. **For Production-like Testing**: Run `./start.sh` to start the full environment and helper monitor terminals (macOS). `start.sh` is macOS-oriented — it attempts to install missing prerequisites (Homebrew, Xcode CLI, Docker Desktop, Node, Go, Air, Swag) and opens a set of Terminal tabs for logs.
+5. Access the app (local defaults):
+
+- Frontend (Vite dev server): http://localhost:3000
+- Backend REST API: http://localhost:8080
+- Swagger / API Docs: http://localhost:8080/swagger/index.html
+
+Docker services and observability ports:
+- MySQL: 3306
+- Redis: 6379
+- Kafka: 9092
+- Prometheus: 9090
+- Grafana: 3001 (see note below)
+
+Helpful defaults / credentials:
+
+- MySQL root user: username `root` / password `rootpassword` (docker-compose sets this)
+- Default database name: `clustergenie` (initial schema is in `database/init.sql`, seed data in `database/seed.sql`)
 6. To stop: Run `./stop.sh` in any terminal or press Ctrl+C in the development terminal.
 
 ### Development Workflow
@@ -133,10 +146,19 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 - **Production Testing**: Use `./start.sh` - full Docker environment
 - **Manual Development**: See Development section below
 
-For manual setup:
-- Backend: `cd backend && go mod tidy && air` (hot reloading)
-- Frontend: `cd frontend && yarn install && yarn dev` (hot reloading)
-- Infrastructure: `docker-compose up -d mysql redis kafka zookeeper`
+For manual (cross-platform) setup and development (alternative to `dev.sh` / `start.sh`):
+
+- Infrastructure (docker-compose):
+   - Start core infra: `docker-compose up -d mysql redis kafka zookeeper`
+   - Optional observability: `docker-compose up -d prometheus grafana` (Grafana runs on 3001 in this repo)
+
+- Backend (local dev):
+   - cd backend && go mod tidy
+   - run with hot reload if you have Air: `air`  OR run locally: `go run ./...`
+
+- Frontend (local dev):
+   - cd frontend && yarn install
+   - yarn dev (Vite dev server, default port 3000 in this project)
 
 ## Usage
 
@@ -169,6 +191,15 @@ For manual setup:
 ### Testing
 - **Unit Tests**: Run `make test` or `docker-compose exec <service> go test`
 - **Integration Tests**: Use the running development environment
+
+E2E / Playwright test notes:
+- The Playwright E2E suite (e2e/playwright) may assume a Vite dev server default at port 5173 in its documentation. This repository configures Vite to run on port 3000 — if your frontend is running on port 3000, export the base URL before running tests:
+
+```bash
+export E2E_BASE_URL='http://localhost:3000'
+```
+
+Then run the e2e tests from the e2e/playwright folder.
 
 ### Debugging
 - **Backend**: Use VS Code Go debugger or `dlv` debugger
@@ -208,14 +239,14 @@ docker-compose up -d prometheus grafana
 ```
 
 - Prometheus UI: http://localhost:9090
-- Grafana UI: http://localhost:3000 (default admin/admin on first boot)
+- Grafana UI: http://localhost:3001 (default admin/admin on first boot)
 
 Grafana is pre-provisioned with a sample dashboard located at `monitoring/grafana/dashboards/clustergenie_dashboard.json` that visualizes worker queue length, active workers, and rate-limit tokens.
 There is also a minimal dashboard for playback/demo at `monitoring/grafana/dashboards/clustergenie_minimal_dashboard.json` and a short demo README at `monitoring/demo/README.md` showing quick steps to simulate load and visualize behaviors.
 
 ### Embedded dashboard preview in UI
 
-You can embed the prebuilt Grafana dashboard inside the Monitoring panel. Click "Embed Grafana Panel" in the Monitoring view (requires Grafana running locally at http://localhost:3000). The embedded iframe will pass the chosen cluster or user as a template variable to the dashboard so you can preview scoped metrics in the UI.
+You can embed the prebuilt Grafana dashboard inside the Monitoring panel. Click "Embed Grafana Panel" in the Monitoring view (requires Grafana running locally at http://localhost:3001). The embedded iframe will pass the chosen cluster or user as a template variable to the dashboard so you can preview scoped metrics in the UI.
 
 ### Persisted per-client rate limits (Redis)
 
@@ -254,6 +285,11 @@ The frontend optionally visualizes worker-queue details and rate-limit status un
 - **Frontend Not Loading**: Check Node.js version; clear npm cache (`npm cache clean --force`).
 - **Go Mod Errors**: Run `go mod tidy` in `backend/`.
 - **Kafka Not Connecting**: Wait for Zookeeper; check logs with `docker-compose logs kafka`.
+
+Known quirks / developer notes:
+- The repo's Docker Compose maps Grafana to port **3001** (see `docker-compose.yml`) but some local README/docs and the frontend `MonitoringPanel` component reference `http://localhost:3000` for embedded Grafana links. If you see an "unable to load" dashboard in the UI, either:
+   - Run Grafana on port 3000 instead (adjust docker-compose mapping) or
+   - Update `frontend/src/components/MonitoringPanel.tsx` to point to `http://localhost:3001` when running the full stack locally.
 
 ## Roadmap
 

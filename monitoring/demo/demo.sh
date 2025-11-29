@@ -27,4 +27,4 @@ done
 
 wait
 
-echo "Load complete. Check Grafana dashboard (http://localhost:3000) and Prometheus metrics to see rejects and latency histograms."
+echo "Load complete. Check Grafana dashboard (http://localhost:3001) and Prometheus metrics to see rejects and latency histograms."

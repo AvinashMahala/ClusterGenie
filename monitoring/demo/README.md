@@ -10,7 +10,7 @@ How to run the demo:
 docker-compose up -d prometheus grafana core-api
 ```
 
-2. Open Grafana at http://localhost:3000 (default admin/admin).
+2. Open Grafana at http://localhost:3001 (default admin/admin).
 3. Import the minimal dashboard (uid `cg-minimal`) is pre-provisioned under `monitoring/grafana/dashboards/clustergenie_minimal_dashboard.json`.
 4. Simulate load:
    - Create several jobs via POST /api/v1/jobs (use different X-User-ID header values) and see worker queue length and job latency in Grafana.
