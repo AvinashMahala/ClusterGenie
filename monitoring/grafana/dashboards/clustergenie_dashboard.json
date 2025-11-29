@@ -1,0 +1,136 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": "cg-demo",
+    "title": "ClusterGenie Overview",
+    "tags": [ "clustergenie" ],
+    "timezone": "browser",
+    "schemaVersion": 30,
+    "version": 1,
+    "templating": {
+      "list": [
+        {
+          "type": "query",
+          "name": "cluster",
+          "label": "Cluster",
+          "datasource": "Prometheus",
+          "query": "label_values(clustergenie_rate_limit_available_tokens{endpoint=\"diagnosis\",scope_type=\"cluster\"}, scope_id)",
+          "refresh": 2,
+          "hide": 0
+        },
+        {
+          "type": "query",
+          "name": "scope_type",
+          "label": "Scope Type",
+          "datasource": "Prometheus",
+          "query": "label_values(clustergenie_rate_limit_exceeded_total, scope_type)",
+          "refresh": 2,
+          "hide": 0
+        },
+        {
+          "type": "query",
+          "name": "endpoint",
+          "label": "Endpoint",
+          "datasource": "Prometheus",
+          "query": "label_values(clustergenie_rate_limit_exceeded_total, endpoint)",
+          "refresh": 2,
+          "hide": 0
+        },
+        {
+          "type": "query",
+          "name": "jobType",
+          "label": "Job type",
+          "datasource": "Prometheus",
+          "query": "label_values(clustergenie_job_processing_seconds_bucket, job_type)",
+          "refresh": 2,
+          "hide": 0
+        },
+        {
+          "type": "query",
+          "name": "user",
+          "label": "User",
+          "datasource": "Prometheus",
+          "query": "label_values(clustergenie_rate_limit_available_tokens{endpoint=\"jobs_create\",scope_type=\"user\"}, scope_id)",
+          "refresh": 2,
+          "hide": 0
+        }
+      ]
+    },
+    "panels": [
+      {
+        "type": "stat",
+        "title": "Worker Pool Queue Length",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "clustergenie_workerpool_queue_length", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 8, "h": 6 }
+      },
+      {
+        "type": "stat",
+        "title": "Active Workers",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "clustergenie_workerpool_active_workers", "refId": "A" }
+        ],
+        "gridPos": { "x": 8, "y": 0, "w": 8, "h": 6 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Rate Limit Tokens (diagnosis - cluster)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "clustergenie_rate_limit_available_tokens{endpoint=\"diagnosis\",scope_type=\"cluster\",scope_id=~\"$cluster\"}", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 6, "w": 16, "h": 8 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Rate Limit Tokens (jobs_create - user)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "clustergenie_rate_limit_available_tokens{endpoint=\"jobs_create\",scope_type=\"user\",scope_id=~\"$user\"}", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 14, "w": 16, "h": 8 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Jobs processed",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "rate(clustergenie_jobs_processed_total[1m])", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 22, "w": 16, "h": 8 }
+      }
+      ,
+      {
+        "type": "stat",
+        "title": "Rate-limit rejects (per min)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "rate(clustergenie_rate_limit_exceeded_total{endpoint=~\"$endpoint\",scope_type=~\"$scope_type\"}[1m])", "refId": "A" }
+        ],
+        "gridPos": { "x": 16, "y": 0, "w": 8, "h": 6 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Job latency p95 (job type)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "A" }
+        ],
+        "gridPos": { "x": 16, "y": 6, "w": 8, "h": 8 }
+      },
+      {
+        "type": "graph",
+        "title": "Top rejecters (scope_id)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "topk(10, sum(rate(clustergenie_rate_limit_exceeded_total[5m])) by (scope_id))", "refId": "A" }
+        ],
+        "gridPos": { "x": 16, "y": 14, "w": 8, "h": 8 }
+      }
+    ]
+  },
+  "overwrite": true
+}

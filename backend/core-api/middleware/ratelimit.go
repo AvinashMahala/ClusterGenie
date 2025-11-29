@@ -48,7 +48,7 @@ func RateLimitMiddleware(manager *services.LimiterManager, bucketName string) gi
 func RateLimitMiddlewareByUserHeader(manager *services.LimiterManager, bucketName string, headerName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := c.GetHeader(headerName)
-		var b *services.TokenBucket
+		var b services.RateLimiter
 		if uid != "" {
 			b = manager.GetOrCreate(bucketName, "user:"+uid)
 		} else {
@@ -102,7 +102,7 @@ func RateLimitMiddlewareByClusterFromBody(manager *services.LimiterManager, buck
 			}
 		}
 
-		var b *services.TokenBucket
+		var b services.RateLimiter
 		if scopeKey != "" {
 			b = manager.GetOrCreate(bucketName, "cluster:"+scopeKey)
 		} else {

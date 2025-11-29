@@ -19,6 +19,14 @@ export class ObservabilityService {
   async getWorkerPool() {
     return this.repo.getWorkerPool();
   }
+
+  async getRateLimitConfig(name: string, scopeType?: string, scopeId?: string) {
+    return this.repo.getRateLimitConfig(name, scopeType, scopeId);
+  }
+
+  async setRateLimitConfig(body: { name: string; scope_type?: string; scope_id?: string; refill_rate?: number; capacity?: number }) {
+    return this.repo.setRateLimitConfig(body);
+  }
 }
 
 export default ObservabilityService;

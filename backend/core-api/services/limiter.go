@@ -1,6 +1,10 @@
 package services
 
 import (
+	"context"
+	"fmt"
+	"math"
+	"strconv"
 	"sync"
 	"time"
 
@@ -111,7 +115,114 @@ func (m *LimiterManager) Add(name string, bucket RateLimiter) {
 		m.buckets[name] = make(map[string]RateLimiter)
 	}
 	m.buckets[name][""] = bucket
-	m.configs[name] = BucketConfig{RefillRate: bucket.refillRate, Capacity: bucket.capacity}
+	// don't introspect the implementation for defaults; use AddDefaultConfig if needed
+}
+
+// RedisTokenBucket implements RateLimiter backed by Redis using an atomic Lua script
+type RedisTokenBucket struct {
+	client     *redis.Client
+	key        string
+	capacity   float64
+	refillRate float64
+	ttlMS      int64
+}
+
+// NewRedisTokenBucket constructs a new RedisTokenBucket using the given redis client.
+func NewRedisTokenBucket(client *redis.Client, name string, scope string, refillRate float64, capacity float64, ttlMS int64) *RedisTokenBucket {
+	key := fmt.Sprintf("limiter:%s:%s", name, scope)
+	return &RedisTokenBucket{client: client, key: key, capacity: capacity, refillRate: refillRate, ttlMS: ttlMS}
+}
+
+// Lua script does atomic token refill and consume
+const redisTokenBucketLua = `local key=KEYS[1]
+local capacity=tonumber(ARGV[1])
+local refill=tonumber(ARGV[2])
+local now=tonumber(ARGV[3])
+local req=tonumber(ARGV[4])
+local ttl=tonumber(ARGV[5])
+local vals=redis.call('HMGET', key, 'tokens', 'last')
+local tokens = tonumber(vals[1])
+if tokens == nil then tokens = capacity end
+local last = tonumber(vals[2])
+if last == nil then last = now end
+local elapsed = (now - last)/1000.0
+tokens = math.min(capacity, tokens + elapsed * refill)
+if tokens >= req then
+  tokens = tokens - req
+  redis.call('HMSET', key, 'tokens', tokens, 'last', now)
+  redis.call('PEXPIRE', key, ttl)
+  return {1, tostring(tokens)}
+else
+  return {0, tostring(tokens)}
+end`
+
+// Allow checks and consumes count tokens atomically in Redis.
+func (r *RedisTokenBucket) Allow(count int) bool {
+	ctx := context.Background()
+	now := time.Now().UnixMilli()
+	res, err := r.client.Eval(ctx, redisTokenBucketLua, []string{r.key}, fmt.Sprintf("%f", r.capacity), fmt.Sprintf("%f", r.refillRate), fmt.Sprintf("%d", now), fmt.Sprintf("%d", count), fmt.Sprintf("%d", r.ttlMS)).Result()
+	if err != nil {
+		// fallback deny on error
+		return false
+	}
+	// result expected as array {1/0, tokens}
+	if arr, ok := res.([]interface{}); ok && len(arr) >= 1 {
+		// first element may be int64 or string
+		switch v := arr[0].(type) {
+		case int64:
+			return v == 1
+		case int:
+			return v == 1
+		case string:
+			return v == "1"
+		case []uint8:
+			return string(v) == "1"
+		}
+	}
+	return false
+}
+
+// Status reads stored tokens and computes current value (best-effort)
+func (r *RedisTokenBucket) Status() (available float64, capacity float64, refillRate float64) {
+	ctx := context.Background()
+	vals, err := r.client.HMGet(ctx, r.key, "tokens", "last").Result()
+	if err != nil {
+		return 0, r.capacity, r.refillRate
+	}
+	var tokens float64
+	var lastMs int64
+	if vals[0] != nil {
+		switch t := vals[0].(type) {
+		case string:
+			if f, err := strconv.ParseFloat(t, 64); err == nil {
+				tokens = f
+			}
+		case float64:
+			tokens = t
+		case int64:
+			tokens = float64(t)
+		}
+	} else {
+		tokens = r.capacity
+	}
+	if vals[1] != nil {
+		switch l := vals[1].(type) {
+		case string:
+			if n, err := strconv.ParseInt(l, 10, 64); err == nil {
+				lastMs = n
+			}
+		case int64:
+			lastMs = l
+		case float64:
+			lastMs = int64(l)
+		}
+	} else {
+		lastMs = time.Now().UnixMilli()
+	}
+	now := time.Now().UnixMilli()
+	elapsed := float64(now-lastMs) / 1000.0
+	available = math.Min(r.capacity, tokens+elapsed*r.refillRate)
+	return available, r.capacity, r.refillRate
 }
 
 // AddDefaultConfig registers config used when creating scoped buckets dynamically
@@ -148,6 +259,40 @@ func (m *LimiterManager) GetOrCreate(name string, scope string) RateLimiter {
 	}
 	// If redis client is available, create a Redis-backed bucket
 	if m.redis != nil {
+		// If redis contains explicit limiter config for this name+scope use it
+		ctx := context.Background()
+		configKey := fmt.Sprintf("limiter_config:%s:%s", name, scope)
+		vals, err := m.redis.HGetAll(ctx, configKey).Result()
+		if err == nil && len(vals) > 0 {
+			// parse refill_rate and capacity if present
+			if v, ok := vals["refill_rate"]; ok {
+				if f, err := strconv.ParseFloat(v, 64); err == nil {
+					cfg.RefillRate = f
+				}
+			}
+			if v, ok := vals["capacity"]; ok {
+				if f, err := strconv.ParseFloat(v, 64); err == nil {
+					cfg.Capacity = f
+				}
+			}
+		} else {
+			// try global config key for the name
+			configKey = fmt.Sprintf("limiter_config:%s:global", name)
+			vals2, err2 := m.redis.HGetAll(ctx, configKey).Result()
+			if err2 == nil && len(vals2) > 0 {
+				if v, ok := vals2["refill_rate"]; ok {
+					if f, err := strconv.ParseFloat(v, 64); err == nil {
+						cfg.RefillRate = f
+					}
+				}
+				if v, ok := vals2["capacity"]; ok {
+					if f, err := strconv.ParseFloat(v, 64); err == nil {
+						cfg.Capacity = f
+					}
+				}
+			}
+		}
+
 		rb := NewRedisTokenBucket(m.redis, name, scope, cfg.RefillRate, cfg.Capacity, m.redisTTLMS)
 		m.buckets[name][scope] = rb
 		return rb

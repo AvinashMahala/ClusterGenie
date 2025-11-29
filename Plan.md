@@ -25,7 +25,7 @@ Progress will be tracked here—update after each completion.
 | Phase 3 | ✅ Completed | Frontend components, services, and REST wiring exist in `frontend/src`. |
 | Phase 4 | ⚪ Pending | Kafka/LLM flow still undergoing integration. |
 | Phase 5 | ✅ Completed | Event-chain demo wiring and UI wiring complete. |
-| Phase 6 | 🔶 In progress | Rate limiting + concurrency work started (middleware, worker pool, observability endpoints & UI). |
+| Phase 6 | ✅ Completed | Rate limiting, worker-pool concurrency, per-scope Redis-backed limiter, Prometheus + Grafana dashboards, frontend UI for limiter rules implemented. |
 | Phase 7 | ⚪ Pending | Rate limiting/concurrency story ahead. |
 
 ## Phase 1: Project Setup (MVP Foundation)
@@ -237,7 +237,7 @@ Progress will be tracked here—update after each completion.
 **Goal**: Highlight resilience features (rate limiting, goroutines/channels) to support the event flow and the upcoming demo.
 
 - **Microphase 6.1**: Add rate limiting safeguards.
-  - **Status**: Completed ✅ (Global token-bucket limiter + middleware applied to diagnosis and job creation; added per-user & per-cluster scoped limiter support and configurable defaults)
+  - **Status**: Completed ✅ (Global token-bucket limiter + middleware applied to diagnosis and job creation; added per-user & per-cluster scoped limiter support and configurable defaults; Redis-backed scoped buckets persisted for distributed deployments)
   - **Tasks**: Introduce middleware that limits diagnosis/implementation calls; expose the throttling status in the UI; use shared counters to enforce concurrency budgets.
   - **Estimated Time**: 2 hours.
   - **Dependencies**: API endpoints from Phase 2/4 and UI forms from Phase 3.
@@ -255,7 +255,7 @@ Progress will be tracked here—update after each completion.
   - **Testing**: Unit tests for channel helpers and manual tests showing concurrent processing.
 
 - **Microphase 6.3**: Observability/resilience for rate limiting and concurrency.
-  - **Status**: Completed ✅ (Observability endpoints and monitoring UI added; Prometheus metrics exported at /metrics; worker pool queue snapshotting added)
+  - **Status**: Completed ✅ (Observability endpoints and monitoring UI added; Prometheus metrics exported at /metrics; worker pool queue snapshotting added; Prometheus+Grafana stack and prebuilt dashboard added for local dev)
   - **Tasks**: Log rate-limit events, queue lengths, and goroutine panics; add simple dashboard widgets on the monitoring page describing the concurrency model and whether workers are healthy.
   - **Estimated Time**: 2 hours.
   - **Dependencies**: 6.1/6.2 and Phase 5 monitoring docs.
@@ -265,6 +265,7 @@ Progress will be tracked here—update after each completion.
 
 **Phase 6 Milestone**: Users can point to rate limiting and goroutine/channel-driven job processing as resilience features during the demo.
   - **Extras added**: per-user & per-cluster rate limit scoping; Prometheus scrape endpoint; monitoring UI shows queued job IDs and rate-limit per-scope checks. Environment variables added for configuration.
+   - **New**: Redis-persisted limiter configs and management endpoints; expanded Grafana with templating variables and latency/reject visualizations; minimal dashboard & demo scene added; frontend UI to manage limiter rules.
 
 ## Phase 7: Testing, Documentation & Demo Prep
 **Goal**: Lock in quality assurance, documentation, and demo scripts so the stakeholders can reproduce the solution.
@@ -316,7 +317,7 @@ Progress will be tracked here—update after each completion.
 - **Rate limiter & concurrency**: Plan out shared rate limiter service and channel-based workers to reuse across job/action endpoints.
 - **Additional improvements**: Look for missing health checks, logging, or auto-scaling heuristics while building Phase 6 workflows.
 
-- **Current Status**: Phase 1–5 complete; Phase 6 in progress (rate-limiter, worker pool, basic observability implemented); Phase 7 pending.
+- **Current Status**: Phase 1–6 complete; Phase 7 pending.
 - **Feedback Loop**: After each microphase, test manually and note issues here. Iterate as needed.
 - **Risks**: Docker complexity—mitigate with simple configs. LLM mocks—ensure they're realistic.
 - **Timeline**: 1-2 weeks total, adjustable based on feedback.

@@ -5,7 +5,7 @@ import (
 )
 
 func TestLimiterGetOrCreateScopedBuckets(t *testing.T) {
-	m := NewLimiterManager()
+	m := NewLimiterManager(nil)
 	// default config for name
 	m.AddDefaultConfig("test", BucketConfig{RefillRate: 1.0, Capacity: 2.0})
 

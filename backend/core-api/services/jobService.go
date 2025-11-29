@@ -124,6 +124,7 @@ func (s *JobService) ProcessJob(id string) error {
 			}
 		}()
 
+		startTS := time.Now()
 		var jobErr error
 		waitForOrchestration := false
 
@@ -148,23 +149,41 @@ func (s *JobService) ProcessJob(id string) error {
 		}
 
 		// Update job status: if this job was handed to orchestration, leave it to the consumer
+		var finalStatus string
 		if jobErr != nil {
 			s.jobRepo.UpdateJobStatus(id, "failed")
 			if JobsProcessed != nil {
 				JobsProcessed.WithLabelValues("failed").Inc()
 			}
+			finalStatus = "failed"
 		} else {
 			if waitForOrchestration {
 				s.jobRepo.UpdateJobStatus(id, "queued")
 				if JobsProcessed != nil {
 					JobsProcessed.WithLabelValues("queued").Inc()
 				}
+				finalStatus = "queued"
 			} else {
 				s.jobRepo.UpdateJobStatus(id, "completed")
 				if JobsProcessed != nil {
 					JobsProcessed.WithLabelValues("completed").Inc()
 				}
+				finalStatus = "completed"
 			}
+		}
+
+		// record duration histogram
+		if JobProcessingSeconds != nil {
+			dur := time.Since(startTS).Seconds()
+			jt := job.Type
+			if jt == "" {
+				jt = "unknown"
+			}
+			statusLabel := finalStatus
+			if statusLabel == "" {
+				statusLabel = "unknown"
+			}
+			JobProcessingSeconds.WithLabelValues(jt, statusLabel).Observe(dur)
 		}
 	}()
 

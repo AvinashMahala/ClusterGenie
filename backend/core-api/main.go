@@ -7,18 +7,14 @@ package main
 // @BasePath /api/v1
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strconv"
-	"github.com/joho/godotenv"
 	"time"
 
-	// Load local .env (optional) to make development easier
-	if err := godotenv.Load(); err != nil {
-		log.Println(".env not found or failed to load, falling back to environment variables")
-	} else {
-		log.Println("Loaded .env file for configuration")
-	}
+	"github.com/joho/godotenv"
+
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
@@ -34,6 +30,12 @@ import (
 )
 
 func main() {
+	// Load local .env (optional) to make development easier
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env not found or failed to load, falling back to environment variables")
+	} else {
+		log.Println("Loaded .env file for configuration")
+	}
 	// Initialize database
 	database.InitDB()
 	defer database.CloseDB()
@@ -68,7 +70,7 @@ func main() {
 	defer consumer.Close()
 
 	// Initialize LimiterManager and worker pool for Phase 6
-	limiter := services.NewLimiterManager()
+	limiter := services.NewLimiterManager(database.Redis)
 	// configurable defaults (env vars)
 	diagRate := 0.2
 	diagCap := 5.0
@@ -402,7 +404,7 @@ func main() {
 		// allow optional scope information
 		scopeType := c.Query("scope_type")
 		scopeId := c.Query("scope_id")
-		var b *services.TokenBucket
+		var b services.RateLimiter
 		if scopeType != "" && scopeId != "" {
 			scopeKey := scopeId
 			if scopeType == "user" {
@@ -420,6 +422,86 @@ func main() {
 		}
 		available, capacity, rate := b.Status()
 		c.JSON(200, gin.H{"name": name, "available": available, "capacity": capacity, "rate_per_sec": rate})
+	})
+
+	// manage persisted limiter config (stored in Redis)
+	api.POST("/observability/ratelimit/config", func(c *gin.Context) {
+		var body struct {
+			Name      string  `json:"name"`
+			ScopeType string  `json:"scope_type"`
+			ScopeID   string  `json:"scope_id"`
+			Refill    float64 `json:"refill_rate"`
+			Capacity  float64 `json:"capacity"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if body.Name == "" {
+			c.JSON(400, gin.H{"error": "name is required"})
+			return
+		}
+		// scope key
+		scopeKey := "global"
+		if body.ScopeType == "user" && body.ScopeID != "" {
+			scopeKey = "user:" + body.ScopeID
+		} else if body.ScopeType == "cluster" && body.ScopeID != "" {
+			scopeKey = "cluster:" + body.ScopeID
+		}
+
+		if database.Redis == nil {
+			c.JSON(500, gin.H{"error": "redis not configured"})
+			return
+		}
+
+		cfgKey := "limiter_config:" + body.Name + ":" + scopeKey
+		m := map[string]interface{}{}
+		if body.Refill > 0 {
+			m["refill_rate"] = fmt.Sprintf("%f", body.Refill)
+		}
+		if body.Capacity > 0 {
+			m["capacity"] = fmt.Sprintf("%f", body.Capacity)
+		}
+		if len(m) == 0 {
+			c.JSON(400, gin.H{"error": "refill_rate or capacity required"})
+			return
+		}
+		if err := database.Redis.HSet(c.Request.Context(), cfgKey, m).Err(); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"ok": true, "config_key": cfgKey})
+	})
+
+	api.GET("/observability/ratelimit/config", func(c *gin.Context) {
+		name := c.Query("name")
+		scopeType := c.Query("scope_type")
+		scopeId := c.Query("scope_id")
+		if name == "" {
+			c.JSON(400, gin.H{"error": "name required"})
+			return
+		}
+		scopeKey := "global"
+		if scopeType == "user" && scopeId != "" {
+			scopeKey = "user:" + scopeId
+		} else if scopeType == "cluster" && scopeId != "" {
+			scopeKey = "cluster:" + scopeId
+		}
+		if database.Redis == nil {
+			c.JSON(500, gin.H{"error": "redis not configured"})
+			return
+		}
+		cfgKey := "limiter_config:" + name + ":" + scopeKey
+		vals, err := database.Redis.HGetAll(c.Request.Context(), cfgKey).Result()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		if len(vals) == 0 {
+			c.JSON(404, gin.H{"error": "not found"})
+			return
+		}
+		c.JSON(200, gin.H{"name": name, "scope": scopeKey, "config": vals})
 	})
 
 	api.GET("/observability/workerpool", func(c *gin.Context) {

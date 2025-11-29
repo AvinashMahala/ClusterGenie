@@ -23,8 +23,15 @@ export function MonitoringPanel() {
   const [error, setError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<any|null>(null);
   const [workerPool, setWorkerPool] = useState<any|null>(null);
+  const [ruleName, setRuleName] = useState<string>('jobs_create');
+  const [ruleScopeType, setRuleScopeType] = useState<string>('global');
+  const [ruleScopeId, setRuleScopeId] = useState<string>('');
+  const [ruleRefill, setRuleRefill] = useState<number | ''>('');
+  const [ruleCapacity, setRuleCapacity] = useState<number | ''>('');
+  const [ruleStatus, setRuleStatus] = useState<string | null>(null);
   const [scopeType, setScopeType] = useState<string>('global');
   const [scopeId, setScopeId] = useState<string>('');
+  const [showGrafanaEmbed, setShowGrafanaEmbed] = useState<boolean>(false);
 
   const loadMetrics = async () => {
     // allow listing across all clusters when clusterId is empty
@@ -77,6 +84,42 @@ export function MonitoringPanel() {
     }, 5000);
     return () => clearInterval(id);
   }, []);
+
+  const fetchRule = async () => {
+    setRuleStatus(null);
+    try {
+      const cfg = await obsService.getRateLimitConfig(ruleName, ruleScopeType, ruleScopeId || undefined);
+      if (cfg && cfg.config) {
+        setRuleRefill(parseFloat(cfg.config.refill_rate || '') || '');
+        setRuleCapacity(parseFloat(cfg.config.capacity || '') || '');
+        setRuleStatus('loaded');
+      } else {
+        setRuleRefill('');
+        setRuleCapacity('');
+        setRuleStatus('not found');
+      }
+    } catch (err) {
+      setRuleStatus('error');
+    }
+  };
+
+  const saveRule = async () => {
+    setRuleStatus(null);
+    try {
+      const body: any = { name: ruleName };
+      if (ruleScopeType !== 'global') {
+        body.scope_type = ruleScopeType;
+        body.scope_id = ruleScopeId;
+      }
+      if (ruleRefill !== '') body.refill_rate = ruleRefill;
+      if (ruleCapacity !== '') body.capacity = ruleCapacity;
+      const resp = await obsService.setRateLimitConfig(body);
+      if (resp && resp.ok) setRuleStatus('saved');
+      else setRuleStatus('saved');
+    } catch (err) {
+      setRuleStatus('error');
+    }
+  };
 
   const fetchScopedRateLimit = async () => {
     try {
@@ -224,6 +267,14 @@ export function MonitoringPanel() {
                     <ActionButton onClick={fetchScopedRateLimit}>Fetch</ActionButton>
                   </div>
                 </div>
+                <div className="observability-controls grafana-controls">
+                  <ActionButton onClick={() => setShowGrafanaEmbed((s) => !s)}>
+                    {showGrafanaEmbed ? 'Hide' : 'Embed'} Grafana Panel
+                  </ActionButton>
+                  <ActionButton onClick={() => window.open(`http://localhost:3000/d/cg-demo?orgId=1${scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeId && scopeType === 'user' ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`)}>
+                    Open Dashboard
+                  </ActionButton>
+                </div>
               </div>
 
               <div className="observability-item">
@@ -276,6 +327,53 @@ export function MonitoringPanel() {
             </CardContent>
           </Card>
         )}
+
+        {/* Optional embedded Grafana panel */}
+        {showGrafanaEmbed && (
+          <Card>
+            <CardHeader title="Grafana — ClusterGenie Dashboard (embed)" />
+            <CardContent>
+              <div style={{ height: 600 }}>
+                <iframe
+                  title="ClusterGenie Grafana"
+                  src={`http://localhost:3000/d/cg-demo?orgId=1${scopeType === 'cluster' && scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeType === 'user' && scopeId ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Manage persisted limiter rules */}
+        <Card>
+          <CardHeader title="Manage limiter rules (Redis)" />
+          <CardContent>
+            <div className="rule-grid">
+              <Select label="Rule name" value={ruleName} onChange={(e) => setRuleName(e.target.value)} options={[{ value: 'jobs_create', label: 'jobs_create' }, { value: 'diagnosis', label: 'diagnosis' }]} />
+              <Select label="Scope type" value={ruleScopeType} onChange={(e) => setRuleScopeType(e.target.value)} options={[{ value: 'global', label: 'Global' }, { value: 'user', label: 'User' }, { value: 'cluster', label: 'Cluster' }]} />
+              {ruleScopeType !== 'global' && (
+                <input className="scope-input" placeholder="Scope id (e.g. user-alice or cluster-123)" value={ruleScopeId} onChange={(e) => setRuleScopeId(e.target.value)} />
+              )}
+
+              <div className="rule-numeric">
+                <label>Refill rate (tokens/sec)</label>
+                <input type="number" step="0.01" value={ruleRefill === '' ? '' : String(ruleRefill)} onChange={(e) => setRuleRefill(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+
+              <div className="rule-numeric">
+                <label>Capacity</label>
+                <input type="number" step="1" value={ruleCapacity === '' ? '' : String(ruleCapacity)} onChange={(e) => setRuleCapacity(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+
+            </div>
+
+            <div className="rule-actions">
+              <ActionButton onClick={fetchRule}>Fetch</ActionButton>
+              <ActionButton onClick={saveRule}>Save</ActionButton>
+              {ruleStatus && <div className="rule-status">Status: {ruleStatus}</div>}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Metrics History */}
         {metrics && metrics.metrics.length > 0 && (

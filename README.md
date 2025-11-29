@@ -198,8 +198,34 @@ This README will be updated after each phase.
 
 ### Prometheus / Observability
 
-- The API exposes a Prometheus metrics scrape endpoint at `http://localhost:8080/metrics`.
-- Rate-limiting, worker pool and job counters are exported as metrics and can be scraped for dashboards.
+
+### Prometheus + Grafana (local)
+
+We include a lightweight Prometheus + Grafana stack in `docker-compose.yml`. To start them along with the app:
+
+```bash
+docker-compose up -d prometheus grafana
+```
+
+- Prometheus UI: http://localhost:9090
+- Grafana UI: http://localhost:3000 (default admin/admin on first boot)
+
+Grafana is pre-provisioned with a sample dashboard located at `monitoring/grafana/dashboards/clustergenie_dashboard.json` that visualizes worker queue length, active workers, and rate-limit tokens.
+There is also a minimal dashboard for playback/demo at `monitoring/grafana/dashboards/clustergenie_minimal_dashboard.json` and a short demo README at `monitoring/demo/README.md` showing quick steps to simulate load and visualize behaviors.
+
+### Embedded dashboard preview in UI
+
+You can embed the prebuilt Grafana dashboard inside the Monitoring panel. Click "Embed Grafana Panel" in the Monitoring view (requires Grafana running locally at http://localhost:3000). The embedded iframe will pass the chosen cluster or user as a template variable to the dashboard so you can preview scoped metrics in the UI.
+
+### Persisted per-client rate limits (Redis)
+
+You can manage per-client or per-cluster rate limit rules via the API (persisted in Redis):
+
+- POST /api/v1/observability/ratelimit/config
+   - body: { name, scope_type: "user"|"cluster"|"global", scope_id, refill_rate, capacity }
+- GET /api/v1/observability/ratelimit/config?name=<name>&scope_type=<user|cluster|global>&scope_id=<id>
+
+These endpoints store limiter rules in Redis keys like `limiter_config:<name>:user:<id>` so multiple instances of the service pick up the same limits.
 
 ### Configurable Environment Variables (backend/core-api)
 
