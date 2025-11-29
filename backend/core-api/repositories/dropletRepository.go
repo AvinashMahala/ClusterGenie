@@ -35,6 +35,7 @@ func (r *DropletRepositoryImpl) CreateDroplet(req *models.CreateDropletRequest) 
 		ClusterID: req.ClusterID,
 		Name:      req.Name,
 		Region:    req.Region,
+		Provider:  req.Provider,
 		Size:      req.Size,
 		Image:     req.Image,
 		Status:    "provisioning",
@@ -138,6 +139,16 @@ func (r *DropletRepositoryImpl) DeleteDroplet(id string) error {
 	// Invalidate cache
 	if r.redis != nil {
 		r.redis.Del(context.Background(), "droplet:"+id)
+	}
+	return nil
+}
+
+func (r *DropletRepositoryImpl) UpdateDroplet(d *models.Droplet) error {
+	if err := r.db.Save(d).Error; err != nil {
+		return err
+	}
+	if r.redis != nil {
+		r.redis.Del(context.Background(), "droplet:"+d.ID)
 	}
 	return nil
 }

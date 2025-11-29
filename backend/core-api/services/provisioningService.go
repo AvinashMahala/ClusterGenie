@@ -13,6 +13,7 @@ import (
 type ProvisioningService struct {
 	dropletRepo interfaces.DropletRepository
 	clusterSvc  *ClusterService
+	scheduler   *SchedulerService
 	producer    interface {
 		PublishEvent(topic, key string, event interface{}) error
 	} // mock interface
@@ -20,11 +21,12 @@ type ProvisioningService struct {
 
 func NewProvisioningService(dropletRepo interfaces.DropletRepository, producer interface {
 	PublishEvent(topic, key string, event interface{}) error
-}, clusterSvc *ClusterService) *ProvisioningService {
+}, clusterSvc *ClusterService, scheduler *SchedulerService) *ProvisioningService {
 	return &ProvisioningService{
 		dropletRepo: dropletRepo,
 		producer:    producer,
 		clusterSvc:  clusterSvc,
+		scheduler:   scheduler,
 	}
 }
 
@@ -84,9 +86,19 @@ func (s *ProvisioningService) ScaleCluster(clusterID string, action string) erro
 		req := &models.CreateDropletRequest{
 			Name:      "scaled-droplet-" + time.Now().Format("20060102150405"),
 			ClusterID: &cid,
-			Region:    "nyc1", // Default region
+			Region:    "nyc1", // Default region - may be overridden by scheduler
 			Size:      "s-1vcpu-1gb",
 			Image:     "ubuntu-22-04-x64",
+		}
+		// if scheduler available, attempt to pick provider+region
+		if s.scheduler != nil {
+			prov, region, err := s.scheduler.SchedulePlacement(clusterID, "", "")
+			if err == nil && prov != nil {
+				req.Provider = prov.Name
+				if region != "" {
+					req.Region = region
+				}
+			}
 		}
 		_, err := s.CreateDroplet(req)
 		return err

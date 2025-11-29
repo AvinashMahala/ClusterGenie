@@ -40,17 +40,26 @@ func main() {
 
 	// Initialize dependencies
 	dropletRepo := repositories.NewDropletRepository(database.DB, database.Redis)
+	providerRepo := repositories.NewProviderRepository(database.DB, database.Redis)
 	clusterRepo := repositories.NewClusterRepository(database.DB, database.Redis)
 	jobRepo := repositories.NewJobRepository(database.DB, database.Redis)
 	metricRepo := repositories.NewMetricRepository(database.DB, database.Redis)
+	deploymentRepo := repositories.NewDeploymentRepository(database.DB, database.Redis)
+	// autoscaler repo/service (demo-mode, Redis-backed)
+	autoscalerRepo := repositories.NewAutoscalerRepository(database.DB, database.Redis)
 	producer := eventbus.NewProducer([]string{"localhost:9092"})
 
 	// cluster service must exist before provisioning service to allow cluster validation
 	clusterSvc := services.NewClusterService(clusterRepo)
-	provisioningSvc := services.NewProvisioningService(dropletRepo, producer, clusterSvc)
+	// scheduler needs providerRepo and dropletRepo; create before provisioning so provisioning can ask placement
+	schedulerSvc := services.NewSchedulerService(providerRepo, dropletRepo)
+	provisioningSvc := services.NewProvisioningService(dropletRepo, producer, clusterSvc, schedulerSvc)
 	diagnosisSvc := services.NewDiagnosisService(clusterRepo)
 	jobSvc := services.NewJobService(jobRepo, producer)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
+	billingSvc := services.NewBillingService(dropletRepo, providerRepo)
+	deploymentSvc := services.NewDeploymentService(deploymentRepo, provisioningSvc, producer)
+	autoscalerSvc := services.NewAutoscalerService(autoscalerRepo, provisioningSvc, monitoringSvc)
 
 	// Set service dependencies
 	jobSvc.SetProvisioningService(provisioningSvc)
@@ -215,6 +224,27 @@ func main() {
 
 		// Monitoring
 		api.GET("/metrics", GetMetricsHandler(monitoringSvc))
+
+		// Autoscaling demo endpoints
+		api.POST("/autoscaling/policies", CreateAutoscalePolicyHandler(autoscalerSvc))
+		api.GET("/autoscaling/policies", ListAutoscalePoliciesHandler(autoscalerSvc))
+		api.GET("/autoscaling/policies/:id", GetAutoscalePolicyHandler(autoscalerSvc))
+		api.PUT("/autoscaling/policies/:id", UpdateAutoscalePolicyHandler(autoscalerSvc))
+		api.DELETE("/autoscaling/policies/:id", DeleteAutoscalePolicyHandler(autoscalerSvc))
+		api.POST("/autoscaling/evaluate", EvaluateAutoscalingHandler(autoscalerSvc))
+		// providers/scheduler
+		api.GET("/providers", ListProvidersHandler(schedulerSvc))
+		api.POST("/providers", CreateProviderHandler(schedulerSvc))
+		api.POST("/schedule", ScheduleHandler(schedulerSvc))
+		api.POST("/migrations", MigrateHandler(schedulerSvc))
+		// billing
+		api.GET("/billing/cluster", EstimateClusterCostHandler(billingSvc))
+
+		// Deployments / rollout simulation
+		api.POST("/deployments/start", StartDeploymentHandler(deploymentSvc))
+		api.GET("/deployments/:id", GetDeploymentHandler(deploymentSvc))
+		api.GET("/deployments", ListDeploymentsHandler(deploymentSvc))
+		api.POST("/deployments/:id/rollback", RollbackDeploymentHandler(deploymentSvc))
 	}
 
 	// Observability endpoints for Phase 6

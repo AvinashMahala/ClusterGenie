@@ -6,6 +6,7 @@ export interface Droplet {
   cluster?: import('./cluster').Cluster;
   cluster_id?: string | null;
   region: string;
+  provider?: string;
   size: string;
   image: string;
   status: 'active' | 'inactive' | 'provisioning';
@@ -18,6 +19,7 @@ export interface CreateDropletRequest {
   // attach created droplet to this cluster (optional)
   "cluster_id"?: string | null;
   region: string;
+  provider?: string;
   size: string;
   image: string;
 }

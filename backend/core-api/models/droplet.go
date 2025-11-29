@@ -11,6 +11,7 @@ type Droplet struct {
 	Cluster   *Cluster  `json:"cluster,omitempty" gorm:"foreignKey:ClusterID;references:ID"`
 	Name      string    `json:"name" example:"web-01"`
 	Region    string    `json:"region" example:"nyc3"`
+	Provider  string    `json:"provider,omitempty"`
 	Size      string    `json:"size" example:"s-1vcpu-1gb"`
 	Image     string    `json:"image" example:"ubuntu-20-04-x64"`
 	Status    string    `json:"status"`
@@ -23,6 +24,7 @@ type CreateDropletRequest struct {
 	// Optional cluster ID to assign this droplet to
 	ClusterID *string `json:"cluster_id,omitempty"`
 	Region    string  `json:"region" example:"nyc3"`
+	Provider  string  `json:"provider,omitempty"` // optional provider override (demo)
 	Size      string  `json:"size" example:"s-1vcpu-1gb"`
 	Image     string  `json:"image" example:"ubuntu-20-04-x64"`
 }

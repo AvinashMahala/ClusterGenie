@@ -61,6 +61,12 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete, cluste
       sortable: true
     },
     {
+      key: 'provider',
+      label: 'Provider',
+      sortable: true,
+      render: (value) => value ? value : <span className="muted">—</span>
+    },
+    {
       key: 'size',
       label: 'Size',
       sortable: true

@@ -11,4 +11,5 @@ type DropletRepository interface {
 	GetDroplet(id string) (*models.Droplet, error)
 	ListDroplets() ([]*models.Droplet, error)
 	DeleteDroplet(id string) error
+	UpdateDroplet(d *models.Droplet) error
 }

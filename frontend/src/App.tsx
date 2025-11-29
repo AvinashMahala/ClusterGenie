@@ -10,6 +10,10 @@ import { ClusterPanel } from './components/ClusterPanel';
 import { ClustersPanel } from './components/ClustersPanel';
 import { CreateClusterPanel } from './components/CreateClusterPanel';
 import { Dashboard } from './components/Dashboard';
+import { AutoscalingPanel } from './components/AutoscalingPanel';
+import { DeploymentsPanel } from './components/DeploymentsPanel';
+import { ProvidersPanel } from './components/ProvidersPanel';
+import { BillingPanel } from './components/BillingPanel';
 import Layout from './components/Layout';
 
 function App() {
@@ -23,6 +27,10 @@ function App() {
           <Route path="/jobs" element={<JobPanel />} />
           <Route path="/jobs/:id" element={<JobDetails />} />
           <Route path="/monitoring" element={<MonitoringPanel />} />
+          <Route path="/autoscaling" element={<AutoscalingPanel />} />
+          <Route path="/deployments" element={<DeploymentsPanel />} />
+          <Route path="/providers" element={<ProvidersPanel />} />
+          <Route path="/billing" element={<BillingPanel />} />
           <Route path="/admin/limiter-rules" element={<LimiterRulesPanel />} />
           <Route path="/clusters" element={<ClustersPanel />} />
           <Route path="/clusters/new" element={<CreateClusterPanel />} />

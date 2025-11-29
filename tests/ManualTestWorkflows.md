@@ -28,6 +28,12 @@ For each test case include a short unique id (e.g. TC-CL-001), the build / envir
 - Attach screenshots using the placeholder path listed in each test step.
 - Record any defects with reproduction steps, logs and environment values.
 
+Local scripted tests: this repo also includes a small set of sample curl-based scripts you can run for Phase 8 flows (autoscaling, deployments, providers, billing):
+
+	- Location: `tests/sample-tests`
+	- Use `chmod +x tests/sample-tests/*.sh` and `tests/sample-tests/run-all.sh` to execute them locally against a running core-api.
+	- If you'd prefer Postman/Newman, `tests/postman` contains a ready-to-import collection and environment.
+
 ---
 
 ## Setup & Preconditions ✅

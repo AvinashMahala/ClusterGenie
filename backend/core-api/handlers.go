@@ -711,3 +711,362 @@ func WorkerPoolHandler(pool *services.WorkerPool) gin.HandlerFunc {
 		})
 	}
 }
+
+// ========== Autoscaling handlers ==========
+
+// @Summary Create autoscale policy
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param request body models.CreateAutoscalePolicyRequest true "Create policy"
+// @Success 201 {object} models.AutoscalePolicy
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/policies [post]
+func CreateAutoscalePolicyHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.CreateAutoscalePolicyRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		p, err := svc.CreatePolicy(&req)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(201, p)
+	}
+}
+
+// @Summary List policies for a cluster
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param cluster_id query string true "Cluster ID"
+// @Success 200 {array} models.AutoscalePolicy
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/policies [get]
+func ListAutoscalePoliciesHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clusterID := c.Query("cluster_id")
+		if clusterID == "" {
+			c.JSON(400, models.ErrorResponse{Error: "cluster_id required"})
+			return
+		}
+		items, err := svc.ListPolicies(clusterID)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"items": items})
+	}
+}
+
+// @Summary Get a single autoscale policy
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param id path string true "Policy ID"
+// @Success 200 {object} models.AutoscalePolicy
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/policies/{id} [get]
+func GetAutoscalePolicyHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		p, err := svc.GetPolicy(id)
+		if err != nil {
+			c.JSON(404, models.ErrorResponse{Error: "policy not found"})
+			return
+		}
+		c.JSON(200, p)
+	}
+}
+
+// @Summary Update autoscale policy
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param id path string true "Policy ID"
+// @Param request body models.UpdateAutoscalePolicyRequest true "Update body"
+// @Success 200 {object} models.AutoscalePolicy
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/policies/{id} [put]
+func UpdateAutoscalePolicyHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var req models.UpdateAutoscalePolicyRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		p, err := svc.UpdatePolicy(id, &req)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, p)
+	}
+}
+
+// @Summary Delete autoscale policy
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param id path string true "Policy ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/policies/{id} [delete]
+func DeleteAutoscalePolicyHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if err := svc.DeletePolicy(id); err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"ok": true, "deleted": id})
+	}
+}
+
+// @Summary Evaluate and apply autoscale policies
+// @Tags autoscaling
+// @Accept json
+// @Produce json
+// @Param cluster_id query string true "Cluster ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /autoscaling/evaluate [post]
+func EvaluateAutoscalingHandler(svc *services.AutoscalerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clusterID := c.Query("cluster_id")
+		if clusterID == "" {
+			c.JSON(400, models.ErrorResponse{Error: "cluster_id required"})
+			return
+		}
+		res, err := svc.EvaluatePolicies(clusterID)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, res)
+	}
+}
+
+// ========== Deployment handlers (rollout simulation) ==========
+
+// @Summary Start a deployment (simulate rollout)
+// @Tags deployments
+// @Accept json
+// @Produce json
+// @Param request body models.StartDeploymentRequest true "Start deployment"
+// @Success 201 {object} models.Deployment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /deployments/start [post]
+func StartDeploymentHandler(svc *services.DeploymentService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.StartDeploymentRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		d, err := svc.StartDeployment(&req)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(201, d)
+	}
+}
+
+// @Summary Get deployment by id
+// @Tags deployments
+// @Accept json
+// @Produce json
+// @Param id path string true "Deployment ID"
+// @Success 200 {object} models.Deployment
+// @Failure 404 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /deployments/{id} [get]
+func GetDeploymentHandler(svc *services.DeploymentService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		d, err := svc.GetDeployment(id)
+		if err != nil {
+			c.JSON(404, models.ErrorResponse{Error: "not found"})
+			return
+		}
+		c.JSON(200, d)
+	}
+}
+
+// @Summary List deployments for a cluster
+// @Tags deployments
+// @Accept json
+// @Produce json
+// @Param cluster_id query string true "Cluster ID"
+// @Success 200 {array} models.Deployment
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /deployments [get]
+func ListDeploymentsHandler(svc *services.DeploymentService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clusterID := c.Query("cluster_id")
+		if clusterID == "" {
+			c.JSON(400, models.ErrorResponse{Error: "cluster_id required"})
+			return
+		}
+		items, err := svc.ListDeployments(clusterID)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"items": items})
+	}
+}
+
+// @Summary Rollback a deployment
+// @Tags deployments
+// @Accept json
+// @Produce json
+// @Param id path string true "Deployment ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /deployments/{id}/rollback [post]
+func RollbackDeploymentHandler(svc *services.DeploymentService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if err := svc.RollbackDeployment(id); err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"ok": true, "rolled_back": id})
+	}
+}
+
+// Providers and scheduler endpoints
+
+// @Summary List providers
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.Provider
+// @Router /providers [get]
+func ListProvidersHandler(svc *services.SchedulerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, err := svc.ListProviders()
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"items": items})
+	}
+}
+
+// @Summary Create provider (demo)
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param request body models.Provider true "Create provider"
+// @Success 201 {object} models.Provider
+// @Router /providers [post]
+func CreateProviderHandler(svc *services.SchedulerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.Provider
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		p, err := svc.CreateProvider(&req)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(201, p)
+	}
+}
+
+// @Summary Schedule placement for cluster
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param request body object true "{cluster_id, preferred, avoid}"
+// @Success 200 {object} map[string]interface{}
+// @Router /schedule [post]
+func ScheduleHandler(svc *services.SchedulerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body struct {
+			ClusterID string `json:"cluster_id"`
+			Preferred string `json:"preferred_provider"`
+			Avoid     string `json:"avoid_provider"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		prov, region, err := svc.SchedulePlacement(body.ClusterID, body.Preferred, body.Avoid)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"provider": prov, "region": region})
+	}
+}
+
+// @Summary Migrate droplet to provider (demo)
+// @Tags providers
+// @Accept json
+// @Produce json
+// @Param request body object true "{droplet_id, target_provider}"
+// @Success 200 {object} map[string]interface{}
+// @Router /migrations [post]
+func MigrateHandler(svc *services.SchedulerService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body struct {
+			DropletID      string `json:"droplet_id"`
+			TargetProvider string `json:"target_provider"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		if err := svc.MigrateDroplet(body.DropletID, body.TargetProvider); err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"ok": true})
+	}
+}
+
+// Billing endpoints
+
+// @Summary Estimate cost for cluster
+// @Tags billing
+// @Accept json
+// @Produce json
+// @Param cluster_id query string true "Cluster ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /billing/cluster [get]
+func EstimateClusterCostHandler(svc *services.BillingService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		clusterID := c.Query("cluster_id")
+		if clusterID == "" {
+			c.JSON(400, models.ErrorResponse{Error: "cluster_id required"})
+			return
+		}
+		r, err := svc.EstimateClusterCost(clusterID)
+		if err != nil {
+			c.JSON(500, models.ErrorResponse{Error: err.Error()})
+			return
+		}
+		c.JSON(200, r)
+	}
+}

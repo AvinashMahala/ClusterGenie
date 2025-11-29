@@ -28,7 +28,7 @@ func TestCreateDroplet_FailsWhenClusterMissing(t *testing.T) {
 	dropletRepo := repositories.NewDropletRepository(db, nil)
 	clusterRepo := repositories.NewClusterRepository(db, nil)
 	clusterSvc := services.NewClusterService(clusterRepo)
-	provisioningSvc := services.NewProvisioningService(dropletRepo, nil, clusterSvc)
+	provisioningSvc := services.NewProvisioningService(dropletRepo, nil, clusterSvc, nil)
 
 	req := &models.CreateDropletRequest{
 		Name:      "bad-drop",
@@ -49,7 +49,7 @@ func TestCreateDroplet_SucceedsAndAddsToCluster(t *testing.T) {
 	dropletRepo := repositories.NewDropletRepository(db, nil)
 	clusterRepo := repositories.NewClusterRepository(db, nil)
 	clusterSvc := services.NewClusterService(clusterRepo)
-	provisioningSvc := services.NewProvisioningService(dropletRepo, nil, clusterSvc)
+	provisioningSvc := services.NewProvisioningService(dropletRepo, nil, clusterSvc, nil)
 
 	// create cluster
 	cluster := &models.Cluster{

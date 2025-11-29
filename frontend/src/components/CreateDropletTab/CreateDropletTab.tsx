@@ -6,6 +6,7 @@ import type { Cluster } from '../../models/cluster';
 import './CreateDropletTab.scss';
 import { useEffect, useRef, useState } from 'react';
 import { ClusterService } from '../../services/clusterService';
+import { ProviderService } from '../../services/providerService';
 import { ErrorMessage } from '../common';
 
 export interface CreateDropletTabProps {
@@ -105,6 +106,12 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
       }
     };
     const clusterSvc = new ClusterService();
+    const providerSvc = new ProviderService();
+    const [providers, setProviders] = useState<any[]>([]);
+
+    useEffect(() => {
+      providerSvc.listProviders().then((p) => setProviders(p || []));
+    }, []);
 
   // autofocus selector when there's a cluster error passed from parent
   useEffect(() => {
@@ -272,6 +279,21 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
                 </select>
               </div>
             </div>
+
+              <div className="form-field">
+                <label htmlFor="provider">Provider (optional)</label>
+                <div className="input-wrapper">
+                  <div className="input-icon">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h18M3 12h18M3 17h18"></path>
+                    </svg>
+                  </div>
+                  <select id="provider" value={form.provider ?? ''} onChange={(e) => handleInputChange('provider' as keyof CreateDropletRequest, e.target.value || undefined)}>
+                    <option value="">(auto)</option>
+                    {providers.map((p:any)=> (<option key={p.id} value={p.name}>{p.name}</option>))}
+                  </select>
+                </div>
+              </div>
 
             <div className="form-field">
               <label htmlFor="size">Size</label>

@@ -39,6 +39,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       ),
     },
     {
+      name: 'Autoscaling',
+      href: '/autoscaling',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h3m12 0h3M7 6h10M7 18h10M12 3v18" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Deployments',
+      href: '/deployments',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Providers',
+      href: '/providers',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Billing',
+      href: '/billing',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14v8" />
+        </svg>
+      ),
+    },
+    {
       name: 'Diagnosis',
       href: '/diagnosis',
       icon: (

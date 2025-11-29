@@ -22,6 +22,7 @@ export function ProvisioningPanel() {
     name: '',
     // optional cluster selection
     "cluster_id": undefined,
+    provider: undefined,
     region: 'nyc1',
     size: 's-1vcpu-1gb',
     image: 'ubuntu-20-04-x64',
@@ -48,7 +49,7 @@ export function ProvisioningPanel() {
       setError(null);
       await provisioningService.createDroplet(form);
       await loadDroplets();
-      setForm({ name: '', "cluster_id": undefined, region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
+      setForm({ name: '', "cluster_id": undefined, provider: undefined, region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
     } catch (err: any) {
       console.error('Failed to create droplet:', err);
       const msg = err instanceof Error ? err.message : String(err);
