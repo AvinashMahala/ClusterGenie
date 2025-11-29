@@ -28,6 +28,26 @@
         "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "A" }],
         "gridPos": { "x": 0, "y": 6, "w": 24, "h": 8 }
       }
+      ,
+      {
+        "type": "stat",
+        "title": "Latency p95/p99",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "A" },
+          { "expr": "histogram_quantile(0.99, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le))", "refId": "B" }
+        ],
+        "gridPos": { "x": 0, "y": 14, "w": 12, "h": 6 }
+      },
+      {
+        "type": "heatmap",
+        "title": "Rate-limit rejects heatmap",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (scope_id)", "refId": "A" }
+        ],
+        "gridPos": { "x": 12, "y": 14, "w": 12, "h": 6 }
+      }
     ]
   },
   "overwrite": true

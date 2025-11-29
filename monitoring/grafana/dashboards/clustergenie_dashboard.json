@@ -122,6 +122,35 @@
         "gridPos": { "x": 16, "y": 6, "w": 8, "h": 8 }
       },
       {
+        "type": "stat",
+        "title": "Latency distribution (p50/p95/p99)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "histogram_quantile(0.5, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "A" },
+          { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "B" },
+          { "expr": "histogram_quantile(0.99, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "C" }
+        ],
+        "gridPos": { "x": 16, "y": 14, "w": 8, "h": 6 }
+      },
+      {
+        "type": "heatmap",
+        "title": "Rate-limit rejects — heatmap (scope_id)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (scope_id)", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 30, "w": 24, "h": 10 }
+      },
+      {
+        "type": "timeseries",
+        "title": "Latency histogram (job_type)",
+        "datasource": "Prometheus",
+        "targets": [
+          { "expr": "sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type)", "refId": "A" }
+        ],
+        "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 }
+      },
+      {
         "type": "graph",
         "title": "Top rejecters (scope_id)",
         "datasource": "Prometheus",

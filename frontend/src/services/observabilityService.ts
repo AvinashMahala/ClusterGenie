@@ -24,8 +24,16 @@ export class ObservabilityService {
     return this.repo.getRateLimitConfig(name, scopeType, scopeId);
   }
 
+  async listRateLimitConfigs(name?: string, scopeType?: string, scopeId?: string) {
+    return this.repo.listRateLimitConfigs(name, scopeType, scopeId);
+  }
+
   async setRateLimitConfig(body: { name: string; scope_type?: string; scope_id?: string; refill_rate?: number; capacity?: number }) {
     return this.repo.setRateLimitConfig(body);
+  }
+
+  async deleteRateLimitConfig(body: { name?: string; scope_type?: string; scope_id?: string; key?: string }) {
+    return this.repo.deleteRateLimitConfig(body);
   }
 }
 

@@ -19,3 +19,14 @@ docker-compose up -d prometheus grafana core-api
 Tips for demo scenes:
 - Pre-fill limiter rules for a test user to demonstrate rejects and show the changed metric on Grafana.
 - Use the embedded dashboard in the Monitoring panel to show live metrics for a chosen cluster or user.
+
+Demo script:
+
+- There's a small demo helper at `monitoring/demo/demo.sh` which will seed a persisted limiter rule for a user and send job create requests to the API to generate metrics for Prometheus/Grafana.
+- Example: run the script to flood the API as user `alice` (adjust count/rate):
+
+```bash
+./monitoring/demo/demo.sh alice 100 50
+```
+
+This will create 100 jobs at roughly 50 req/s as user alice which should trigger rate-limit rejects depending on your limiter config.

@@ -224,6 +224,8 @@ You can manage per-client or per-cluster rate limit rules via the API (persisted
 - POST /api/v1/observability/ratelimit/config
    - body: { name, scope_type: "user"|"cluster"|"global", scope_id, refill_rate, capacity }
 - GET /api/v1/observability/ratelimit/config?name=<name>&scope_type=<user|cluster|global>&scope_id=<id>
+ - GET /api/v1/observability/ratelimit/config/list?name=<optional>&scope_type=<user|cluster|global>&scope_id=<id> — list persisted limiter configs
+ - DELETE /api/v1/observability/ratelimit/config — delete a persisted rule, accepts JSON body with one of { key, name + scope_type + scope_id }
 
 These endpoints store limiter rules in Redis keys like `limiter_config:<name>:user:<id>` so multiple instances of the service pick up the same limits.
 

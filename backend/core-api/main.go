@@ -15,6 +15,8 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"strings"
+
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
@@ -502,6 +504,108 @@ func main() {
 			return
 		}
 		c.JSON(200, gin.H{"name": name, "scope": scopeKey, "config": vals})
+	})
+
+	// list persisted limiter configs (supports optional name/scope filters)
+	api.GET("/observability/ratelimit/config/list", func(c *gin.Context) {
+		nameFilter := c.Query("name")
+		scopeType := c.Query("scope_type")
+		scopeId := c.Query("scope_id")
+
+		if database.Redis == nil {
+			c.JSON(500, gin.H{"error": "redis not configured"})
+			return
+		}
+
+		// build pattern
+		pattern := "limiter_config:*"
+		if nameFilter != "" {
+			if scopeType != "" && scopeId != "" {
+				scopeKey := "global"
+				if scopeType == "user" {
+					scopeKey = "user:" + scopeId
+				} else if scopeType == "cluster" {
+					scopeKey = "cluster:" + scopeId
+				}
+				pattern = "limiter_config:" + nameFilter + ":" + scopeKey
+			} else {
+				pattern = "limiter_config:" + nameFilter + ":*"
+			}
+		}
+
+		// scan through keys and return configs
+		var cursor uint64
+		results := []gin.H{}
+		for {
+			keys, cur, err := database.Redis.Scan(c.Request.Context(), cursor, pattern, 100).Result()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			cursor = cur
+			for _, k := range keys {
+				// keys like limiter_config:<name>:<scope>
+				parts := strings.SplitN(k, ":", 3)
+				if len(parts) < 3 {
+					continue
+				}
+				name := parts[1]
+				scope := parts[2]
+				vals, err := database.Redis.HGetAll(c.Request.Context(), k).Result()
+				if err != nil {
+					// collect but continue
+					continue
+				}
+				results = append(results, gin.H{"key": k, "name": name, "scope": scope, "config": vals})
+			}
+			if cursor == 0 {
+				break
+			}
+		}
+		c.JSON(200, gin.H{"count": len(results), "items": results})
+	})
+
+	// delete persisted limiter config
+	api.DELETE("/observability/ratelimit/config", func(c *gin.Context) {
+		var body struct {
+			Name      string `json:"name"`
+			ScopeType string `json:"scope_type"`
+			ScopeID   string `json:"scope_id"`
+			Key       string `json:"key"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		if database.Redis == nil {
+			c.JSON(500, gin.H{"error": "redis not configured"})
+			return
+		}
+
+		var cfgKey string
+		if body.Key != "" {
+			cfgKey = body.Key
+		} else {
+			if body.Name == "" {
+				c.JSON(400, gin.H{"error": "name or key required"})
+				return
+			}
+			scopeKey := "global"
+			if body.ScopeType == "user" && body.ScopeID != "" {
+				scopeKey = "user:" + body.ScopeID
+			} else if body.ScopeType == "cluster" && body.ScopeID != "" {
+				scopeKey = "cluster:" + body.ScopeID
+			}
+			cfgKey = "limiter_config:" + body.Name + ":" + scopeKey
+		}
+
+		if err := database.Redis.Del(c.Request.Context(), cfgKey).Err(); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{"ok": true, "deleted": cfgKey})
 	})
 
 	api.GET("/observability/workerpool", func(c *gin.Context) {

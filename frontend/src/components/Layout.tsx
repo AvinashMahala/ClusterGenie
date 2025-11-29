@@ -65,6 +65,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </svg>
       ),
     },
+    {
+      name: 'Limiter Rules',
+      href: '/admin/limiter-rules',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      ),
+    },
   ];
 
   return (
