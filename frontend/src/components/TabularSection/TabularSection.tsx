@@ -102,7 +102,7 @@ function TabularSection<T extends Record<string, any>>({
   return (
     <div className="tabular-section">
       {/* Section Header */}
-      <div className="section-header">
+      {/* <div className="section-header">
         <div className="section-info">
           <div className="section-icon">
             {icon}
@@ -119,7 +119,7 @@ function TabularSection<T extends Record<string, any>>({
             {actions}
           </div>
         )}
-      </div>
+      </div> */}
 
       {/* Filters */}
       <div className="filters-section">

@@ -136,7 +136,6 @@
         background-color: var(--color-background-secondary);
 
         th {
-          padding: 0.75rem 1rem;
           text-align: left;
           font-weight: 600;
           font-size: 0.875rem;
@@ -159,6 +158,14 @@
             justify-content: space-between;
             gap: 0.5rem;
 
+            /* ensure the header label occupies the left side and aligns
+               with the start of the corresponding table cells */
+            > span {
+              flex: 1 1 auto;
+              min-width: 0; /* allow proper truncation for long labels */
+              display: block;
+            }
+
             .sort-icon {
               width: 0.75rem;
               height: 0.75rem;
@@ -174,6 +181,7 @@
       }
 
       tbody {
+        text-align: justify;
         tr {
           transition: background-color 0.15s ease;
 
@@ -185,12 +193,12 @@
             }
           }
 
-          td {
-            padding: 0.75rem 1rem;
+            td {
             border-bottom: 1px solid var(--color-border-light);
-            font-size: 0.875rem;
+            font-size: 0.9rem; /* slightly larger for readability */
             color: var(--color-text-primary);
             vertical-align: middle;
+            /* keep default table-cell behavior so each td sits in its own column */
 
             &.status-cell {
               .status-badge {
@@ -347,10 +355,6 @@
       .data-table {
         font-size: 0.8125rem;
 
-        thead th,
-        tbody td {
-          padding: 0.5rem 0.75rem;
-        }
 
         // Hide less important columns on mobile
         th:nth-child(n+4),
