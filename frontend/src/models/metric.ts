@@ -17,4 +17,7 @@ export interface GetMetricsRequest {
 export interface MetricsResponse {
   metrics: Metric[];
   period: string;
+  page?: number;
+  page_size?: number;
+  total_count?: number;
 }

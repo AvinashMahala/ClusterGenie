@@ -7,11 +7,13 @@ import axios from 'axios';
 const baseURL = 'http://localhost:8080/api/v1';
 
 export class MetricRepositoryImpl implements MetricRepository {
-  async getMetrics(clusterId: string, type?: Metric['type']): Promise<MetricsResponse> {
-    const params = { cluster_id: clusterId };
+  async getMetrics(clusterId: string, type?: Metric['type'], page?: number, pageSize?: number): Promise<MetricsResponse> {
+    const params: any = { cluster_id: clusterId };
     if (type) {
       (params as any).type = type;
     }
+    if (page && page > 0) params.page = page;
+    if (pageSize && pageSize > 0) params.page_size = pageSize;
     const response = await axios.get(`${baseURL}/metrics`, { params });
     const metricsResponse = response.data;
     return {

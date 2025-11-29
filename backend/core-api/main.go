@@ -8,6 +8,7 @@ package main
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
@@ -37,7 +38,7 @@ func main() {
 	clusterSvc := services.NewClusterService(clusterRepo)
 	provisioningSvc := services.NewProvisioningService(dropletRepo, producer, clusterSvc)
 	diagnosisSvc := services.NewDiagnosisService(clusterRepo)
-	jobSvc := services.NewJobService(jobRepo)
+	jobSvc := services.NewJobService(jobRepo, producer)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
 
 	// Set service dependencies
@@ -238,9 +239,24 @@ func main() {
 		api.GET("/metrics", func(c *gin.Context) {
 			clusterID := c.Query("cluster_id")
 			metricType := c.Query("type")
+			page := 1
+			pageSize := 50
+			if p := c.Query("page"); p != "" {
+				if v, err := strconv.Atoi(p); err == nil && v > 0 {
+					page = v
+				}
+			}
+			if ps := c.Query("page_size"); ps != "" {
+				if v, err := strconv.Atoi(ps); err == nil && v > 0 {
+					pageSize = v
+				}
+			}
+
 			req := &models.GetMetricsRequest{
 				ClusterID: clusterID,
 				Type:      metricType,
+				Page:      page,
+				PageSize:  pageSize,
 			}
 			resp, err := monitoringSvc.GetMetrics(req)
 			if err != nil {

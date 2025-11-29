@@ -12,6 +12,8 @@ export function MonitoringPanel() {
   const [clusterId, setClusterId] = useState('cluster-demo');
   const [selectedType, setSelectedType] = useState<Metric['type'] | ''>('');
   const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +27,7 @@ export function MonitoringPanel() {
     setError(null);
 
     try {
-      const result = await monitoringService.getMetrics(clusterId.trim(), selectedType || undefined);
+      const result = await monitoringService.getMetrics(clusterId.trim(), selectedType || undefined, page, pageSize);
       setMetrics(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load metrics');
@@ -36,7 +38,7 @@ export function MonitoringPanel() {
 
   useEffect(() => {
     loadMetrics();
-  }, [clusterId, selectedType]);
+  }, [clusterId, selectedType, page, pageSize]);
 
   const getMetricColor = (type: string) => {
     switch (type) {
@@ -167,16 +169,33 @@ export function MonitoringPanel() {
                     </tr>
                   </thead>
                   <tbody>
-                    {metrics.metrics.slice(-20).map((metric) => (
+                    {metrics.metrics.map((metric) => (
                       <tr key={`${metric.id}-${metric.timestamp.getTime()}`}>
                         <td>{metric.type}</td>
                         <td>{formatValue(metric.value, metric.unit)}</td>
                         <td>{metric.timestamp.toLocaleString()}</td>
                       </tr>
-                    ))}
+                      ))}
                   </tbody>
                 </table>
               </div>
+                {/* Pagination controls */}
+                <div className="metrics-pagination">
+                  <div className="page-controls">
+                    <ActionButton onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                      Previous
+                    </ActionButton>
+                    <div className="page-info">Page {metrics.page || page} of {Math.max(1, Math.ceil(((metrics.total_count || 0) / (metrics.page_size || pageSize)) || 1))}</div>
+                    <ActionButton onClick={() => setPage((p) => p + 1)} disabled={(metrics.page || page) * (metrics.page_size || pageSize) >= (metrics.total_count || 0)}>
+                      Next
+                    </ActionButton>
+                  </div>
+
+                  <div className="page-size-control">
+                    <label>Page size</label>
+                    <Select value={pageSize.toString()} onChange={(e) => { setPageSize(parseInt(e.target.value)); setPage(1); }} options={[{ value: '10', label: '10' }, { value: '20', label: '20' }, { value: '50', label: '50' }, { value: '100', label: '100' }]} />
+                  </div>
+                </div>
             </CardContent>
           </Card>
         )}

@@ -11,7 +11,7 @@ export class MonitoringService {
     this.metricRepo = metricRepo;
   }
 
-  async getMetrics(clusterId: string, type?: Metric['type']): Promise<MetricsResponse> {
-    return this.metricRepo.getMetrics(clusterId, type);
+  async getMetrics(clusterId: string, type?: Metric['type'], page?: number, pageSize?: number): Promise<MetricsResponse> {
+    return this.metricRepo.getMetrics(clusterId, type, page, pageSize);
   }
 }
