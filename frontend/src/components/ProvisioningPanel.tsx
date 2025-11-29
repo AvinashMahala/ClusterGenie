@@ -5,6 +5,7 @@ import { ProvisioningService } from '../services/provisioningService';
 import { ClusterService } from '../services/clusterService';
 import type { Droplet, CreateDropletRequest } from '../models';
 import { Hero } from './Hero';
+import { useToast } from './Toast/ToastProvider';
 import { TabNavigation, type TabType } from './TabNavigation';
 import { OverviewTab } from './OverviewTab';
 import { CreateDropletTab } from './CreateDropletTab';
@@ -30,6 +31,8 @@ export function ProvisioningPanel() {
   const [clusters, setClusters] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [clusterError, setClusterError] = useState<string | null>(null);
+  const [latestCreatedId, setLatestCreatedId] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     loadDroplets();
@@ -43,12 +46,23 @@ export function ProvisioningPanel() {
     })();
   }, []);
 
+  // clear highlight after a short while once user sees created item
+  useEffect(() => {
+    if (!latestCreatedId) return;
+    const t = setTimeout(() => setLatestCreatedId(null), 8000);
+    return () => clearTimeout(t);
+  }, [latestCreatedId]);
+
   const handleCreate = async () => {
     setLoading(true);
     try {
       setError(null);
-      await provisioningService.createDroplet(form);
+      const resp = await provisioningService.createDroplet(form);
+      // reload droplets list and switch to droplets tab so user sees created item
       await loadDroplets();
+      addToast({ type: 'success', title: 'Droplet created', message: 'Your droplet was created successfully.' });
+      setLatestCreatedId(resp?.droplet?.id ?? null);
+      setActiveTab('droplets');
       setForm({ name: '', "cluster_id": undefined, provider: undefined, region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
     } catch (err: any) {
       console.error('Failed to create droplet:', err);
@@ -108,6 +122,8 @@ export function ProvisioningPanel() {
         variant="compact"
       />
 
+      {/* global toast used instead of in-page alert */}
+
       <TabNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -139,6 +155,7 @@ export function ProvisioningPanel() {
             onRefresh={loadDroplets}
             onDelete={handleDelete}
             clusters={clusters}
+            highlightedId={latestCreatedId}
           />
         )}
       </div>

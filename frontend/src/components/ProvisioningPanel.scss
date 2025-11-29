@@ -2,6 +2,24 @@
 .provisioning-panel {
   max-width: 1400px;
   margin: 0 auto;
+  padding: 1.25rem;
+
+  // Layout with side-rail navigation
+  .provisioning-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .provisioning-main {
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+  }
+
+  // small-screen pill nav (keeps compatibility)
+  .top-pill-nav { display: none; margin-bottom: 1rem; }
 
   // Tab Navigation
   .tab-navigation {
@@ -546,6 +564,13 @@
         }
       }
     }
+  }
+
+  @media (max-width: 900px) {
+    .provisioning-layout { grid-template-columns: 1fr; }
+    .side-rail { display: none; }
+    .top-pill-nav { display: block; }
+    .top-pill-nav .tab-navigation .tab-button { padding: 0.5rem 0.75rem; font-size: 0.9rem; }
   }
 
   // Main Content Grid

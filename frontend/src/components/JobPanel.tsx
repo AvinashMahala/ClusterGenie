@@ -71,12 +71,8 @@ export function JobPanel() {
 
   const formatDate = (date: Date | string | undefined) => {
     if (!date) return 'Unknown';
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleString();
-    } catch (error) {
-      return 'Invalid date';
-    }
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return isNaN(dateObj.getTime()) ? 'Unknown' : dateObj.toLocaleString();
   };
 
   // sorting helpers

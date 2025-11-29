@@ -15,11 +15,13 @@ import { DeploymentsPanel } from './components/DeploymentsPanel';
 import { ProvidersPanel } from './components/ProvidersPanel';
 import { BillingPanel } from './components/BillingPanel';
 import Layout from './components/Layout';
+import { ToastProvider } from './components/Toast/ToastProvider';
 
 function App() {
   return (
     <Router>
-      <Layout>
+      <ToastProvider>
+        <Layout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/provisioning" element={<ProvisioningPanel />} />
@@ -36,7 +38,8 @@ function App() {
           <Route path="/clusters/new" element={<CreateClusterPanel />} />
           <Route path="/clusters/:id" element={<ClusterPanel />} />
         </Routes>
-      </Layout>
+        </Layout>
+      </ToastProvider>
     </Router>
   )
 }

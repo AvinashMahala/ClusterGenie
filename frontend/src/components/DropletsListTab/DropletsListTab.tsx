@@ -13,9 +13,10 @@ export interface DropletsListTabProps {
   onRefresh: () => void;
   onDelete: (id: string) => void;
   clusters?: Cluster[];
+  highlightedId?: string | null;
 }
 
-export function DropletsListTab({ droplets, loading, onRefresh, onDelete, clusters }: DropletsListTabProps) {
+export function DropletsListTab({ droplets, loading, onRefresh, onDelete, clusters, highlightedId }: DropletsListTabProps) {
   const statusFilterOptions: FilterOption[] = useMemo(() => {
     const statuses = [...new Set(droplets.map(d => d.status))];
     return statuses.map(status => ({
@@ -81,7 +82,11 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete, cluste
       key: 'createdAt',
       label: 'Created',
       sortable: true,
-      render: (value) => new Date(value as string).toLocaleDateString()
+      render: (value) => {
+        if (!value) return '—';
+        const d = new Date(value as string);
+        return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+      }
     },
     {
       key: 'actions',
@@ -156,8 +161,15 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete, cluste
 
   // apply cluster filter before passing into TabularSection
   const visibleDroplets = useMemo(() => {
-    if (!clusterFilter) return droplets;
-    return droplets.filter(d => d.cluster && d.cluster.id === clusterFilter);
+    let list = !clusterFilter ? droplets : droplets.filter(d => d.cluster && d.cluster.id === clusterFilter);
+
+    // Default: show latest created droplets on top
+    const sorted = [...list].sort((a, b) => {
+      const at = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bt = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bt - at; // newest first
+    });
+    return sorted;
   }, [droplets, clusterFilter]);
 
   const emptyStateIcon = (
@@ -178,6 +190,13 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete, cluste
         searchPlaceholder="Search droplets..."
         filterOptions={statusFilterOptions}
         filterKey="status"
+        pagination={true}
+        defaultPageSize={8}
+        pageSizeOptions={[5, 8, 12, 20]}
+        allowColumnToggle={true}
+        dense={true}
+        highlightedRowId={highlightedId}
+        rowKey={'id'}
         emptyStateTitle="No droplets found"
         emptyStateDescription={
           droplets.length === 0

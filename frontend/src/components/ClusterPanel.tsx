@@ -234,9 +234,12 @@ export function ClusterPanel() {
                       )}
                       <div className="detail-item">
                         <span className="label">Created:</span>
-                        <span className="value">
-                          {new Date(droplet.createdAt).toLocaleDateString()}
-                        </span>
+                        <span className="value">{
+                          (!droplet.createdAt) ? '—' : (() => {
+                            const d = new Date(droplet.createdAt);
+                            return isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+                          })()
+                        }</span>
                       </div>
                     </div>
                   </div>

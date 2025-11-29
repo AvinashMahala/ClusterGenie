@@ -29,6 +29,16 @@ export interface TabularSectionProps<T> {
   emptyStateDescription?: string;
   emptyStateIcon?: React.ReactNode;
   onRowClick?: (item: T) => void;
+  // additional features
+  pagination?: boolean;
+  defaultPageSize?: number;
+  pageSizeOptions?: number[];
+  allowColumnToggle?: boolean;
+  dense?: boolean;
+  // highlight row id (uses rowKey to match)
+  highlightedRowId?: string | null;
+  rowKey?: keyof T | string;
+  highlightClassName?: string;
 }
 
 function TabularSection<T extends Record<string, any>>({
@@ -45,11 +55,22 @@ function TabularSection<T extends Record<string, any>>({
   emptyStateDescription = 'Get started by creating your first item.',
   emptyStateIcon,
   onRowClick,
+  pagination = false,
+  defaultPageSize = 10,
+  pageSizeOptions = [5, 10, 20],
+  allowColumnToggle = false,
+  dense = false,
+  highlightedRowId = null,
+  rowKey = 'id',
+  highlightClassName = 'highlighted-row',
 }: TabularSectionProps<T>) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(defaultPageSize ?? 10);
+  const [visibleCols, setVisibleCols] = useState<string[]>(columns.map(c => String(c.key)));
 
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
@@ -83,6 +104,13 @@ function TabularSection<T extends Record<string, any>>({
     return filtered;
   }, [data, searchTerm, statusFilter, sortColumn, sortDirection, filterKey]);
 
+  // page slice
+  const paginatedData = useMemo(() => {
+    if (!pagination) return filteredAndSortedData;
+    const start = (page - 1) * pageSize;
+    return filteredAndSortedData.slice(start, start + pageSize);
+  }, [filteredAndSortedData, page, pageSize, pagination]);
+
   const handleSort = (columnKey: string) => {
     if (sortColumn === columnKey) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -99,10 +127,28 @@ function TabularSection<T extends Record<string, any>>({
     return item[column.key as keyof T];
   };
 
+  const pageCount = Math.max(1, Math.ceil(filteredAndSortedData.length / pageSize));
+
+  // auto-scroll to highlighted row when it appears
+  React.useEffect(() => {
+    if (!highlightedRowId) return;
+    // Find element in DOM with data-row-id
+    const id = String(highlightedRowId);
+    const el = document.querySelector(`[data-row-id="${id}"]`);
+    if (el instanceof HTMLElement) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // add temporary pulse class (already handled by CSS via highlight class)
+    }
+  }, [highlightedRowId]);
+
+  // visible columns + rows derived for simpler rendering
+  const displayedColumns = columns.filter(c => visibleCols.includes(String(c.key)));
+  const rows = pagination ? paginatedData : filteredAndSortedData;
+
   return (
-    <div className="tabular-section">
+    <div className={`tabular-section ${dense ? 'dense' : ''}`}>
       {/* Section Header */}
-      {/* <div className="section-header">
+      <div className="section-header">
         <div className="section-info">
           <div className="section-icon">
             {icon}
@@ -119,7 +165,7 @@ function TabularSection<T extends Record<string, any>>({
             {actions}
           </div>
         )}
-      </div> */}
+      </div>
 
       {/* Filters */}
       <div className="filters-section">
@@ -151,6 +197,23 @@ function TabularSection<T extends Record<string, any>>({
             </select>
           </div>
         )}
+
+        {allowColumnToggle && (
+          <div className="column-toggle">
+            <label>Columns</label>
+            <div className="cols-list">
+              {columns.map(col => (
+                <label key={String(col.key)}>
+                  <input type="checkbox" checked={visibleCols.includes(String(col.key))} onChange={() => {
+                    const k = String(col.key);
+                    setVisibleCols(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
+                  }} />
+                  {col.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -159,43 +222,54 @@ function TabularSection<T extends Record<string, any>>({
           <table className="data-table">
             <thead>
               <tr>
-                {columns.map(column => (
-                  <th
-                    key={String(column.key)}
-                    className={`${column.sortable ? 'sortable' : ''} ${column.className || ''}`}
-                    onClick={column.sortable ? () => handleSort(String(column.key)) : undefined}
-                  >
-                    <div className="header-content">
-                      <span>{column.label}</span>
-                      {column.sortable && sortColumn === String(column.key) && (
-                        <svg
-                          className={`sort-icon ${sortDirection}`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                {displayedColumns.map(column => {
+                  if (!visibleCols.includes(String(column.key))) return null;
+                  return (
+                    <th
+                      key={String(column.key)}
+                      className={`${column.sortable ? 'sortable' : ''} ${column.className || ''}`}
+                      onClick={column.sortable ? () => handleSort(String(column.key)) : undefined}
+                    >
+                      <div className="header-content">
+                        <span>{column.label}</span>
+                        {column.sortable && sortColumn === String(column.key) && (
+                          <svg
+                            className={`sort-icon ${sortDirection}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                          </svg>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedData.map((item, index) => (
-                <tr
-                  key={index}
-                  className={onRowClick ? 'clickable' : ''}
-                  onClick={onRowClick ? () => onRowClick(item) : undefined}
-                >
-                  {columns.map(column => (
-                    <td key={String(column.key)} className={column.className || ''}>
-                      {getValue(item, column)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {rows.map((item, index) => {
+                const rk = String(item[rowKey as keyof T] ?? index);
+                const isHighlighted = highlightedRowId && String(highlightedRowId) === rk;
+                return (
+                  <tr
+                    key={rk}
+                    data-row-id={rk}
+                    className={`${onRowClick ? 'clickable' : ''} ${isHighlighted ? highlightClassName : ''}`.trim()}
+                    onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  >
+                    {displayedColumns.map(column => {
+                      if (!visibleCols.includes(String(column.key))) return null;
+                      return (
+                        <td key={String(column.key)} className={column.className || ''}>
+                          {getValue(item, column)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+              );
+            })}
             </tbody>
           </table>
         </div>
@@ -205,6 +279,28 @@ function TabularSection<T extends Record<string, any>>({
           description={emptyStateDescription}
           icon={emptyStateIcon}
         />
+      )}
+
+      {pagination && filteredAndSortedData.length > 0 && (
+        <div className="pagination-controls">
+          <div className="left">
+            <label>Rows per page:
+              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+                {(pageSizeOptions ?? [5, 10, 20]).map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="right">
+            <button onClick={() => setPage(1)} disabled={page === 1}>« First</button>
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+            <span className="page-indicator">Page {page} of {pageCount}</span>
+            <button onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={page === pageCount}>Next ›</button>
+            <button onClick={() => setPage(pageCount)} disabled={page === pageCount}>Last »</button>
+          </div>
+        </div>
       )}
     </div>
   );

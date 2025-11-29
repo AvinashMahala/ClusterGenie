@@ -5,7 +5,6 @@ import type { CreateDropletRequest } from '../../models';
 import type { Cluster } from '../../models/cluster';
 import './CreateDropletTab.scss';
 import { useEffect, useRef, useState } from 'react';
-import { ClusterService } from '../../services/clusterService';
 import { ProviderService } from '../../services/providerService';
 import { ErrorMessage } from '../common';
 
@@ -23,89 +22,13 @@ export interface CreateDropletTabProps {
 }
 
 export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters, error, onClearError, clusterError, onClearClusterError }: CreateDropletTabProps) {
-  const selectRef = useRef<HTMLInputElement | null>(null);
-  const [validating, setValidating] = useState(false);
-  const [valid, setValid] = useState<boolean | null>(null);
-    const [inputCluster, setInputCluster] = useState<string>(form["cluster_id"] ?? '');
-    const [suggestions, setSuggestions] = useState<Cluster[]>([]);
-    const [suggestionsVisible, setSuggestionsVisible] = useState(false);
-    const [activeIndex, setActiveIndex] = useState<number>(-1);
-    const timerRef = useRef<number | null>(null);
-    const idSuffix = useRef(Math.random().toString(36).slice(2, 8)).current;
-    const activeId = activeIndex >= 0 && suggestions[activeIndex] ? `cluster-suggestion-${idSuffix}-${activeIndex}` : '';
+  const selectRef = useRef<HTMLSelectElement | null>(null);
+  // validation state when user attempts to create without selecting a cluster
+  const [clusterMissing, setClusterMissing] = useState(false);
 
   
 
-    // cluster input change handler (typeahead + validation)
-    const onClusterInput = (value: string) => {
-      setInputCluster(value);
-      // filter local suggestions from passed clusters
-      if (value && clusters && clusters.length) {
-        const q = value.toLowerCase();
-        const matched = clusters.filter(c => (c.name || '').toLowerCase().includes(q) || (c.id || '').toLowerCase().includes(q)).slice(0, 6);
-        setSuggestions(matched);
-        setSuggestionsVisible(matched.length > 0);
-        setActiveIndex(matched.length ? 0 : -1);
-      } else {
-        setSuggestions([]);
-        setSuggestionsVisible(false);
-        setActiveIndex(-1);
-      }
-
-      // set backing form cluster_id when the value is empty -> clear
-      if (!value) {
-        handleInputChange('cluster_id' as keyof CreateDropletRequest, undefined);
-        setValid(null);
-        if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-        setValidating(false);
-        return;
-      }
-
-      // debounce validation call
-      setValid(null);
-      setValidating(true);
-      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-      timerRef.current = window.setTimeout(async () => {
-        try {
-          await clusterSvc.getCluster(value);
-          setValid(true);
-          // once confirmed, update backing form cluster_id to the confirmed id
-          handleInputChange('cluster_id' as keyof CreateDropletRequest, value);
-          if (typeof onClearClusterError === 'function') onClearClusterError();
-        } catch (err) {
-          setValid(false);
-        } finally {
-          setValidating(false);
-        }
-      }, 400);
-    };
-
-    // select a suggestion from list
-    const selectSuggestion = (c: Cluster) => {
-      setInputCluster(c.id);
-      handleInputChange('cluster_id' as keyof CreateDropletRequest, c.id);
-      setSuggestionsVisible(false);
-      setActiveIndex(-1);
-      setValid(true);
-      if (typeof onClearClusterError === 'function') onClearClusterError();
-    };
-
-    const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-      if (!suggestionsVisible || !suggestions.length) return;
-      if (ev.key === 'ArrowDown') {
-        ev.preventDefault();
-        setActiveIndex(i => Math.min(i + 1, suggestions.length - 1));
-      } else if (ev.key === 'ArrowUp') {
-        ev.preventDefault();
-        setActiveIndex(i => Math.max(i - 1, 0));
-      } else if (ev.key === 'Enter') {
-        ev.preventDefault();
-        if (activeIndex >= 0 && suggestions[activeIndex]) selectSuggestion(suggestions[activeIndex]);
-      } else if (ev.key === 'Escape') {
-        setSuggestionsVisible(false);
-      }
-    };
-    const clusterSvc = new ClusterService();
+    // cluster selection will be done via the provided `clusters` prop
     const providerSvc = new ProviderService();
     const [providers, setProviders] = useState<any[]>([]);
 
@@ -120,13 +43,7 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
     }
   }, [clusterError]);
 
-  // debounced validation timer ref is handled by timerRef earlier (don't redeclare)
-  // cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+  // no debounced validation timer here (selector is a native select)
   const handleInputChange = (field: keyof CreateDropletRequest, value: string | undefined) => {
     onFormChange({
       ...form,
@@ -134,7 +51,20 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
     } as any);
     if (error && typeof onClearError === 'function') onClearError();
     if (clusterError && typeof onClearClusterError === 'function') onClearClusterError();
+    if (field === 'cluster_id') {
+      setClusterMissing(false);
+    }
   };
+
+  const handleCreateClick = () => {
+    if (!form.cluster_id) {
+      setClusterMissing(true);
+      if (selectRef.current) selectRef.current.focus();
+      return;
+    }
+    // all good - let parent perform creation
+    onCreate();
+  }
 
   return (
     <div className="create-tab">
@@ -155,71 +85,37 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
           {error && <ErrorMessage message={error} />}
           <div className="form-grid">
             <div className="form-field">
-              <label htmlFor="cluster">Attach to Cluster (optional)</label>
+              <label htmlFor="cluster">Attach to Cluster <span style={{ color: '#ef4444' }}>(required)</span></label>
               <div className="input-wrapper">
                 <div className="input-icon">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4" />
                   </svg>
                 </div>
-                <div className="typeahead-wrapper">
-                  <input
+                <div className="select-wrapper">
+                  <select
                     id="cluster"
                     ref={selectRef}
-                    role="combobox"
-                    aria-autocomplete="list"
-                    aria-expanded={suggestionsVisible}
-                    aria-controls={`cluster-suggestions-${idSuffix}`}
-                    aria-activedescendant={activeId || undefined}
-                    className={(clusterError || (valid === false)) ? 'invalid' : ''}
-                    value={inputCluster}
-                    placeholder="type cluster name or id"
-                    onChange={(e) => onClusterInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onBlur={() => { setTimeout(() => setSuggestionsVisible(false), 120); }}
-                    onFocus={() => { if (inputCluster) setSuggestionsVisible(true); }}
-                  />
-
-                  <div className="selector-indicator">
-                    {validating ? (
-                      <svg className="spinner" viewBox="0 0 50 50">
-                        <circle cx="25" cy="25" r="20" fill="none" strokeWidth="4" stroke="#6b7280" strokeDasharray="31.4 31.4" />
-                      </svg>
-                    ) : valid === true ? (
-                      <svg className="valid-check" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="green">
-                        <path d="M20 6L9 17l-5-5" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    ) : null}
-                  </div>
-
-                  {suggestionsVisible && suggestions.length > 0 && (
-                    <ul id={`cluster-suggestions-${idSuffix}`} role="listbox" className="suggestions-list">
-                      {suggestions.map((s, idx) => {
-                        const itemId = `cluster-suggestion-${idSuffix}-${idx}`;
-                        return (
-                          <li
-                            id={itemId}
-                            key={s.id}
-                            role="option"
-                            aria-selected={activeIndex === idx}
-                            className={activeIndex === idx ? 'active' : ''}
-                            onMouseDown={(ev) => { ev.preventDefault(); selectSuggestion(s); }}
-                          >
-                            <div className="s-title">{s.name}</div>
-                            <div className="s-sub">{s.id}</div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                    value={form.cluster_id ?? ''}
+                    onChange={(e) => handleInputChange('cluster_id' as keyof CreateDropletRequest, e.target.value || undefined)}
+                  >
+                    <option value="">-- Select a cluster --</option>
+                    {(clusters || []).length === 0 ? (
+                      <option value="" disabled>(no clusters available)</option>
+                    ) : (
+                      (clusters || []).map((c) => (
+                        <option key={c.id} value={c.id}>{c.name || c.id}</option>
+                      ))
+                    )}
+                  </select>
                 </div>
                 <div role="status" aria-live="polite" className="sr-only">
-                  {validating ? 'Validating cluster...' : (valid === false ? 'Cluster not found' : '')}
+                  {clusterError ? 'Cluster not found' : ''}
                 </div>
               </div>
-              {(clusterError || valid === false) && (
+              {(clusterError || clusterMissing) && (
                 <div className="inline-error">
-                  <p>{clusterError ?? 'Cluster ID not found'}</p>
+                  <p>{clusterError ?? (clusterMissing ? 'Please select a cluster to attach to' : '')}</p>
                   <div className="suggestions">
                     <a href="/clusters/new" className="suggest-link">Create a cluster</a>
                     <span className="separator">·</span>
@@ -343,11 +239,11 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate, cluste
             </div>
           </div>
 
-          <div className="form-actions">
+            <div className="form-actions">
             <button
               className="create-button"
-              onClick={onCreate}
-              disabled={loading || !form.name.trim()}
+              onClick={handleCreateClick}
+              disabled={loading || !form.name.trim() || !form.cluster_id}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>

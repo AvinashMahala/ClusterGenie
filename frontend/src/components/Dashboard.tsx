@@ -268,7 +268,11 @@ export function Dashboard() {
                   key: 'createdAt',
                   label: 'Created',
                   sortable: true,
-                  render: (value) => new Date(value as string).toLocaleDateString() + ' ' + new Date(value as string).toLocaleTimeString()
+                  render: (value) => {
+                    if (!value) return '—';
+                    const d = new Date(value as string);
+                    return isNaN(d.getTime()) ? '—' : `${d.toLocaleDateString()} ${d.toLocaleTimeString()}`;
+                  }
                 }
               ]}
               data={recentJobs}
