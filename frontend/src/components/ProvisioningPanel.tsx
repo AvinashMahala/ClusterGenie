@@ -137,6 +137,7 @@ export function ProvisioningPanel() {
             loading={loading}
             onRefresh={loadDroplets}
             onDelete={handleDelete}
+            clusters={clusters}
           />
         )}
       </div>

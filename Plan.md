@@ -195,7 +195,7 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: Every droplet response includes the owning cluster and persistence uses a cluster key.
   - **Testing**: Unit/integration tests verifying droplet creation returns the linked cluster.
 
-- **Microphase 5.2**: Surface the relationship in provisioning UI.
+  - **Microphase 5.2**: Surface the relationship in provisioning UI. ✅ Completed
   - **Status**: Pending ⚪
   - **Tasks**: Add a cluster dropdown to the droplet creation form; tag droplets in the My Droplets tab with cluster badges and filters.
   - **Estimated Time**: 3 hours.
@@ -204,7 +204,7 @@ Progress will be tracked here—update after each completion.
   - **Success Metrics**: Users pick the cluster when creating droplets and a cluster column appears in droplet listings.
   - **Testing**: UI tests validating form submission includes cluster ID and table rows show the right cluster.
 
-- **Microphase 5.3**: Cluster-aware diagnosis interactions.
+  - **Microphase 5.3**: Cluster-aware diagnosis interactions. ✅ Completed
   - **Status**: Pending ⚪
   - **Tasks**: Populate the diagnosis dropdown with clusters; show actions per cluster and wire implement buttons to create a job tied to that cluster.
   - **Estimated Time**: 3 hours.

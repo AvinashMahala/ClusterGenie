@@ -1,7 +1,8 @@
 // frontend/src/components/DropletsListTab/DropletsListTab.tsx
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Droplet } from '../../models';
+import type { Cluster } from '../../models/cluster';
 import TabularSection, { type Column, type FilterOption } from '../TabularSection';
 import { StatusBadge } from '../common';
 import './DropletsListTab.scss';
@@ -11,9 +12,10 @@ export interface DropletsListTabProps {
   loading: boolean;
   onRefresh: () => void;
   onDelete: (id: string) => void;
+  clusters?: Cluster[];
 }
 
-export function DropletsListTab({ droplets, loading, onRefresh, onDelete }: DropletsListTabProps) {
+export function DropletsListTab({ droplets, loading, onRefresh, onDelete, clusters }: DropletsListTabProps) {
   const statusFilterOptions: FilterOption[] = useMemo(() => {
     const statuses = [...new Set(droplets.map(d => d.status))];
     return statuses.map(status => ({
@@ -118,17 +120,40 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete }: Drop
     </svg>
   );
 
+  const [clusterFilter, setClusterFilter] = useState<string>('');
+
   const sectionActions = (
-    <button
-      className="refresh-button"
-      onClick={onRefresh}
-      disabled={loading}
-    >
+    <div className="section-actions-group">
+      <select
+        className="cluster-filter"
+        value={clusterFilter}
+        onChange={(e) => setClusterFilter(e.target.value)}
+        aria-label="Filter by cluster"
+      >
+        <option value="">All Clusters</option>
+        {(clusters || []).map(c => (
+          <option key={c.id} value={c.id}>{c.name || c.id}</option>
+        ))}
+      </select>
+
+      <button
+        className="refresh-button"
+        onClick={onRefresh}
+        disabled={loading}
+      >
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
       </svg>
     </button>
+      </button>
+    </div>
   );
+
+  // apply cluster filter before passing into TabularSection
+  const visibleDroplets = useMemo(() => {
+    if (!clusterFilter) return droplets;
+    return droplets.filter(d => d.cluster && d.cluster.id === clusterFilter);
+  }, [droplets, clusterFilter]);
 
   const emptyStateIcon = (
     <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,10 +166,10 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete }: Drop
       <TabularSection
         title="Your Droplets"
         icon={sectionIcon}
-        count={droplets.length}
+        count={visibleDroplets.length}
         actions={sectionActions}
         columns={columns}
-        data={droplets}
+        data={visibleDroplets}
         searchPlaceholder="Search droplets..."
         filterOptions={statusFilterOptions}
         filterKey="status"

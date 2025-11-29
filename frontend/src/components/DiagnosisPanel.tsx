@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { DiagnosisService } from '../services/diagnosisService';
 import { MonitoringService } from '../services/monitoringService';
 import { JobService } from '../services/jobService';
+import { ClusterService } from '../services/clusterService';
 import type { DiagnosisResponse, Metric } from '../models';
 import { Panel, PanelHeader, PanelContent, FormSection, FormField, ActionButton, ErrorMessage, StatusBadge, Card } from './common';
 import '../styles/DiagnosisPanel.scss';
@@ -11,6 +12,7 @@ import '../styles/DiagnosisPanel.scss';
 const diagnosisService = new DiagnosisService();
 const monitoringService = new MonitoringService();
 const jobService = new JobService();
+const clusterService = new ClusterService();
 
 interface DiagnosisHistory {
   id: string;
@@ -32,6 +34,7 @@ export function DiagnosisPanel({ clusterId: propClusterId }: DiagnosisPanelProps
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<DiagnosisHistory[]>([]);
+  const [clusters, setClusters] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'current' | 'history' | 'analytics'>('current');
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [dismissedRecommendations, setDismissedRecommendations] = useState<Set<number>>(new Set());
@@ -51,6 +54,18 @@ export function DiagnosisPanel({ clusterId: propClusterId }: DiagnosisPanelProps
         console.error('Failed to load diagnosis history:', e);
       }
     }
+  }, []);
+
+  // load clusters for dropdown
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await clusterService.listClusters();
+        setClusters(list || []);
+      } catch (err) {
+        // ignore
+      }
+    })();
   }, []);
 
   // Auto-refresh functionality
@@ -254,14 +269,26 @@ export function DiagnosisPanel({ clusterId: propClusterId }: DiagnosisPanelProps
               <Card className="input-card">
                 <FormSection>
                   <div className="input-grid">
-                    <FormField label="Cluster ID" required>
-                      <input
-                        type="text"
-                        value={clusterId}
-                        onChange={(e) => setClusterId(e.target.value)}
-                        placeholder="Enter cluster ID (e.g., cluster-prod)"
-                        onKeyPress={(e) => e.key === 'Enter' && performDiagnosis()}
-                      />
+                    <FormField label="Cluster" required>
+                      <div className="cluster-selector-row">
+                        <select
+                          value={clusterId}
+                          onChange={(e) => setClusterId(e.target.value)}
+                          className="cluster-dropdown"
+                        >
+                          <option value="">-- Select cluster (or type id) --</option>
+                          {clusters.map((c: any) => (
+                            <option key={c.id} value={c.id}>{c.name || c.id}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          value={clusterId}
+                          onChange={(e) => setClusterId(e.target.value)}
+                          placeholder="Or type cluster ID (e.g., cluster-prod)"
+                          onKeyPress={(e) => e.key === 'Enter' && performDiagnosis()}
+                        />
+                      </div>
                     </FormField>
                     <div className="quick-actions">
                       <button
@@ -330,6 +357,47 @@ export function DiagnosisPanel({ clusterId: propClusterId }: DiagnosisPanelProps
                               'Never'
                             }
                           </span>
+                        </div>
+                        <div className="info-item cluster-actions">
+                          <span className="label">Actions:</span>
+                          <div className="value actions-list">
+                            <button
+                              className="action-mini"
+                              onClick={() => performDiagnosis()}
+                            >Diagnose</button>
+                            <button
+                              className="action-mini"
+                              onClick={async () => {
+                                if (!diagnosis?.cluster?.id) return alert('Run a diagnosis first or pick a cluster');
+                                try {
+                                  await jobService.createJob({
+                                    type: 'provision',
+                                    parameters: { cluster_id: diagnosis.cluster.id, description: 'Provisioning job from diagnosis' }
+                                  });
+                                  alert('✅ Provisioning job created');
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Failed to create provisioning job');
+                                }
+                              }}
+                            >Create Provision Job</button>
+                            <button
+                              className="action-mini"
+                              onClick={async () => {
+                                if (!diagnosis?.cluster?.id) return alert('Run a diagnosis first or pick a cluster');
+                                try {
+                                  await jobService.createJob({
+                                    type: 'scale',
+                                    parameters: { cluster_id: diagnosis.cluster.id, description: 'Scaling job from diagnosis' }
+                                  });
+                                  alert('✅ Scaling job created');
+                                } catch (err) {
+                                  console.error(err);
+                                  alert('Failed to create scaling job');
+                                }
+                              }}
+                            >Create Scale Job</button>
+                          </div>
                         </div>
                       </div>
                     </Card>
