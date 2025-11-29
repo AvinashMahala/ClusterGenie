@@ -1,0 +1,135 @@
+/* AutoscalingPanel.scss - styles for the autoscaling page */
+
+.autoscaling-page {
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .page-title {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .autoscaling-body {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .left-pane {
+    .panel { padding: 1rem; background: linear-gradient(180deg,#ffffff,#fbfbff); border-radius:10px; border:1px solid rgba(99,102,241,0.06); }
+
+    h3 { margin-top: 0; margin-bottom: 8px; }
+  }
+
+  .right-pane {
+    .panel { padding: 1rem; }
+
+    .toolbar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .policies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .no-policies {
+      padding: 1rem;
+      color: #6b7280;
+    }
+  }
+
+  /* Policy card fallback styling (small) */
+  .policy-card {
+    border-radius: 0.5rem;
+    border: 1px solid #e6e9ef;
+    padding: 0.75rem;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      text-align: left;
+
+      strong { font-weight: 700; }
+      .muted { color: #6b7280; font-size: 0.85rem; }
+      .small { font-size: 0.8rem; color: #9ca3af; }
+    }
+
+    .card-actions { display: flex; gap: 0.5rem; align-items:center; }
+  }
+
+  /* Left template CTA */
+  .left-pane .panel > div { display:block; }
+  .left-pane .panel .action-button.small { padding: 0.25rem 0.6rem; border-radius: 8px; }
+
+  @media (max-width: 880px) {
+    .autoscaling-body { grid-template-columns: 1fr; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  }
+}
+
+.policy-drawer {
+  position: fixed;
+  right: 24px;
+  top: 88px;
+  width: 420px;
+  max-width: calc(100% - 48px);
+  background: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  border-radius: 8px;
+  z-index: 1200;
+  overflow: hidden;
+
+  & > div { background: white; }
+
+  strong { font-weight:700; }
+
+  .muted { color: #6b7280; }
+}
+

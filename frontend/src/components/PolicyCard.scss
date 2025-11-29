@@ -1,0 +1,30 @@
+.policy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff, #fbfbff);
+  border: 1px solid rgba(99,102,241,0.08);
+  box-shadow: 0 6px 18px rgba(8,15,52,0.06);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(8,15,52,0.12);
+  }
+
+  .meta { display:flex; flex-direction:column; gap:6px; }
+
+  .policy-head { display:flex; align-items:center; gap:8px; }
+
+  .policy-icon { width:34px; height:34px; border-radius:8px; background: linear-gradient(135deg,#6366f1,#8b5cf6); display:flex; align-items:center; justify-content:center; color:white; font-size:0.9rem; font-weight:700; }
+
+  .muted { color:#6b7280; font-size:0.85rem; }
+
+  .status-chip { padding: 0.15rem 0.5rem; border-radius: 999px; font-size:0.72rem; background:#eef2ff; color:#3730a3; font-weight:700; }
+
+  .card-actions { display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+
+  .action-button.small { padding: 0.25rem 0.5rem; border-radius:6px; font-size:0.78rem; }
+}
