@@ -1,9 +1,9 @@
-// frontend/src/components/ClustersPanel.tsx
+// frontend/src/components/ClustersPanel.tsx (new)
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { ClusterService } from '../services/clusterService';
 import type { Cluster } from '../models/cluster';
-import TabularSection, { type Column, type FilterOption } from './TabularSection';
 import { StatusBadge } from './common';
 import './ClustersPanel.scss';
 
@@ -13,122 +13,241 @@ export function ClustersPanel() {
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'healthy' | 'warning' | 'critical'>('all');
+  const [sortKey, setSortKey] = useState<'name' | 'region' | 'lastChecked'>('name');
 
-  const loadClusters = async () => {
+  useEffect(() => { load(); }, []);
+
+  async function load() {
     setLoading(true);
+    setError(null);
     try {
-      const clusterList = await clusterService.listClusters();
-      setClusters(clusterList);
+      const list = await clusterService.listClusters();
+      setClusters(list || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load clusters');
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  useEffect(() => {
-    loadClusters();
-  }, []);
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return clusters
+      .filter(c => statusFilter === 'all' ? true : c.status === statusFilter)
+      .filter(c => !q || c.name.toLowerCase().includes(q) || c.region.toLowerCase().includes(q));
+  }, [clusters, query, statusFilter]);
 
-  const statusFilterOptions: FilterOption[] = [
-    { value: 'healthy', label: 'Healthy' },
-    { value: 'warning', label: 'Warning' },
-    { value: 'critical', label: 'Critical' }
-  ];
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    arr.sort((a, b) => {
+      if (sortKey === 'name') return a.name.localeCompare(b.name);
+      if (sortKey === 'region') return a.region.localeCompare(b.region);
+      // lastChecked - newest first
+      const ta = a.lastChecked ? new Date(a.lastChecked).getTime() : 0;
+      const tb = b.lastChecked ? new Date(b.lastChecked).getTime() : 0;
+      return tb - ta;
+    });
+    return arr;
+  }, [filtered, sortKey]);
 
-  const columns: Column<Cluster>[] = [
-    {
-      key: 'name',
-      label: 'Name',
-      sortable: true,
-      render: (value, cluster) => (
-        <div className="cluster-name-cell">
-          <div className="cluster-name">{value}</div>
-          <div className="cluster-id">ID: {cluster.id}</div>
-        </div>
-      )
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      className: 'status-cell',
-      render: (value) => <StatusBadge status={value as string} />
-    },
-    {
-      key: 'region',
-      label: 'Region',
-      sortable: true
-    },
-    {
-      key: 'droplets',
-      label: 'Droplets',
-      render: (value) => Array.isArray(value) ? value.length : 0
-    },
-    {
-      key: 'lastChecked',
-      label: 'Last Checked',
-      sortable: true,
-      render: (value) => new Date(value as string).toLocaleString()
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      className: 'actions-cell',
-      render: (_, cluster) => (
-        <div className="action-buttons">
-          <button
-            className="action-btn action-view"
-            title="View Details"
-            onClick={() => window.location.href = `/clusters/${cluster.id}`}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            </svg>
-          </button>
-        </div>
-      )
-    }
-  ];
+  const counts = useMemo(() => ({
+    healthy: clusters.filter(c => c.status === 'healthy').length,
+    warning: clusters.filter(c => c.status === 'warning').length,
+    critical: clusters.filter(c => c.status === 'critical').length,
+  }), [clusters]);
+
+  const statusCards = useMemo(() => {
+    const cards: Array<{
+      key: 'all' | 'healthy' | 'warning' | 'critical';
+      label: string;
+      icon: string;
+      copy: string;
+      tooltip: string;
+      trendChips: string[];
+      sparkline: number[];
+      filterLabel: string;
+      count: number;
+    }> = [
+      {
+        key: 'healthy',
+        label: 'Healthy',
+        icon: '✔︎',
+        copy: `${counts.healthy} clusters running without alerts`,
+        tooltip: 'Clusters reporting no active issues',
+        trendChips: ['2 events resolved today', 'Stable for 3+ hours'],
+        sparkline: [70, 80, 75, 85, 90],
+        filterLabel: 'Show only healthy',
+        count: counts.healthy,
+      },
+      {
+        key: 'warning',
+        label: 'Warning',
+        icon: '⚠',
+        copy: `${counts.warning} clusters degraded in the last hour`,
+        tooltip: 'Clusters with warning-level alerts',
+        trendChips: ['2 clusters need scaling', 'Avg latency +14%'],
+        sparkline: [30, 35, 40, 38, 45],
+        filterLabel: 'Show only warning',
+        count: counts.warning,
+      },
+      {
+        key: 'critical',
+        label: 'Critical',
+        icon: '✖',
+        copy: `${counts.critical} clusters require immediate attention`,
+        tooltip: 'Clusters with critical or failing jobs',
+        trendChips: ['1 outage ongoing', 'Investigating errors'],
+        sparkline: [10, 15, 8, 12, 5],
+        filterLabel: 'Show only critical',
+        count: counts.critical,
+      },
+      {
+        key: 'all',
+        label: 'Fleet total',
+        icon: '#',
+        copy: `${clusters.length} clusters tracked`,
+        tooltip: 'Roll-up of every cluster in the fleet',
+        trendChips: ['4 deployments today', '1 incident closed'],
+        sparkline: [50, 60, 55, 60, 58],
+        filterLabel: 'Reset filters',
+        count: clusters.length,
+      },
+    ];
+
+    return cards;
+  }, [counts, clusters.length]);
+
+  function handleCardFilter(key: 'all' | 'healthy' | 'warning' | 'critical') {
+    setStatusFilter(prev => (prev === key && key !== 'all') ? 'all' : key);
+  }
 
   return (
-    <div className="clusters-panel">
-      <TabularSection
-        title="Clusters"
-        icon={
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        }
-        count={clusters.length}
-        actions={
-          <button
-            className="refresh-btn"
-            onClick={loadClusters}
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        }
-        columns={columns}
-        data={clusters}
-        searchPlaceholder="Search clusters..."
-        filterOptions={statusFilterOptions}
-        filterKey="status"
-        emptyStateTitle="No clusters found"
-        emptyStateDescription="Create your first cluster to get started"
-        emptyStateIcon={
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        }
-      />
-      {error && (
-        <div className="error-message">
-          Error: {error}
+    <div className="clusters-page">
+      <header className="clusters-header">
+        <div>
+          <h1>Clusters</h1>
         </div>
-      )}
+
+        <div className="header-actions">
+          <button className="btn btn-ghost" onClick={load} disabled={loading} title="Refresh">
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <Link to="/provisioning" className="btn btn-primary">Create cluster</Link>
+        </div>
+      </header>
+
+      <section className="status-card-grid">
+        {statusCards.map(card => (
+          <article
+            key={card.key}
+            className={`status-card status-card-${card.key}`}
+            title={card.tooltip}
+          >
+            <div className="status-card-header">
+              <div>
+                <p className="status-card-label">{card.label}</p>
+                <p className="status-card-count">{card.count}</p>
+              </div>
+              <span className="status-card-icon" aria-hidden="true">{card.icon}</span>
+            </div>
+
+            <p className="status-card-copy">{card.copy}</p>
+
+            <div className="status-card-trend">
+              {card.trendChips.map(chip => (
+                <span key={chip} className="trend-chip">{chip}</span>
+              ))}
+            </div>
+
+            <div className="sparkline" aria-hidden="true">
+              {card.sparkline.map((value, index) => (
+                <span key={index} style={{ height: `${value}%` }} />
+              ))}
+            </div>
+
+            <div className="status-card-footer">
+              <button
+                type="button"
+                className={`filter-chip${statusFilter === card.key ? ' active' : ''}`}
+                aria-pressed={statusFilter === card.key}
+                onClick={() => handleCardFilter(card.key)}
+              >
+                {card.filterLabel}
+              </button>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="clusters-list-wrap">
+        <div className="list-toolbar">
+          <div className="search">
+            <input
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              placeholder="Search by name or region"
+            />
+          </div>
+
+          <div className="controls">
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)}>
+              <option value="all">All status</option>
+              <option value="healthy">Healthy</option>
+              <option value="warning">Warning</option>
+              <option value="critical">Critical</option>
+            </select>
+
+            <select value={sortKey} onChange={e => setSortKey(e.target.value as any)}>
+              <option value="name">Sort: Name</option>
+              <option value="region">Sort: Region</option>
+              <option value="lastChecked">Sort: Recent</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="table-area">
+          {error && <div className="error">Error loading clusters — {error}</div>}
+
+          {!loading && sorted.length === 0 && (
+            <div className="empty">No clusters match your filters.</div>
+          )}
+
+          <table className="clusters-table" role="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Region</th>
+                <th>Status</th>
+                <th>Droplets</th>
+                <th>Last checked</th>
+                <th style={{ width: 160 }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map(c => (
+                <tr key={c.id}>
+                  <td className="cell-name">
+                    <div className="name-main">{c.name}</div>
+                    <div className="name-sub">{c.id}</div>
+                  </td>
+                  <td>{c.region}</td>
+                  <td><StatusBadge status={c.status} /></td>
+                  <td className="center">{c.droplets ? c.droplets.length : 0}</td>
+                  <td className="muted">{c.lastChecked ? new Date(c.lastChecked).toLocaleString() : '—'}</td>
+                  <td className="actions">
+                    <Link to={`/clusters/${c.id}`} className="btn btn-small btn-view">View</Link>
+                    <button className="btn btn-small btn-ghost">Edit</button>
+                    <button className="btn btn-small btn-danger">Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
+

@@ -41,7 +41,7 @@ export function ClusterPanel() {
 
       // Filter droplets that belong to this cluster
       const clusterDroplets = allDroplets.filter(droplet =>
-        clusterData.droplets.includes(droplet.id)
+        clusterData.droplets ? clusterData.droplets.includes(droplet.id) : false
       );
       setDroplets(clusterDroplets);
 

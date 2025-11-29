@@ -14,11 +14,19 @@ export class ClusterRepositoryImpl implements ClusterRepository {
 
   async getCluster(id: string): Promise<Cluster> {
     const response = await axios.get(`${baseURL}/clusters/${id}`);
-    return response.data.cluster;
+    const cluster = response.data.cluster;
+    return {
+      ...cluster,
+      lastChecked: cluster.last_checked ? new Date(cluster.last_checked) : new Date()
+    };
   }
 
   async listClusters(): Promise<Cluster[]> {
     const response = await axios.get(`${baseURL}/clusters`);
-    return response.data.clusters || [];
+    const clusters = response.data.clusters || [];
+    return clusters.map((cluster: any) => ({
+      ...cluster,
+      lastChecked: cluster.last_checked ? new Date(cluster.last_checked) : new Date()
+    }));
   }
 }

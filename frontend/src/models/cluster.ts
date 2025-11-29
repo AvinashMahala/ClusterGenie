@@ -4,7 +4,7 @@ export interface Cluster {
   id: string;
   name: string;
   region: string;
-  droplets: string[]; // droplet IDs
+  droplets: string[] | null; // droplet IDs
   status: 'healthy' | 'warning' | 'critical';
   lastChecked: Date;
 }
