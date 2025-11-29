@@ -4,6 +4,7 @@ package services
 
 import (
 	"errors"
+	"time"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/interfaces"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
@@ -78,10 +79,10 @@ func (s *ProvisioningService) DeleteDroplet(id string) error {
 func (s *ProvisioningService) ScaleCluster(clusterID string, action string) error {
 	// Simple scaling logic: add/remove droplets
 	if action == "scale_up" {
-		// Create a new droplet for the cluster
+		// Create a new droplet for the cluster (use timestamped name to avoid collisions)
 		cid := clusterID
 		req := &models.CreateDropletRequest{
-			Name:      "scaled-droplet",
+			Name:      "scaled-droplet-" + time.Now().Format("20060102150405"),
 			ClusterID: &cid,
 			Region:    "nyc1", // Default region
 			Size:      "s-1vcpu-1gb",

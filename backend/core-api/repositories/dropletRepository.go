@@ -8,6 +8,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -26,7 +28,8 @@ func NewDropletRepository(db *gorm.DB, redis *redis.Client) *DropletRepositoryIm
 }
 
 func (r *DropletRepositoryImpl) CreateDroplet(req *models.CreateDropletRequest) (*models.DropletResponse, error) {
-	id := "droplet-" + req.Name // simple ID generation
+	// Use a time/UUID-based ID to avoid collisions even when names repeat
+	id := "droplet-" + uuid.NewString()
 	droplet := &models.Droplet{
 		ID:        id,
 		ClusterID: req.ClusterID,

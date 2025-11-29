@@ -4,8 +4,8 @@ package services
 
 import (
 	"log"
-	"time"
 
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/events"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 )
 
@@ -59,93 +59,9 @@ func (h *EventHandler) handleJobCompleted(event map[string]interface{}) error {
 }
 
 func (h *EventHandler) handleJobRequested(event map[string]interface{}) error {
-	log.Printf("Handling job requested event: %v", event)
-
-	// Extract details
-	jobID, _ := event["job_id"].(string)
-	jobType, _ := event["job_type"].(string)
-	clusterID, _ := event["cluster_id"].(string)
-
-	// mark job running
-	if jobID != "" && h.jobSvc != nil {
-		_ = h.jobSvc.jobRepo.UpdateJobStatus(jobID, "running")
-		if h.provisioningSvc != nil && h.provisioningSvc.producer != nil {
-			_ = h.provisioningSvc.producer.PublishEvent("cluster-events", jobID, map[string]interface{}{
-				"type":      "job_started",
-				"job_id":    jobID,
-				"job_type":  jobType,
-				"cluster_id": clusterID,
-				"progress":  0,
-				"message":   "orchestration started",
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-			})
-			// set a baseline progress
-			_ = h.jobSvc.jobRepo.UpdateJobProgress(jobID, 10, "orchestration started")
-	}
-
-	var err error
-
-	switch jobType {
-	case "provision":
-		// Create droplet for the cluster and simulate progress updates
-		if clusterID != "" && h.provisioningSvc != nil {
-			req := &models.CreateDropletRequest{
-				Name:      "droplet-from-job-" + jobID[len(jobID)-8:],
-				Region:    "nyc3",
-				Size:      "s-1vcpu-1gb",
-				Image:     "ubuntu-20-04-x64",
-				ClusterID: &clusterID,
-			}
-			_, err = h.provisioningSvc.CreateDroplet(req)
-		}
-	case "scale":
-		if clusterID != "" && h.provisioningSvc != nil {
-			err = h.provisioningSvc.ScaleCluster(clusterID, "scale_up")
-		}
-	default:
-		log.Printf("Unhandled job type in orchestration: %s", jobType)
-	}
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-			})
-			_ = h.jobSvc.jobRepo.UpdateJobProgress(jobID, 30, "provision: initializing")
-		}
-
-		_, err = h.provisioningSvc.CreateDroplet(req)
-
-		if h.provisioningSvc != nil && h.provisioningSvc.producer != nil {
-			_ = h.provisioningSvc.producer.PublishEvent("cluster-events", jobID, map[string]interface{}{
-				"type":      "job_progress",
-				"job_id":    jobID,
-				"job_type":  jobType,
-				"cluster_id": clusterID,
-				"progress":  75,
-				"message":   "provisioning - completing",
-				"timestamp": time.Now().UTC().Format(time.RFC3339),
-			})
-			_ = h.jobSvc.jobRepo.UpdateJobProgress(jobID, 75, "provision: completing")
-
-	if jobID != "" && h.jobSvc != nil {
-		if err != nil {
-			_ = h.jobSvc.jobRepo.UpdateJobStatus(jobID, "failed")
-		} else {
-			_ = h.jobSvc.jobRepo.UpdateJobStatus(jobID, "completed")
-		}
-	}
-
-	// Publish job_completed event for observability
-	if h.provisioningSvc != nil && h.provisioningSvc.producer != nil {
-		_ = h.provisioningSvc.producer.PublishEvent("cluster-events", jobID, map[string]interface{}{
-			"type":       "job_completed",
-			"job_id":     jobID,
-			"job_type":   jobType,
-			"cluster_id": clusterID,
-			"error":      err != nil,
-			"progress":   100,
-			"timestamp":  time.Now().UTC().Format(time.RFC3339),
-		})
-	}
-
-	return err
+	// lightweight wrapper that delegates to the typed handler
+	log.Printf("Handling job requested event (legacy wrapper): %v", event)
+	return h.handleJobRequestedTyped(event)
 }
 
 // handleJobRequestedTyped converts a raw event into typed events and orchestrates

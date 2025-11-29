@@ -27,6 +27,8 @@ CREATE TABLE jobs (
     cluster_id VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
+    trace_id VARCHAR(255),
+    progress INT DEFAULT 0,
     created_at DATETIME NOT NULL,
     completed_at DATETIME,
     result TEXT,

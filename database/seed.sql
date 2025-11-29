@@ -14,10 +14,10 @@ INSERT INTO droplets (id, cluster_id, name, region, size, image, status, created
 ('droplet-4', NULL, 'orphan-droplet', 'nyc1', 's-1vcpu-1gb', 'ubuntu-20-04-x64', 'active', '2025-11-27 16:00:00', '192.168.1.4');
 
 -- Insert sample jobs
-INSERT INTO jobs (id, cluster_id, type, status, created_at, completed_at, result, error, parameters) VALUES
-('job-1', 'cluster-1', 'provision', 'completed', '2025-11-20 10:00:00', '2025-11-20 10:10:00', 'Provisioned successfully', NULL, '{"droplets": 2}'),
-('job-2', 'cluster-2', 'diagnose', 'completed', '2025-11-25 14:00:00', '2025-11-25 14:05:00', 'Diagnosis complete', NULL, '{}'),
-('job-3', 'cluster-3', 'scale', 'failed', '2025-11-28 08:00:00', NULL, NULL, 'Scaling failed due to insufficient resources', '{"target_size": 3}');
+INSERT INTO jobs (id, cluster_id, type, status, trace_id, progress, created_at, completed_at, result, error, parameters) VALUES
+('job-1', 'cluster-1', 'provision', 'completed', 'trace-job-1', 100, '2025-11-20 10:00:00', '2025-11-20 10:10:00', 'Provisioned successfully', NULL, '{"droplets": 2}'),
+('job-2', 'cluster-2', 'diagnose', 'completed', 'trace-job-2', 100, '2025-11-25 14:00:00', '2025-11-25 14:05:00', 'Diagnosis complete', NULL, '{}'),
+('job-3', 'cluster-3', 'scale', 'failed', 'trace-job-3', 0, '2025-11-28 08:00:00', NULL, NULL, 'Scaling failed due to insufficient resources', '{"target_size": 3}');
 
 -- Insert sample metrics
 INSERT INTO metrics (id, cluster_id, type, timestamp, value, unit) VALUES
