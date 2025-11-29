@@ -10,6 +10,7 @@ const jobService = new JobService();
 
 export function JobPanel() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  // Polling enabled by default
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +33,12 @@ export function JobPanel() {
 
   useEffect(() => {
     loadJobs();
+
+    // Poll frequently for live job updates while there are running/queued jobs
+    const interval = setInterval(async () => {
+      await loadJobs();
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleCreateJob = async () => {
@@ -137,6 +144,13 @@ export function JobPanel() {
                       {formatDate(job.createdAt)}
                     </span>
                   </div>
+                  {/* Progress bar */}
+                  {typeof job.progress === 'number' && job.progress > 0 && job.status !== 'completed' && (
+                    <div className="job-progress">
+                      <div className="progress-bar" style={{ width: `${job.progress}%` }} />
+                      <div className="progress-label">{job.progress}%</div>
+                    </div>
+                  )}
                   {job.error && (
                     <div className="job-error">Error: {job.error}</div>
                   )}

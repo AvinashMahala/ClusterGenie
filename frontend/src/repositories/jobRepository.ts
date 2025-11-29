@@ -16,6 +16,7 @@ export class JobRepositoryImpl implements JobRepository {
         ...jobResponse.job,
         createdAt: new Date(jobResponse.job.createdAt),
         completedAt: jobResponse.job.completedAt ? new Date(jobResponse.job.completedAt) : undefined,
+        progress: jobResponse.job.progress ?? 0,
       },
     };
   }
@@ -27,6 +28,7 @@ export class JobRepositoryImpl implements JobRepository {
       ...job,
       createdAt: new Date(job.createdAt),
       completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+      progress: job.progress ?? 0,
     };
   }
 
@@ -36,6 +38,7 @@ export class JobRepositoryImpl implements JobRepository {
       ...job,
       createdAt: new Date(job.createdAt),
       completedAt: job.completedAt ? new Date(job.completedAt) : undefined,
+      progress: job.progress ?? 0,
     }));
   }
 }

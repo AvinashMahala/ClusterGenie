@@ -8,6 +8,7 @@ export interface Job {
   completedAt?: Date;
   result?: any;
   error?: string;
+  progress?: number;
 }
 
 export interface CreateJobRequest {
