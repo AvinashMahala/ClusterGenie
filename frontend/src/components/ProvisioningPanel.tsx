@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ProvisioningService } from '../services/provisioningService';
+import { ClusterService } from '../services/clusterService';
 import type { Droplet, CreateDropletRequest } from '../models';
 import { Hero } from './Hero';
 import { TabNavigation, type TabType } from './TabNavigation';
@@ -11,6 +12,7 @@ import { DropletsListTab } from './DropletsListTab';
 import './ProvisioningPanel.scss';
 
 const provisioningService = new ProvisioningService();
+const clusterService = new ClusterService();
 
 export function ProvisioningPanel() {
   const [droplets, setDroplets] = useState<Droplet[]>([]);
@@ -18,13 +20,24 @@ export function ProvisioningPanel() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [form, setForm] = useState<CreateDropletRequest>({
     name: '',
+    // optional cluster selection
+    "cluster_id": undefined,
     region: 'nyc1',
     size: 's-1vcpu-1gb',
     image: 'ubuntu-20-04-x64',
   });
+  const [clusters, setClusters] = useState<any[]>([]);
 
   useEffect(() => {
     loadDroplets();
+    (async () => {
+      try {
+        const list = await clusterService.listClusters();
+        setClusters(list || []);
+      } catch (err) {
+        // ignore
+      }
+    })();
   }, []);
 
   const handleCreate = async () => {
@@ -32,7 +45,7 @@ export function ProvisioningPanel() {
     try {
       await provisioningService.createDroplet(form);
       await loadDroplets();
-      setForm({ name: '', region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
+      setForm({ name: '', "cluster_id": undefined, region: 'nyc1', size: 's-1vcpu-1gb', image: 'ubuntu-20-04-x64' });
     } catch (error) {
       console.error('Failed to create droplet:', error);
     } finally {
@@ -99,6 +112,7 @@ export function ProvisioningPanel() {
           <CreateDropletTab
             form={form}
             loading={loading}
+            clusters={clusters}
             onFormChange={setForm}
             onCreate={handleCreate}
           />

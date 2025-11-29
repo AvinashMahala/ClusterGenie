@@ -35,6 +35,18 @@ export function DropletsListTab({ droplets, loading, onRefresh, onDelete }: Drop
       )
     },
     {
+      key: 'cluster',
+      label: 'Cluster',
+      sortable: true,
+      render: (_, droplet) => (
+        droplet.cluster ? (
+          <StatusBadge status={droplet.cluster.name} variant="info" size="sm" />
+        ) : (
+          <span className="muted">—</span>
+        )
+      )
+    },
+    {
       key: 'status',
       label: 'Status',
       sortable: true,

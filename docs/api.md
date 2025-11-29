@@ -14,7 +14,7 @@ This document describes the REST API endpoints for ClusterGenie.
 
 ### Provisioning Service
 - **POST /droplets**
-  - Request: `{ "name": "string", "region": "string", "size": "string", "image": "string" }`
+  - Request: `{ "name": "string", "cluster_id": "string (optional)", "region": "string", "size": "string", "image": "string" }`
   - Response: `{ "droplet": {...}, "message": "string" }`
 
 - **GET /droplets/{id}**

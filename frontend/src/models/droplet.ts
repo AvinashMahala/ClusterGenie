@@ -3,6 +3,8 @@
 export interface Droplet {
   id: string;
   name: string;
+  cluster?: import('./cluster').Cluster;
+  cluster_id?: string | null;
   region: string;
   size: string;
   image: string;
@@ -13,6 +15,8 @@ export interface Droplet {
 
 export interface CreateDropletRequest {
   name: string;
+  // attach created droplet to this cluster (optional)
+  "cluster_id"?: string | null;
   region: string;
   size: string;
   image: string;

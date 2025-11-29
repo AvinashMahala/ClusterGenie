@@ -33,9 +33,10 @@ func main() {
 	metricRepo := repositories.NewMetricRepository(database.DB, database.Redis)
 	producer := eventbus.NewProducer([]string{"localhost:9092"})
 
-	provisioningSvc := services.NewProvisioningService(dropletRepo, producer)
-	diagnosisSvc := services.NewDiagnosisService(clusterRepo)
+	// cluster service must exist before provisioning service to allow cluster validation
 	clusterSvc := services.NewClusterService(clusterRepo)
+	provisioningSvc := services.NewProvisioningService(dropletRepo, producer, clusterSvc)
+	diagnosisSvc := services.NewDiagnosisService(clusterRepo)
 	jobSvc := services.NewJobService(jobRepo)
 	monitoringSvc := services.NewMonitoringService(metricRepo)
 

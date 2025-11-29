@@ -2,6 +2,7 @@
 
 
 import type { CreateDropletRequest } from '../../models';
+import type { Cluster } from '../../models/cluster';
 import './CreateDropletTab.scss';
 
 export interface CreateDropletTabProps {
@@ -9,9 +10,10 @@ export interface CreateDropletTabProps {
   loading: boolean;
   onFormChange: (form: CreateDropletRequest) => void;
   onCreate: () => void;
+  clusters?: Cluster[];
 }
 
-export function CreateDropletTab({ form, loading, onFormChange, onCreate }: CreateDropletTabProps) {
+export function CreateDropletTab({ form, loading, onFormChange, onCreate, clusters }: CreateDropletTabProps) {
   const handleInputChange = (field: keyof CreateDropletRequest, value: string) => {
     onFormChange({
       ...form,
@@ -36,6 +38,26 @@ export function CreateDropletTab({ form, loading, onFormChange, onCreate }: Crea
 
         <div className="droplet-form">
           <div className="form-grid">
+            <div className="form-field">
+              <label htmlFor="cluster">Attach to Cluster (optional)</label>
+              <div className="input-wrapper">
+                <div className="input-icon">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4" />
+                  </svg>
+                </div>
+                <select
+                  id="cluster"
+                  value={form["cluster_id"] || ''}
+                  onChange={(e) => handleInputChange('cluster_id' as keyof CreateDropletRequest, e.target.value)}
+                >
+                  <option value="">(none)</option>
+                  {clusters && clusters.map(c => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="form-field">
               <label htmlFor="name">Droplet Name</label>
               <div className="input-wrapper">
