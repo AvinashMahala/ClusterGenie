@@ -103,6 +103,7 @@ ClusterGenie follows a microservices architecture with clean layers for scalabil
 - **Frontend**: React 18+, TypeScript, Vite, Tailwind CSS, SASS, Axios.
 - **Infrastructure**: Docker, Docker Compose, Makefile.
 - **Other**: Git, GitHub Actions (CI/CD), Prometheus (optional monitoring).
+- **Other**: Git, GitHub Actions (CI/CD), Prometheus (optional monitoring).
 
 ## Prerequisites
 
@@ -194,6 +195,29 @@ For manual setup:
 - **Phase 5**: Polish (tests, docs, demo script).
 
 This README will be updated after each phase.
+
+### Prometheus / Observability
+
+- The API exposes a Prometheus metrics scrape endpoint at `http://localhost:8080/metrics`.
+- Rate-limiting, worker pool and job counters are exported as metrics and can be scraped for dashboards.
+
+### Configurable Environment Variables (backend/core-api)
+
+- CLUSTERGENIE_DIAG_RATE — token refill rate (tokens/sec) for diagnosis limiter (default 0.2)
+- CLUSTERGENIE_DIAG_CAP — bucket capacity for diagnosis limiter (default 5)
+- CLUSTERGENIE_JOBS_RATE — token refill rate for job creation limiter (default 0.1)
+- CLUSTERGENIE_JOBS_CAP — bucket capacity for job creation limiter (default 3)
+- CLUSTERGENIE_DIAG_SCOPE — limiter scope for diagnosis: "cluster" | "user" | "global" (default cluster)
+- CLUSTERGENIE_JOBS_SCOPE — limiter scope for jobs: "user" | "cluster" | "global" (default user)
+- CLUSTERGENIE_WORKER_COUNT — number of workers in job worker pool (default 4)
+- CLUSTERGENIE_WORKER_QUEUE — job queue size (default 100)
+
+The frontend optionally visualizes worker-queue details and rate-limit status under the Monitoring panel.
+
+### Local .env for backend/core-api
+
+- Place a `.env` file in `backend/core-api/.env` to override the default settings during development. The application uses `github.com/joho/godotenv` to load this file automatically on startup if present.
+- An example is included at `backend/core-api/.env.example` — copy it to `.env` and tweak values to tune rate limits and worker pool for local testing.
 
 ## Troubleshooting
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MonitoringService } from '../services/monitoringService';
+import { ObservabilityService } from '../services/observabilityService';
 import type { Metric, MetricsResponse } from '../models/metric';
 import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Select, ActionButton, Alert, LoadingSpinner } from './common';
 import { ClusterRepositoryImpl } from '../repositories/clusterRepository';
@@ -9,6 +10,7 @@ import type { Cluster } from '../models/cluster';
 import './MonitoringPanel.scss';
 
 const monitoringService = new MonitoringService();
+const obsService = new ObservabilityService();
 
 export function MonitoringPanel() {
   const [clusterId, setClusterId] = useState('');
@@ -19,6 +21,10 @@ export function MonitoringPanel() {
   const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimit, setRateLimit] = useState<any|null>(null);
+  const [workerPool, setWorkerPool] = useState<any|null>(null);
+  const [scopeType, setScopeType] = useState<string>('global');
+  const [scopeId, setScopeId] = useState<string>('');
 
   const loadMetrics = async () => {
     // allow listing across all clusters when clusterId is empty
@@ -37,12 +43,54 @@ export function MonitoringPanel() {
       setError(err instanceof Error ? err.message : 'Failed to load metrics');
     } finally {
       setLoading(false);
+      // fetch observability statuses on each refresh
+      try {
+        const rl = await obsService.getRateLimit('diagnosis');
+        setRateLimit(rl);
+      } catch {
+        setRateLimit(null);
+      }
+      try {
+        const ws = await obsService.getWorkerPool();
+        setWorkerPool(ws);
+      } catch {
+        setWorkerPool(null);
+      }
     }
   };
 
   useEffect(() => {
     loadMetrics();
   }, [clusterId, selectedType, page, pageSize]);
+
+  useEffect(() => {
+    // poll worker pool and rate limit status every 5 seconds
+    const id = setInterval(async () => {
+      try {
+        const ws = await obsService.getWorkerPool();
+        setWorkerPool(ws);
+      } catch { }
+      try {
+        const rl = await obsService.getRateLimit('diagnosis');
+        setRateLimit(rl);
+      } catch { }
+    }, 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fetchScopedRateLimit = async () => {
+    try {
+      if (scopeType === 'global') {
+        const rl = await obsService.getRateLimit('diagnosis');
+        setRateLimit(rl);
+      } else {
+        const rl = await obsService.getRateLimitScoped('diagnosis', scopeType, scopeId);
+        setRateLimit(rl);
+      }
+    } catch {
+      setRateLimit(null);
+    }
+  }
 
   useEffect(() => {
     // fetch clusters list for the dropdown
@@ -151,6 +199,63 @@ export function MonitoringPanel() {
         )}
 
         {/* Current Metrics Summary */}
+        {/* Phase 6: Observability (Rate limiter / Worker pool) */}
+        <Card>
+          <CardHeader title="Phase 6 Observability" />
+          <CardContent>
+            <div className="observability-grid">
+              <div className="observability-item">
+                <div className="observability-title">Rate Limit (diagnosis)</div>
+                <div className="observability-body">
+                  {rateLimit ? (
+                    <>
+                      <div>Available tokens: {Math.round(rateLimit.available * 100)/100}</div>
+                      <div>Capacity: {rateLimit.capacity}</div>
+                      <div>Rate (per sec): {rateLimit.rate_per_sec}</div>
+                    </>
+                  ) : (
+                    <div className="text-gray-500">Rate limit status unavailable</div>
+                  )}
+                  <div className="observability-controls">
+                    <Select label="Scope" value={scopeType} onChange={(e) => setScopeType(e.target.value)} options={[{ value: 'global', label: 'Global' }, { value: 'user', label: 'User' }, { value: 'cluster', label: 'Cluster' }]} />
+                    {scopeType !== 'global' && (
+                      <input type="text" className="scope-input" placeholder="Enter id" value={scopeId} onChange={(e) => setScopeId(e.target.value)} />
+                    )}
+                    <ActionButton onClick={fetchScopedRateLimit}>Fetch</ActionButton>
+                  </div>
+                </div>
+              </div>
+
+              <div className="observability-item">
+                <div className="observability-title">Job Worker Pool</div>
+                <div className="observability-body">
+                  {workerPool ? (
+                    <>
+                      <div>Workers: {workerPool.worker_count}</div>
+                      <div>Active: {workerPool.active_workers}</div>
+                      <div>Queue: {workerPool.queue_length}/{workerPool.queue_capacity}</div>
+                      {workerPool.queued_ids && workerPool.queued_ids.length > 0 && (
+                        <div className="queue-list">
+                          <div className="queue-title">Queued job IDs</div>
+                          <div className="queue-ids">
+                            {workerPool.queued_ids.slice(0, 20).map((id: string) => (
+                              <div key={id} className="queue-id">{id}</div>
+                            ))}
+                            {workerPool.queued_ids.length > 20 && (
+                              <div className="queue-more">+{workerPool.queued_ids.length - 20} more</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-gray-500">Worker pool status unavailable</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
         {Object.keys(latestMetrics).length > 0 && (
           <Card>
             <CardHeader title="Current Metrics" />

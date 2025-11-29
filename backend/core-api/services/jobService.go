@@ -22,6 +22,7 @@ type JobService struct {
 	producer        interface {
 		PublishEvent(topic, key string, event interface{}) error
 	}
+	workerPool *WorkerPool
 }
 
 func NewJobService(jobRepo interfaces.JobRepository, producer interface {
@@ -39,6 +40,11 @@ func (s *JobService) SetProvisioningService(provisioningSvc *ProvisioningService
 
 func (s *JobService) SetClusterService(clusterSvc *ClusterService) {
 	s.clusterSvc = clusterSvc
+}
+
+// SetWorkerPool assigns a worker pool for processing jobs concurrently.
+func (s *JobService) SetWorkerPool(pool *WorkerPool) {
+	s.workerPool = pool
 }
 
 func (s *JobService) CreateJob(req *models.CreateJobRequest) (*models.JobResponse, error) {
@@ -59,13 +65,28 @@ func (s *JobService) CreateJob(req *models.CreateJobRequest) (*models.JobRespons
 		return nil, err
 	}
 
-	// Automatically start processing the job
-	go func() {
-		err := s.ProcessJob(resp.Job.ID)
-		if err != nil {
-			log.Printf("Failed to process job %s: %v", resp.Job.ID, err)
+	// Enqueue for worker pool processing if available, otherwise process in a goroutine
+	if s.workerPool != nil {
+		ok := s.workerPool.Submit(resp.Job.ID)
+		if !ok {
+			// queue full — mark job as rejected and return an error
+			_ = s.jobRepo.UpdateJobStatus(resp.Job.ID, "queued_rejected")
+			if JobsProcessed != nil {
+				JobsProcessed.WithLabelValues("rejected").Inc()
+			}
+			return resp, errors.New("job queue full — try again later")
 		}
-	}()
+		// mark queued
+		_ = s.jobRepo.UpdateJobStatus(resp.Job.ID, "queued")
+	} else {
+		// Fallback to previous behavior
+		go func() {
+			err := s.ProcessJob(resp.Job.ID)
+			if err != nil {
+				log.Printf("Failed to process job %s: %v", resp.Job.ID, err)
+			}
+		}()
+	}
 
 	return resp, nil
 }
@@ -129,11 +150,20 @@ func (s *JobService) ProcessJob(id string) error {
 		// Update job status: if this job was handed to orchestration, leave it to the consumer
 		if jobErr != nil {
 			s.jobRepo.UpdateJobStatus(id, "failed")
+			if JobsProcessed != nil {
+				JobsProcessed.WithLabelValues("failed").Inc()
+			}
 		} else {
 			if waitForOrchestration {
 				s.jobRepo.UpdateJobStatus(id, "queued")
+				if JobsProcessed != nil {
+					JobsProcessed.WithLabelValues("queued").Inc()
+				}
 			} else {
 				s.jobRepo.UpdateJobStatus(id, "completed")
+				if JobsProcessed != nil {
+					JobsProcessed.WithLabelValues("completed").Inc()
+				}
 			}
 		}
 	}()

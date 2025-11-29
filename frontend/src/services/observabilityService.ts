@@ -1,0 +1,24 @@
+import type ObservabilityRepository from '../repositories/observabilityRepository';
+import { ObservabilityRepositoryImpl } from '../repositories/observabilityRepository';
+
+export class ObservabilityService {
+  private repo: any;
+
+  constructor(repo: any = new ObservabilityRepositoryImpl()) {
+    this.repo = repo;
+  }
+
+  async getRateLimit(name: string) {
+    return this.repo.getRateLimit(name);
+  }
+
+  async getRateLimitScoped(name: string, scopeType?: string, scopeId?: string) {
+    return this.repo.getRateLimit(name, scopeType, scopeId);
+  }
+
+  async getWorkerPool() {
+    return this.repo.getWorkerPool();
+  }
+}
+
+export default ObservabilityService;

@@ -5,6 +5,8 @@ go 1.24.0
 toolchain go1.24.10
 
 require (
+		github.com/prometheus/client_golang v1.16.0
+		github.com/joho/godotenv v1.6.0
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
 	github.com/google/uuid v1.6.0

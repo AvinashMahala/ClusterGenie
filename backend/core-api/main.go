@@ -8,16 +8,27 @@ package main
 
 import (
 	"log"
+	"os"
 	"strconv"
+	"github.com/joho/godotenv"
+	"time"
 
+	// Load local .env (optional) to make development easier
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env not found or failed to load, falling back to environment variables")
+	} else {
+		log.Println("Loaded .env file for configuration")
+	}
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/middleware"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/repositories"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/services"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -56,7 +67,101 @@ func main() {
 	}()
 	defer consumer.Close()
 
+	// Initialize LimiterManager and worker pool for Phase 6
+	limiter := services.NewLimiterManager()
+	// configurable defaults (env vars)
+	diagRate := 0.2
+	diagCap := 5.0
+	if v := os.Getenv("CLUSTERGENIE_DIAG_RATE"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			diagRate = f
+		}
+	}
+	if v := os.Getenv("CLUSTERGENIE_DIAG_CAP"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			diagCap = f
+		}
+	}
+	limiter.Add("diagnosis", services.NewTokenBucket(diagRate, diagCap))
+	limiter.AddDefaultConfig("diagnosis", services.BucketConfig{RefillRate: diagRate, Capacity: diagCap})
+
+	jobRate := 0.1
+	jobCap := 3.0
+	if v := os.Getenv("CLUSTERGENIE_JOBS_RATE"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			jobRate = f
+		}
+	}
+	if v := os.Getenv("CLUSTERGENIE_JOBS_CAP"); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			jobCap = f
+		}
+	}
+	limiter.Add("jobs_create", services.NewTokenBucket(jobRate, jobCap))
+	limiter.AddDefaultConfig("jobs_create", services.BucketConfig{RefillRate: jobRate, Capacity: jobCap})
+
+	// create and start worker pool for job processing
+	// worker pool configurable
+	workerCount := 4
+	if v := os.Getenv("CLUSTERGENIE_WORKER_COUNT"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			workerCount = n
+		}
+	}
+	workerQueueSize := 100
+	if v := os.Getenv("CLUSTERGENIE_WORKER_QUEUE"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			workerQueueSize = n
+		}
+	}
+
+	workerPool := services.NewWorkerPool(workerCount, workerQueueSize, func(jobID string) {
+		// delegate to JobService for actual processing
+		_ = jobSvc.ProcessJob(jobID)
+	})
+	workerPool.Start()
+	// attach worker pool to job service so CreateJob uses it
+	jobSvc.SetWorkerPool(workerPool)
+
+	// Register Prometheus metrics
+	services.RegisterPrometheusMetrics()
+
+	// start a background goroutine to sync worker pool & limiter stats into Prometheus
+	go func() {
+		for {
+			// worker pool metrics
+			services.WorkerPoolQueueLength.Set(float64(workerPool.QueueLength()))
+			services.WorkerPoolActiveWorkers.Set(float64(workerPool.ActiveWorkers()))
+			services.WorkerPoolCount.Set(float64(workerPool.WorkerCount()))
+
+			// limiter snapshot -> update available tokens per scope
+			snap := limiter.SnapshotStatus()
+			for name, scopes := range snap {
+				for scope, s := range scopes {
+					scopeType := "global"
+					scopeID := ""
+					if scope != "" {
+						if len(scope) > 5 && scope[:5] == "user:" {
+							scopeType = "user"
+							scopeID = scope[5:]
+						} else if len(scope) > 8 && scope[:8] == "cluster:" {
+							scopeType = "cluster"
+							scopeID = scope[8:]
+						} else {
+							scopeID = scope
+						}
+					}
+					services.RateLimitAvailable.WithLabelValues(name, scopeType, scopeID).Set(s.Available)
+				}
+			}
+
+			// sleep between updates
+			time.Sleep(2 * time.Second)
+		}
+	}()
+
 	// Initialize Gin router for REST API
+	// expose observability now that worker pool and limiter exist
 	r := gin.Default()
 	r.Use(cors.Default())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -122,8 +227,18 @@ func main() {
 			c.JSON(200, &models.DeleteDropletResponse{Message: "Droplet deleted"})
 		})
 
-		// Diagnosis
-		api.POST("/diagnosis/diagnose", func(c *gin.Context) {
+		// Diagnosis (scope configurable: cluster/user/global)
+		diagScope := os.Getenv("CLUSTERGENIE_DIAG_SCOPE")
+		if diagScope == "" {
+			diagScope = "cluster"
+		}
+		diagMiddleware := middleware.RateLimitMiddleware(limiter, "diagnosis")
+		if diagScope == "cluster" {
+			diagMiddleware = middleware.RateLimitMiddlewareByClusterFromBody(limiter, "diagnosis", "cluster_id")
+		} else if diagScope == "user" {
+			diagMiddleware = middleware.RateLimitMiddlewareByUserHeader(limiter, "diagnosis", "X-User-ID")
+		}
+		api.POST("/diagnosis/diagnose", diagMiddleware, func(c *gin.Context) {
 			var req models.DiagnoseClusterRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(400, gin.H{"error": err.Error()})
@@ -203,8 +318,18 @@ func main() {
 			c.JSON(200, resp)
 		})
 
-		// Jobs
-		api.POST("/jobs", func(c *gin.Context) {
+		// Jobs (scope configurable: user/cluster/global)
+		jobsScope := os.Getenv("CLUSTERGENIE_JOBS_SCOPE")
+		if jobsScope == "" {
+			jobsScope = "user"
+		}
+		jobsMiddleware := middleware.RateLimitMiddleware(limiter, "jobs_create")
+		if jobsScope == "user" {
+			jobsMiddleware = middleware.RateLimitMiddlewareByUserHeader(limiter, "jobs_create", "X-User-ID")
+		} else if jobsScope == "cluster" {
+			jobsMiddleware = middleware.RateLimitMiddlewareByClusterFromBody(limiter, "jobs_create", "cluster_id")
+		}
+		api.POST("/jobs", jobsMiddleware, func(c *gin.Context) {
 			var req models.CreateJobRequest
 			if err := c.ShouldBindJSON(&req); err != nil {
 				c.JSON(400, gin.H{"error": err.Error()})
@@ -266,6 +391,49 @@ func main() {
 			c.JSON(200, resp)
 		})
 	}
+
+	// Observability endpoints for Phase 6
+	api.GET("/observability/ratelimit", func(c *gin.Context) {
+		name := c.Query("name")
+		if name == "" {
+			c.JSON(400, gin.H{"error": "name query param required (e.g. diagnosis or jobs_create)"})
+			return
+		}
+		// allow optional scope information
+		scopeType := c.Query("scope_type")
+		scopeId := c.Query("scope_id")
+		var b *services.TokenBucket
+		if scopeType != "" && scopeId != "" {
+			scopeKey := scopeId
+			if scopeType == "user" {
+				scopeKey = "user:" + scopeId
+			} else if scopeType == "cluster" {
+				scopeKey = "cluster:" + scopeId
+			}
+			b = limiter.GetOrCreate(name, scopeKey)
+		} else {
+			b = limiter.Get(name)
+		}
+		if b == nil {
+			c.JSON(404, gin.H{"error": "no such limiter"})
+			return
+		}
+		available, capacity, rate := b.Status()
+		c.JSON(200, gin.H{"name": name, "available": available, "capacity": capacity, "rate_per_sec": rate})
+	})
+
+	api.GET("/observability/workerpool", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"worker_count":   workerPool.WorkerCount(),
+			"active_workers": workerPool.ActiveWorkers(),
+			"queue_length":   workerPool.QueueLength(),
+			"queue_capacity": workerPool.QueueCapacity(),
+			"queued_ids":     workerPool.SnapshotQueue(),
+		})
+	})
+
+	// Prometheus metrics endpoint (scrape target)
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 	log.Println("REST API server listening on :8080")
 	log.Println("Swagger UI available at http://localhost:8080/swagger/index.html")
