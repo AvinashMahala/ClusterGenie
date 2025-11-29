@@ -1,0 +1,13 @@
+{
+  "name": "cg-e2e-playwright",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "install:browsers": "npx playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "ClusterGenie - Core API",
+    "_postman_id": "clustergenie-core-api",
+    "description": "Collection for core API endpoints used for QA: health, clusters, droplets, jobs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+      }
+    },
+    {
+      "name": "List Clusters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/clusters", "host": ["{{base_url}}"], "path": ["clusters"] }
+      }
+    },
+    {
+      "name": "Get Cluster",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/clusters/{{cluster_id}}", "host": ["{{base_url}}"], "path": ["clusters","{{cluster_id}}"] }
+      }
+    },
+    {
+      "name": "Create Droplet",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"clusterId\": \"{{cluster_id}}\",\n  \"image\": \"ubuntu-22-04\",\n  \"flavour\": \"s-1vcpu-1gb\",\n  \"region\": \"ams3\",\n  \"name\": \"qa-test-01\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/droplets", "host": ["{{base_url}}"], "path": ["droplets"] }
+      }
+    },
+    {
+      "name": "Get Droplet",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/droplets/{{droplet_id}}", "host": ["{{base_url}}"], "path": ["droplets","{{droplet_id}}"] }
+      }
+    },
+    {
+      "name": "Create Job",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"diagnose\",\n  \"clusterId\": \"{{cluster_id}}\",\n  \"params\": { \"target\": \"node-1\" }\n}"
+        },
+        "url": { "raw": "{{base_url}}/jobs", "host": ["{{base_url}}"], "path": ["jobs"] }
+      }
+    },
+    {
+      "name": "Get Job",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/jobs/{{job_id}}", "host": ["{{base_url}}"], "path": ["jobs","{{job_id}}"] }
+      }
+    },
+    {
+      "name": "Cancel Job",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": { "raw": "{{base_url}}/jobs/{{job_id}}/cancel", "host": ["{{base_url}}"], "path": ["jobs","{{job_id}}","cancel"] }
+      }
+    }
+  ]
+}
