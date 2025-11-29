@@ -378,6 +378,125 @@
                 }
             }
         }
+        ,
+        "/clusters": {
+            "post": {
+                "summary": "Create a new cluster",
+                "description": "Create a new logical cluster resource",
+                "tags": ["Clusters"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Create cluster request",
+                    "required": true,
+                    "schema": {"$ref": "#/definitions/models.CreateClusterRequest"}
+                }],
+                "responses": {
+                    "201": {"description": "Created","schema": {"$ref": "#/definitions/models.ClusterResponse"}},
+                    "400": {"description": "Bad Request","schema": {"type": "object","properties": {"error": {"type": "string"}}}},
+                    "500": {"description": "Internal Server Error","schema": {"type": "object","properties": {"error": {"type": "string"}}}}
+                }
+            },
+            "get": {
+                "summary": "List clusters",
+                "description": "Returns a list of clusters",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ListClustersResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/clusters/{id}": {
+            "get": {
+                "summary": "Get cluster by ID",
+                "description": "Returns a specific cluster by ID",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","description": "Cluster ID","required": true,"type": "string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ClusterResponse"}}, "404": {"description": "Not Found"}}
+            },
+            "put": {
+                "summary": "Update cluster",
+                "description": "Updates an existing cluster",
+                "tags": ["Clusters"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","required": true,"type": "string"},{"in": "body","name": "request","required": true,"schema":{"$ref":"#/definitions/models.UpdateClusterRequest"}}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ClusterResponse"}}, "400": {"description": "Bad Request"}, "500": {"description": "Internal Server Error"}}
+            },
+            "delete": {
+                "summary": "Delete cluster",
+                "description": "Delete a cluster by ID",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","required": true,"type": "string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.DeleteClusterResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/health/{clusterId}": {
+            "get": {
+                "summary": "Check cluster health",
+                "description": "Perform a health check for a cluster",
+                "tags": ["Monitoring"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "clusterId","required": true,"type": "string","description":"Cluster ID to check"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.HealthCheckResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/observability/ratelimit": {
+            "get": {
+                "summary": "Get rate limiter status",
+                "description": "Returns availability/limits for a named limiter (supporting optional scope)",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string","required":true},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.RateLimitStatus"}}, "400": {"description":"Bad Request"}, "404": {"description":"Not Found"}}
+            }
+        },
+        "/observability/ratelimit/config": {
+            "post": {
+                "summary": "Create/Update persisted limiter config",
+                "tags": ["Observability"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/models.RateLimitConfigRequest"}}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.RateLimitConfigResponse"}}, "400": {"description":"Bad Request"}, "500": {"description":"Internal Server Error"}}
+            },
+            "get": {
+                "summary": "Get persisted limiter config",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string","required":true},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.RateLimitConfigResponse"}},"400":{"description":"Bad Request"},"404":{"description":"Not Found"},"500":{"description":"Internal Server Error"}}
+            },
+            "delete": {
+                "summary": "Delete persisted limiter config",
+                "tags": ["Observability"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/models.DeleteLimiterConfigRequest"}}],
+                "responses": {"200": {"description":"OK","schema":{"type":"object","properties":{"ok":{"type":"boolean"},"deleted":{"type":"string"}}}},"400":{"description":"Bad Request"},"500":{"description":"Internal Server Error"}}
+            }
+        },
+        "/observability/ratelimit/config/list": {
+            "get": {
+                "summary": "List persisted limiter configs",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string"},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.RateLimitConfigListResponse"}},"500":{"description":"Internal Server Error"}}
+            }
+        },
+        "/observability/workerpool": {
+            "get": {
+                "summary": "Workerpool status",
+                "description": "Returns stats and snapshot of the worker pool",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.WorkerPoolStatus"}}}
+            }
+        }
     },
     "definitions": {
         "models.HelloRequest": {
@@ -634,6 +753,56 @@
                 }
             }
         }
+        ,
+        "models.CreateClusterRequest": {
+            "type": "object",
+            "required": ["name", "region"],
+            "properties": {"name": {"type": "string"}, "region": {"type": "string"}}
+        },
+        "models.UpdateClusterRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "region": {"type": "string"}, "status": {"type": "string"}}
+        },
+        "models.ClusterResponse": {
+            "type": "object",
+            "properties": {"cluster": {"$ref": "#/definitions/models.Cluster"}, "message": {"type": "string"}}
+        },
+        "models.ListClustersResponse": {
+            "type": "object",
+            "properties": {"clusters": {"type": "array","items": {"$ref": "#/definitions/models.Cluster"}}}
+        },
+        "models.DeleteClusterResponse": {
+            "type": "object",
+            "properties": {"message": {"type": "string"}}
+        },
+        "models.HealthCheckResponse": {
+            "type": "object",
+            "properties": {"cluster_id": {"type": "string"}, "status": {"type": "string"}, "issues": {"type": "array","items": {"type": "string"}}, "timestamp": {"type": "string","format": "date-time"}}
+        },
+        "models.RateLimitStatus": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "available": {"type": "number"}, "capacity": {"type": "number"}, "rate_per_sec": {"type": "number"}}
+        },
+        "models.RateLimitConfigRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "scope_type": {"type": "string"}, "scope_id": {"type": "string"}, "refill_rate": {"type": "number"}, "capacity": {"type": "number"}}
+        },
+        "models.RateLimitConfigResponse": {
+            "type": "object",
+            "properties": {"ok": {"type": "boolean"}, "config_key": {"type": "string"}, "name": {"type": "string"}, "scope": {"type": "string"}, "config": {"type": "object","additionalProperties": {"type": "string"}}}
+        },
+        "models.RateLimitConfigListResponse": {
+            "type": "object",
+            "properties": {"count": {"type": "integer"}, "items": {"type": "array","items": {"type": "object","properties": {"key": {"type": "string"}, "name": {"type": "string"}, "scope": {"type": "string"}, "config": {"type": "object","additionalProperties": {"type": "string"}}}}}}
+        },
+        "models.DeleteLimiterConfigRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "scope_type": {"type": "string"}, "scope_id": {"type": "string"}, "key": {"type": "string"}}
+        },
+        "models.WorkerPoolStatus": {
+            "type": "object",
+            "properties": {"worker_count": {"type": "integer"}, "active_workers": {"type": "integer"}, "queue_length": {"type": "integer"}, "queue_capacity": {"type": "integer"}, "queued_ids": {"type": "array","items": {"type": "string"}}}
+        }
     },
     "tags": [
         {
@@ -655,6 +824,15 @@
         {
             "name": "Monitoring",
             "description": "Metrics and monitoring data"
+        }
+        ,
+        {
+            "name": "Clusters",
+            "description": "Cluster management and lifecycle"
+        },
+        {
+            "name": "Observability",
+            "description": "Rate limit / workerpool observability endpoints"
         }
     ]
 }

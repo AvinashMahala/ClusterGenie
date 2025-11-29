@@ -8,5 +8,809 @@
     },
     "host": "localhost:8080",
     "basePath": "/api/v1",
-    "paths": {}
+    "paths": {
+        "/hello": {
+            "post": {
+                "summary": "Say hello",
+                "description": "Returns a greeting message",
+                "tags": ["Hello"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Hello request",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/models.HelloRequest"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.HelloResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/droplets": {
+            "post": {
+                "summary": "Create a new droplet",
+                "description": "Creates a new DigitalOcean droplet",
+                "tags": ["Provisioning"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Droplet creation request",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/models.CreateDropletRequest"
+                    }
+                }],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.DropletResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "List all droplets",
+                "description": "Returns a list of all droplets",
+                "tags": ["Provisioning"],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ListDropletsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/droplets/{id}": {
+            "get": {
+                "summary": "Get droplet by ID",
+                "description": "Returns a specific droplet by its ID",
+                "tags": ["Provisioning"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "path",
+                    "name": "id",
+                    "description": "Droplet ID",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DropletResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "summary": "Delete droplet",
+                "description": "Deletes a droplet by its ID",
+                "tags": ["Provisioning"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "path",
+                    "name": "id",
+                    "description": "Droplet ID",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DeleteDropletResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/diagnosis/diagnose": {
+            "post": {
+                "summary": "Diagnose cluster",
+                "description": "Performs diagnostic analysis on a cluster",
+                "tags": ["Diagnosis"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Cluster diagnosis request",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/models.DiagnoseClusterRequest"
+                    }
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.DiagnoseClusterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs": {
+            "post": {
+                "summary": "Create a new job",
+                "description": "Creates a new job for cluster operations",
+                "tags": ["Jobs"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Job creation request",
+                    "required": true,
+                    "schema": {
+                        "$ref": "#/definitions/models.CreateJobRequest"
+                    }
+                }],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.JobResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "summary": "List all jobs",
+                "description": "Returns a list of all jobs",
+                "tags": ["Jobs"],
+                "produces": ["application/json"],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.ListJobsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{id}": {
+            "get": {
+                "summary": "Get job by ID",
+                "description": "Returns a specific job by its ID",
+                "tags": ["Jobs"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "path",
+                    "name": "id",
+                    "description": "Job ID",
+                    "required": true,
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.JobResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "summary": "Get cluster metrics",
+                "description": "Returns metrics for a cluster, optionally filtered by type",
+                "tags": ["Monitoring"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "query",
+                    "name": "cluster_id",
+                    "description": "Cluster ID to get metrics for",
+                    "type": "string"
+                }, {
+                    "in": "query",
+                    "name": "type",
+                    "description": "Metric type (cpu, memory, disk, network)",
+                    "type": "string"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.GetMetricsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "error": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ,
+        "/clusters": {
+            "post": {
+                "summary": "Create a new cluster",
+                "description": "Create a new logical cluster resource",
+                "tags": ["Clusters"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{
+                    "in": "body",
+                    "name": "request",
+                    "description": "Create cluster request",
+                    "required": true,
+                    "schema": {"$ref": "#/definitions/models.CreateClusterRequest"}
+                }],
+                "responses": {
+                    "201": {"description": "Created","schema": {"$ref": "#/definitions/models.ClusterResponse"}},
+                    "400": {"description": "Bad Request","schema": {"type": "object","properties": {"error": {"type": "string"}}}},
+                    "500": {"description": "Internal Server Error","schema": {"type": "object","properties": {"error": {"type": "string"}}}}
+                }
+            },
+            "get": {
+                "summary": "List clusters",
+                "description": "Returns a list of clusters",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ListClustersResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/clusters/{id}": {
+            "get": {
+                "summary": "Get cluster by ID",
+                "description": "Returns a specific cluster by ID",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","description": "Cluster ID","required": true,"type": "string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ClusterResponse"}}, "404": {"description": "Not Found"}}
+            },
+            "put": {
+                "summary": "Update cluster",
+                "description": "Updates an existing cluster",
+                "tags": ["Clusters"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","required": true,"type": "string"},{"in": "body","name": "request","required": true,"schema":{"$ref":"#/definitions/models.UpdateClusterRequest"}}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.ClusterResponse"}}, "400": {"description": "Bad Request"}, "500": {"description": "Internal Server Error"}}
+            },
+            "delete": {
+                "summary": "Delete cluster",
+                "description": "Delete a cluster by ID",
+                "tags": ["Clusters"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "id","required": true,"type": "string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.DeleteClusterResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/health/{clusterId}": {
+            "get": {
+                "summary": "Check cluster health",
+                "description": "Perform a health check for a cluster",
+                "tags": ["Monitoring"],
+                "produces": ["application/json"],
+                "parameters": [{"in": "path","name": "clusterId","required": true,"type": "string","description":"Cluster ID to check"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.HealthCheckResponse"}}, "500": {"description": "Internal Server Error"}}
+            }
+        },
+        "/observability/ratelimit": {
+            "get": {
+                "summary": "Get rate limiter status",
+                "description": "Returns availability/limits for a named limiter (supporting optional scope)",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string","required":true},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.RateLimitStatus"}}, "400": {"description":"Bad Request"}, "404": {"description":"Not Found"}}
+            }
+        },
+        "/observability/ratelimit/config": {
+            "post": {
+                "summary": "Create/Update persisted limiter config",
+                "tags": ["Observability"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/models.RateLimitConfigRequest"}}],
+                "responses": {"200": {"description": "OK","schema": {"$ref": "#/definitions/models.RateLimitConfigResponse"}}, "400": {"description":"Bad Request"}, "500": {"description":"Internal Server Error"}}
+            },
+            "get": {
+                "summary": "Get persisted limiter config",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string","required":true},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.RateLimitConfigResponse"}},"400":{"description":"Bad Request"},"404":{"description":"Not Found"},"500":{"description":"Internal Server Error"}}
+            },
+            "delete": {
+                "summary": "Delete persisted limiter config",
+                "tags": ["Observability"],
+                "consumes": ["application/json"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"body","name":"body","required":true,"schema":{"$ref":"#/definitions/models.DeleteLimiterConfigRequest"}}],
+                "responses": {"200": {"description":"OK","schema":{"type":"object","properties":{"ok":{"type":"boolean"},"deleted":{"type":"string"}}}},"400":{"description":"Bad Request"},"500":{"description":"Internal Server Error"}}
+            }
+        },
+        "/observability/ratelimit/config/list": {
+            "get": {
+                "summary": "List persisted limiter configs",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "parameters": [{"in":"query","name":"name","type":"string"},{"in":"query","name":"scope_type","type":"string"},{"in":"query","name":"scope_id","type":"string"}],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.RateLimitConfigListResponse"}},"500":{"description":"Internal Server Error"}}
+            }
+        },
+        "/observability/workerpool": {
+            "get": {
+                "summary": "Workerpool status",
+                "description": "Returns stats and snapshot of the worker pool",
+                "tags": ["Observability"],
+                "produces": ["application/json"],
+                "responses": {"200": {"description":"OK","schema":{"$ref":"#/definitions/models.WorkerPoolStatus"}}}
+            }
+        }
+    },
+    "definitions": {
+        "models.HelloRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.HelloResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Droplet": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "ip_address": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateDropletRequest": {
+            "type": "object",
+            "required": ["name", "region", "size", "image"],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DropletResponse": {
+            "type": "object",
+            "properties": {
+                "droplet": {
+                    "$ref": "#/definitions/models.Droplet"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ListDropletsResponse": {
+            "type": "object",
+            "properties": {
+                "droplets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Droplet"
+                    }
+                }
+            }
+        },
+        "models.DeleteDropletResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Cluster": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "region": {
+                    "type": "string"
+                },
+                "droplets": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "last_checked": {
+                    "type": "string",
+                    "format": "date-time"
+                }
+            }
+        },
+        "models.DiagnoseClusterRequest": {
+            "type": "object",
+            "required": ["cluster_id"],
+            "properties": {
+                "cluster_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.DiagnoseClusterResponse": {
+            "type": "object",
+            "properties": {
+                "cluster": {
+                    "$ref": "#/definitions/models.Cluster"
+                },
+                "insights": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "recommendations": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.Job": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "completed_at": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "result": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.CreateJobRequest": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "models.JobResponse": {
+            "type": "object",
+            "properties": {
+                "job": {
+                    "$ref": "#/definitions/models.Job"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.ListJobsResponse": {
+            "type": "object",
+            "properties": {
+                "jobs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Job"
+                    }
+                }
+            }
+        },
+        "models.Metric": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "cluster_id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number",
+                    "format": "float"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.GetMetricsResponse": {
+            "type": "object",
+            "properties": {
+                "metrics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Metric"
+                    }
+                },
+                "period": {
+                    "type": "string"
+                }
+            }
+        }
+        ,
+        "models.CreateClusterRequest": {
+            "type": "object",
+            "required": ["name", "region"],
+            "properties": {"name": {"type": "string"}, "region": {"type": "string"}}
+        },
+        "models.UpdateClusterRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "region": {"type": "string"}, "status": {"type": "string"}}
+        },
+        "models.ClusterResponse": {
+            "type": "object",
+            "properties": {"cluster": {"$ref": "#/definitions/models.Cluster"}, "message": {"type": "string"}}
+        },
+        "models.ListClustersResponse": {
+            "type": "object",
+            "properties": {"clusters": {"type": "array","items": {"$ref": "#/definitions/models.Cluster"}}}
+        },
+        "models.DeleteClusterResponse": {
+            "type": "object",
+            "properties": {"message": {"type": "string"}}
+        },
+        "models.HealthCheckResponse": {
+            "type": "object",
+            "properties": {"cluster_id": {"type": "string"}, "status": {"type": "string"}, "issues": {"type": "array","items": {"type": "string"}}, "timestamp": {"type": "string","format": "date-time"}}
+        },
+        "models.RateLimitStatus": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "available": {"type": "number"}, "capacity": {"type": "number"}, "rate_per_sec": {"type": "number"}}
+        },
+        "models.RateLimitConfigRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "scope_type": {"type": "string"}, "scope_id": {"type": "string"}, "refill_rate": {"type": "number"}, "capacity": {"type": "number"}}
+        },
+        "models.RateLimitConfigResponse": {
+            "type": "object",
+            "properties": {"ok": {"type": "boolean"}, "config_key": {"type": "string"}, "name": {"type": "string"}, "scope": {"type": "string"}, "config": {"type": "object","additionalProperties": {"type": "string"}}}
+        },
+        "models.RateLimitConfigListResponse": {
+            "type": "object",
+            "properties": {"count": {"type": "integer"}, "items": {"type": "array","items": {"type": "object","properties": {"key": {"type": "string"}, "name": {"type": "string"}, "scope": {"type": "string"}, "config": {"type": "object","additionalProperties": {"type": "string"}}}}}}
+        },
+        "models.DeleteLimiterConfigRequest": {
+            "type": "object",
+            "properties": {"name": {"type": "string"}, "scope_type": {"type": "string"}, "scope_id": {"type": "string"}, "key": {"type": "string"}}
+        },
+        "models.WorkerPoolStatus": {
+            "type": "object",
+            "properties": {"worker_count": {"type": "integer"}, "active_workers": {"type": "integer"}, "queue_length": {"type": "integer"}, "queue_capacity": {"type": "integer"}, "queued_ids": {"type": "array","items": {"type": "string"}}}
+        }
+    },
+    "tags": [
+        {"name": "Hello","description": "Basic greeting endpoints"},
+        {"name": "Provisioning","description": "Droplet management and provisioning"},
+        {"name": "Diagnosis","description": "Cluster health diagnosis and analysis"},
+        {"name": "Jobs","description": "Job management and execution"},
+        {"name": "Monitoring","description": "Metrics and monitoring data"},
+        {"name": "Clusters","description": "Cluster management and lifecycle"},
+        {"name": "Observability","description": "Rate limit / workerpool observability endpoints"}
+    ]
 }
