@@ -22,10 +22,12 @@ a:hover {
   color: #535bf2;
 }
 
+/* Keep the body layout flow standard for the app — avoid centering the entire app via flex here.
+   Centering was forcing panels into a narrow centered column and caused layout collisions.
+   Use block layout and let page-level containers control centering and overall layout. */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
   min-height: 100vh;
 }

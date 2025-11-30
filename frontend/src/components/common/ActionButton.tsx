@@ -19,7 +19,7 @@ export function ActionButton({
 }: ActionButtonProps) {
     return (
         <button
-            className={`action-button ${variant} ${size} ${className}`}
+            className={`action-button cg-action-button ${variant} ${size} ${className}`}
             disabled={disabled || loading}
             {...props}
         >

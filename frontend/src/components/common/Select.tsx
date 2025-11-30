@@ -33,7 +33,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const selectId = props.id || `select-${Math.random().toString(36).substr(2, 9)}`;
 
     return (
-      <div className={`select-wrapper ${size} ${variant} ${error ? 'error' : ''} ${className}`}>
+      <div className={`select-wrapper cg-select-wrapper ${size} ${variant} ${error ? 'error' : ''} ${className}`}>
         {label && (
           <label htmlFor={selectId} className="select-label">
             {label}

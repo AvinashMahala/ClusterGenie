@@ -78,7 +78,9 @@ svg{
   }
 }
 
-.card {
+.app-card {
+  /* Scoped helper — do not use raw .card globally (component styles live in components/common/Card.scss)
+     This prevents accidental overriding of shared card styles. */
   padding: 2em;
 }
 
