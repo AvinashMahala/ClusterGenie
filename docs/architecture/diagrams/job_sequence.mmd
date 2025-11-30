@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant B as Browser (Frontend)
+    participant API as core-api (HTTP)
+    participant J as JobService
+    participant DB as MySQL
+    participant KP as Kafka Producer
+    participant WP as WorkerPool
+    participant P as ProvisioningService
+    participant E as Kafka (cluster-events)
+    participant EC as core-api Consumer
+
+    B->>API: POST /api/v1/jobs (create job)
+    API->>J: CreateJob(request)
+    J->>DB: INSERT jobs (id,status='queued')
+    J->>KP: Produce event 'job.requested' -> topic cluster-events
+    J-->>API: 201 Created (job id)
+
+    Note over WP: WorkerPool picks job asynchronously
+    WP->>J: ProcessJob(jobID)
+    J->>DB: Update jobs (status='processing', progress)
+    J->>P: (internal) Provisioning action or job-specific work
+    P->>DB: create droplet / update state
+    P->>KP: Produce event 'droplet.created' or 'job.completed'
+    J->>DB: Update jobs (status='completed', result)
+    KP->>E: Job events flow into Kafka topics
+    E->>EC: core-api event consumer handles events via EventHandler
+    EC->>J: EventHandler may trigger JobService/Monitoring actions

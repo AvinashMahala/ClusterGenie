@@ -1,0 +1,24 @@
+Job Processing Flow — ASCII Sequence Diagram
+
+Browser (Frontend) -> core-api (HTTP): POST /api/v1/jobs (create job)
+core-api -> JobService: CreateJob(request)
+JobService -> MySQL: INSERT INTO jobs (id, status='queued')
+JobService -> Kafka: Produce event 'job.requested' (topic: cluster-events)
+JobService -> Browser: 201 Created (job id)
+
+(Async background processing)
+WorkerPool -> JobService: Pick job off queue / submit
+JobService -> MySQL: UPDATE jobs SET status='processing', progress=<x>
+JobService -> ProvisioningService: perform job-specific work (e.g. create droplet)
+ProvisioningService -> MySQL: create droplet / update droplet state
+ProvisioningService -> Kafka: Produce event 'droplet.created' or 'job.completed'
+JobService -> MySQL: UPDATE jobs SET status='completed', result=<...>, completed_at=<timestamp>
+
+Kafka (cluster-events) -> core-api consumer: message observed
+core-api EventHandler -> JobService / MonitoringService: handle event, correlate by job_id/trace_id
+
+Logging: application logs include job_id and trace_id -> emitted to Kafka logs.* -> log-consumer -> Loki (labels job_id, trace_id)
+
+Observability:
+- Prometheus scrapes core-api /metrics (worker pool, limiter metrics, request latencies)
+- Grafana combines Prometheus metrics + Loki logs for drill-downs and correlation

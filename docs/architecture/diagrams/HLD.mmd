@@ -1,0 +1,32 @@
+flowchart LR
+  subgraph User
+    Browser(User GUI)
+  end
+
+  subgraph Frontend[Frontend (React/Vite)]
+    Browser -->|HTTP REST| API[core-api REST API]
+    Browser -->|Embed| Grafana[Grafana (dashboards)]
+  end
+
+  subgraph Backend[core-api (Go)]
+    API --> DB[MySQL]
+    API --> Redis[Redis]
+    API -->|produce events| Kafka[(Kafka)]
+    API -->|expose metrics /metrics| Prometheus
+    API -->|expose observability APIs| Observability
+    API -->|submit background jobs| WorkerPool
+    WorkerPool -->|process jobs| JobService
+  end
+
+  Kafka -->|cluster-events| BackendConsumer[core-api consumer]
+  Kafka -->|logs.*| LogConsumer[log-consumer]
+  LogConsumer -->|push| Loki[Loki]
+
+  subgraph Monitoring[Monitoring Stack]
+    Prometheus -->|query /metrics| API
+    Prometheus -->|alerts/recording rules| Alerting
+    Grafana -->|datasources| Prometheus
+    Grafana -->|datasources| Loki
+  end
+
+  Note[Note: Docker Compose orchestrates DB / Redis / Kafka / Prometheus / Grafana / Loki / core-api / log-consumer] --- Backend
