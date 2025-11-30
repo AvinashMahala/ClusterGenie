@@ -896,6 +896,7 @@
                         }
                     }
 
+                    .cg-status-badge,
                     .status-badge {
                         padding: 0.375rem 0.75rem;
                         border-radius: 20px;
@@ -1395,7 +1396,7 @@
                 }
 
                 .actions-grid {
-                    grid-template-columns: 1fr !important;
+                    grid-template-columns: 1fr;
 
                     .action-card {
                         padding: 1.5rem 1rem;
@@ -1524,6 +1525,7 @@
                         margin-bottom: 2rem;
                     }
 
+                    .cg-action-button,
                     .action-button {
                         display: inline-flex;
                         align-items: center;

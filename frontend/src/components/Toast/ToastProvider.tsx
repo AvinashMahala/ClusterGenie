@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import './Toast.scss';
+import styles from './Toast.module.scss';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -37,7 +37,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
 
       {/* Toast container - top-right */}
-      <div className="toast-portal" aria-live="polite" aria-atomic="true">
+      <div className={styles.portal} aria-live="polite" aria-atomic="true">
         {toasts.map((t) => (
           <Toast key={t.id} toast={t} onClose={() => removeToast(t.id)} />
         ))}
@@ -61,12 +61,12 @@ const Toast: React.FC<{ toast: ToastItem; onClose: () => void }> = ({ toast, onC
   }, [id, duration, onClose]);
 
   return (
-    <div className={`toast ${type}`} role="status">
-      <div className="toast-content">
-        <div className="toast-title">{title}</div>
-        <div className="toast-message">{message}</div>
+    <div className={`${styles.root} ${styles[type] || ''}`} role="status">
+      <div className={styles.content}>
+        <div className={styles.title}>{title}</div>
+        <div className={styles.message}>{message}</div>
       </div>
-      <button className="toast-close" onClick={onClose} aria-label="Dismiss">×</button>
+      <button className={styles.close} onClick={onClose} aria-label="Dismiss">×</button>
     </div>
   );
 };

@@ -26,5 +26,5 @@
 
   .card-actions { display:flex; gap:8px; align-items:center; justify-content:flex-end; }
 
-  .action-button.small { padding: 0.25rem 0.5rem; border-radius:6px; font-size:0.78rem; }
+  .cg-action-button.small, .action-button.small { padding: 0.25rem 0.5rem; border-radius:6px; font-size:0.78rem; }
 }

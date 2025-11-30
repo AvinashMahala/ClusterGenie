@@ -1,0 +1,27 @@
+name: Frontend Stylelint
+
+on:
+  pull_request:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  stylelint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies (frontend)
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - name: Run stylelint
+        working-directory: frontend
+        run: npm run stylelint:ci
