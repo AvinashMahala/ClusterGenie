@@ -1,0 +1,64 @@
+ClusterGenie — LLD Component Diagram (ASCII)
+
++----------------------------------------------+
+| HTTP REST API (Gin)                          |
+| - /api/v1 endpoints                          |
+| - Observability endpoints (/metrics, /observability/*)
++----------------------+-----------------------+
+                       |                       
+                       | calls                 
+                       V                       
++----------------------------------------------+
+| Services (Domain Layer)                       |
+|  - ProvisioningService  - JobService          |
+|  - ClusterService       - DiagnosisService    |
+|  - AutoscalerService    - MonitoringService   |
+|  - DeploymentService    - BillingService      |
++----------------------+-----------------------+
+                       |                       
+                       | uses                  
+                       V                       
++----------------------+-----------------------+
+| Repositories (Data Layer)                     |
+|  - ClusterRepo    - DropletRepo               |
+|  - JobRepo        - MetricRepo                |
+|  - ProviderRepo   - DeploymentRepo            |
++-----------+-----------+-----------+-----------+
+            |           |           |
+            |           |           |
+            V           V           V
+        +------+    +------+    +----------+
+        | MySQL|    | Redis|    | Kafka    |
+        +------+    +------+    +----------+
+                       ^
+                       |  (optional)
+                       | Redis-backed TokenBucket
+                       | for distributed rate limiting
+
+WorkerPool (Background jobs)
++------------------------------------+
+| - Queue backed by channel           |
+| - Worker goroutines process job id  |
+| - Emits processing metrics -> /metrics
++------------------------------------+
+
+Event/Log flow
++------------------------------------+
+| core-api -> Kafka (produces events) |
+| log producers -> Kafka (logs.*)     |
+| log-consumer -> reads logs.* -> Loki|
++------------------------------------+
+
+Metrics & Observability
++------------------------------------+
+| - Metrics exported in services/metrics.go
+| - Prometheus scrapes /metrics
+| - Grafana uses Prometheus & Loki
++------------------------------------+
+
+LimiterManager (Rate Limiting)
++------------------------------------+
+| - Supports TokenBucket (in-mem) and RedisTokenBucket
+| - Scoped buckets (global, user:<id>, cluster:<id>)
+| - Config persisted in Redis under limiter_config:* keys
++------------------------------------+

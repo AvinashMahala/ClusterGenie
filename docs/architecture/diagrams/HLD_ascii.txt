@@ -1,0 +1,47 @@
+ClusterGenie — High-Level Architecture (ASCII)
+
++----------------------+           +----------------------+           +---------------------------+
+|                      |  HTTP     |                      |  Events   |                           |
+|   User Browser       | <-------> |   Frontend (React)   | <-------> |    core-api (Go / Gin)    |
+|  (Vite SPA / UI)     |           |  (API calls & embeds)|           |  - REST /api/v1            |
+|                      |           |                      |           |  - Producer -> Kafka      |
++----------------------+           +----------------------+           +---------------------------+
+                                                                               |      |      |
+                                                                               |      |      +----------------+
+                                                                               |      |                       |
+                                                                               |      V                       V
+                                                                               |  +---------+           +-----------+
+                                                                               |  |  MySQL  |           |   Redis   |
+                                                                               |  +---------+           +-----------+
+                                                                               V
+                                                                       +------------------+
+                                                                       |    WorkerPool    |
+                                                                       |    (job queue)   |
+                                                                       +------------------+
+
+Kafka (Event Bus)
++-------------------------------------------------------+
+| - topics: cluster-events, logs.*                       |
+| - core-api produces events (job.requested... )         |
+| - core-api consumes events (consumer -> EventHandler)  |
++-------------------------------------------------------+
+
+Logging / Monitoring stack (observability)
++---------+       +------------+          +------------+
+|  Logs   | ----> | log-consumer| ------> |   Loki     |
++---------+       +------------+          +------------+
+                             ^                        |
+                             |                        |
+                          Kafka (logs.*)             Grafana
+                                                      (Dashboards & Explore)
+
+Prometheus (Metrics)
++-----------------------------------------------------+
+| core-api exposes /metrics -> Prometheus scrapes      |
+| Prometheus -> Grafana (dashboards & alerting rules) |
++-----------------------------------------------------+
+
+Notes:
+- Docker Compose used to orchestrate core-api, MySQL, Redis, Kafka, Prometheus, Grafana, Loki, log-consumer for local dev.
+- Frontend talks to core-api via REST; embeds Grafana dashboards for monitoring.
+- log-consumer enriches logs with labels (job_id, trace_id) and pushes to Loki for easy correlation with metrics in Grafana.

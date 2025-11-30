@@ -1,0 +1,41 @@
+flowchart TD
+  API[HTTP REST API (Gin)]
+  DB[MySQL]
+  RDS[Redis]
+  Kafka[(Kafka)]
+  Producer[Kafka Producer]
+  Consumer[Kafka Consumer]
+  Worker[WorkerPool]
+  Limiter[LimiterManager]
+  Services[Domain Services]
+  Repos[Repositories]
+  EventHandler[EventHandler]
+
+  API --> Services
+  Services --> Repos
+  Repos --> DB
+  Repos --> RDS
+  Services --> Producer
+  Consumer --> EventHandler
+  EventHandler --> Services
+  Services --> Worker
+  Worker --> Services
+  API --> Limiter
+  Limiter --> RDS
+  Services -->|metrics| Prometheus[[Prometheus]]
+
+  subgraph Domain [Services]
+    ProvisioningSvc[ProvisioningService]
+    JobSvc[JobService]
+    ClusterSvc[ClusterService]
+    DiagnosisSvc[DiagnosisService]
+    AutoscalerSvc[AutoscalerService]
+    MonitoringSvc[MonitoringService]
+  end
+
+  Services --> ProvisioningSvc
+  Services --> JobSvc
+  Services --> ClusterSvc
+  Services --> DiagnosisSvc
+  Services --> AutoscalerSvc
+  Services --> MonitoringSvc
