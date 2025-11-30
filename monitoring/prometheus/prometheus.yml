@@ -14,7 +14,13 @@ scrape_configs:
     # If you run core-api inside docker-compose and want Prometheus to scrape the container
     # directly, replace this with ['core-api:8080'] or add it when the core-api container is present.
     static_configs:
-      - targets: ['host.docker.internal:8080']
+      # Support multiple development / deployment layouts so Prometheus can find
+      # the core-api regardless of how you run it (host vs container).
+      # - When Prometheus runs inside docker-compose: the container DNS name is `core-api:8080`.
+      # - When Prometheus runs on the host (or via Docker Desktop on macOS): use `host.docker.internal:8080`.
+      # - When both Prometheus and core-api run on the host, `localhost:8080` will work.
+      # Keep all three so scraping is robust in dev environments.
+      - targets: ['host.docker.internal:8080', 'core-api:8080', 'localhost:8080']
 
   - job_name: 'prometheus'
     static_configs:

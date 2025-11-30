@@ -68,8 +68,17 @@ services:
       - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
     command:
       - --config.file=/etc/prometheus/prometheus.yml
+    # Expose Prometheus web UI on the host
     ports:
       - "9090:9090"
+    # Helpful for local development: allow the prometheus container to resolve
+    # the host machine (and localhost) so it can scrape a backend running on the host.
+    # The host-gateway address works in modern Docker engines. Note: mapping
+    # `localhost` to the host gateway changes what `localhost` resolves to inside
+    # the container and should only be used for local development / dev-only testing.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "localhost:host-gateway"
     depends_on:
       - core-api
 
