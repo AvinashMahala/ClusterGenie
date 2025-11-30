@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ProviderService, ClusterService } from '../services';
+import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, ActionButton, Input, Select, Alert, LoadingSpinner } from './common';
+import './ProvidersPanel.scss';
 import type { Provider } from '../models/provider';
 
 const providerSvc = new ProviderService();
@@ -14,73 +16,138 @@ export const ProvidersPanel: React.FC = () => {
   const [preferred, setPreferred] = useState('');
   const [avoid, setAvoid] = useState('');
   const [dropletId, setDropletId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string|null>(null);
+  const [showDetails, setShowDetails] = useState<Provider | null>(null);
 
   useEffect(() => { loadProviders(); clusterSvc.listClusters().then(c=>setClusters(c || [])); }, []);
 
-  const loadProviders = async () => { const p = await providerSvc.listProviders(); setProviders(p || []); }
+  const loadProviders = async () => { setLoading(true); try { const p = await providerSvc.listProviders(); setProviders(p || []); } catch (err:any) { setError(err?.message || 'Failed to load providers'); } finally { setLoading(false); } }
 
   const onCreate = async () => {
-    await providerSvc.createProvider({ name, regions: ['region-a', 'region-b'], capacity, classes: ['small','medium'] });
-    await loadProviders();
+    setLoading(true); setError(null);
+    try {
+      await providerSvc.createProvider({ name, regions: ['region-a', 'region-b'], capacity, classes: ['small','medium'] });
+      await loadProviders();
+      setName(''); setCapacity(10);
+    } catch (err:any) {
+      setError(err?.message || 'Create failed');
+    } finally { setLoading(false); }
   }
 
   const onSchedule = async () => {
-    if (!clusterID) return alert('select cluster');
-    const r = await providerSvc.schedule(clusterID, preferred, avoid);
-    alert('Placement result:\n' + JSON.stringify(r, null, 2));
+    if (!clusterID) return setError('Select cluster first');
+    setLoading(true); setError(null);
+    try {
+      const r = await providerSvc.schedule(clusterID, preferred, avoid);
+      setShowDetails({ id: '__placement_result', name: 'Placement result', capacity: 0, used: 0, classes: [], regions: [], meta: r });
+    } catch (err:any) {
+      setError(err?.message || 'Schedule failed');
+    } finally { setLoading(false); }
   }
 
   const onMigrate = async () => {
-    if (!dropletId || !preferred) return alert('provide droplet id and target provider');
-    await providerSvc.migrate(dropletId, preferred);
-    alert('Migration started for ' + dropletId);
+    if (!dropletId || !preferred) return setError('Provide droplet id and target provider');
+    setLoading(true); setError(null);
+    try {
+      await providerSvc.migrate(dropletId, preferred);
+      setShowDetails({ id: '__migration', name: `Migration ${dropletId}`, capacity: 0, used: 0, classes: [], regions: [], meta: { dropletId, target: preferred } });
+    } catch (err:any) {
+      setError(err?.message || 'Migration failed');
+    } finally { setLoading(false); }
   }
 
   return (
-    <div className="panel providers-panel">
-      <h2>Multi-cloud Simulation</h2>
-      <div className="row">
-        <div className="col">
-          <h3>Providers</h3>
-          <div className="muted">Add providers and capacity for demo scheduling</div>
-          <div style={{marginTop:8}}>
-            <input placeholder="Provider name" value={name} onChange={e=>setName(e.target.value)} />
-            <input type="number" placeholder="Capacity" value={capacity} onChange={e=>setCapacity(Number(e.target.value))} />
-            <button className="action-button" onClick={onCreate}>Create provider</button>
-          </div>
-          <div style={{marginTop:12}}>
-            {providers.map(p => (
-              <div key={p.id} className="policy">
-                <div className="meta"><strong>{p.name}</strong> <span className="muted">capacity {p.capacity} used {p.used || 0}</span></div>
+    <Panel>
+      <PanelHeader title="Multi-cloud Simulation" subtitle="Manage providers, capacity and simulate scheduling/migrations" />
+      <PanelContent>
+        <Card>
+          <CardHeader title="Providers" subtitle={`Total ${providers.length}`} />
+          <CardContent>
+            <div className="providers-top">
+              <div className="create-form">
+                <Input label="Provider name" placeholder="Provider name" value={name} onChange={(e:any) => setName(e.target.value)} />
+                <Input label="Capacity" type="number" placeholder="Capacity" value={String(capacity)} onChange={(e:any) => setCapacity(Number(e.target.value))} />
+                <div className="create-actions">
+                  <ActionButton onClick={onCreate} disabled={loading}>{loading ? <LoadingSpinner size="sm" /> : 'Create provider'}</ActionButton>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="col">
-          <h3>Schedule / Migrate</h3>
-          <div style={{marginTop:8}}>
-            <label>Cluster</label>
-            <select value={clusterID} onChange={e=>setClusterID(e.target.value)}>
-              <option value="">-- select cluster --</option>
-              {clusters.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <div style={{marginTop:8}}>
-              <input placeholder="Preferred provider" value={preferred} onChange={e=>setPreferred(e.target.value)} />
-              <input placeholder="Avoid provider" value={avoid} onChange={e=>setAvoid(e.target.value)} />
-              <button className="action-button" onClick={onSchedule}>Simulate placement</button>
+              <div className="providers-list">
+                {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
+
+                {loading && !providers.length ? (
+                  <div className="loading-list">Loading providers…</div>
+                ) : (
+                  <table className="providers-table">
+                    <thead>
+                      <tr><th>Name</th><th>Capacity</th><th>Used</th><th>Regions</th><th>Classes</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      {providers.map(p => (
+                        <tr key={p.id}>
+                          <td>{p.name}</td>
+                          <td>{p.capacity}</td>
+                          <td>{p.used || 0}</td>
+                          <td>{(p.regions || []).join(', ')}</td>
+                          <td>{(p.classes || []).join(', ')}</td>
+                          <td className="actions-col"><ActionButton size="sm" variant="secondary" onClick={() => setShowDetails(p)}>Details</ActionButton></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <hr />
+        <Card>
+          <CardHeader title="Simulate" />
+          <CardContent>
+            <div className="simulate-grid">
+              <div className="simulate-left">
+                <Select label="Cluster" options={[{ value: '', label: '-- select cluster --' }, ...(clusters.map(c=>({ value: c.id, label: c.name || c.id }))) ]} value={clusterID} onChange={(e:any) => setClusterID(e.target.value)} />
+                <Input label="Preferred provider" placeholder="Preferred provider" value={preferred} onChange={(e:any) => setPreferred(e.target.value)} />
+                <Input label="Avoid provider" placeholder="Avoid provider" value={avoid} onChange={(e:any) => setAvoid(e.target.value)} />
+                <div className="simulate-actions">
+                  <ActionButton onClick={onSchedule} disabled={loading}>{loading ? <LoadingSpinner size="sm" /> : 'Simulate placement'}</ActionButton>
+                  <ActionButton variant="secondary" onClick={() => { setPreferred(''); setAvoid(''); }}>Clear</ActionButton>
+                </div>
+              </div>
 
-            <div className="small muted">Migrate a droplet (enter droplet id)</div>
-            <input placeholder="droplet-id" value={dropletId} onChange={e=>setDropletId(e.target.value)} />
-            <input placeholder="target provider" value={preferred} onChange={e=>setPreferred(e.target.value)} />
-            <button className="action-button secondary" onClick={onMigrate}>Migrate</button>
+              <div className="simulate-right">
+                <div className="migrate-box">
+                  <div className="small muted">Migrate a droplet (enter droplet id)</div>
+                  <Input label="Droplet ID" placeholder="droplet-id" value={dropletId} onChange={(e:any) => setDropletId(e.target.value)} />
+                  <Input label="Target provider" placeholder="target provider" value={preferred} onChange={(e:any) => setPreferred(e.target.value)} />
+                  <div className="migrate-actions"><ActionButton variant="danger" onClick={onMigrate}>Start migrate</ActionButton></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* details modal */}
+        {showDetails && (
+          <div className="details-overlay" role="dialog" aria-modal="true">
+            <div className="details-card">
+              <div className="details-header">
+                <div className="details-title">{showDetails.name}</div>
+                <div className="details-close"><ActionButton variant="secondary" onClick={() => setShowDetails(null)}>Close</ActionButton></div>
+              </div>
+              <div className="details-body">
+                <div><strong>Capacity:</strong> {showDetails.capacity}</div>
+                <div><strong>Used:</strong> {showDetails.used || 0}</div>
+                <div><strong>Regions:</strong> {(showDetails.regions || []).join(', ')}</div>
+                <div><strong>Classes:</strong> {(showDetails.classes || []).join(', ')}</div>
+                {showDetails.meta && <pre className="meta-block">{JSON.stringify(showDetails.meta, null, 2)}</pre>}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        )}
+      </PanelContent>
+    </Panel>
   )
 }
 

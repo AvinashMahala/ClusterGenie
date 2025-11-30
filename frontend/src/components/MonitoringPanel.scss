@@ -11,6 +11,38 @@
   }
 }
 
+/* dashboard hero */
+.monitoring-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, rgba(37,99,235,0.06), rgba(16,185,129,0.02));
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+
+  .hero-left { flex: 1; }
+
+  .hero-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; }
+  .hero-sub { color: #6b7280; font-size: 0.9rem; margin-top: 0.25rem; }
+
+  .hero-stats { display: flex; gap: 0.75rem; align-items: center; }
+
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 4px 18px rgba(2,6,23,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 110px;
+  }
+
+  .stat-value { font-weight: 800; font-size: 1.05rem; }
+  .stat-label { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -67,6 +99,51 @@
 .metrics-table-container {
   overflow-x: auto;
 }
+
+/* observability grid */
+.observability-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.observability-item {
+  padding: 0.75rem;
+}
+
+.observability-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.observability-body {
+  padding: 0.5rem 0;
+  color: #0f172a;
+}
+
+.observability-controls { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+.observability-controls.grafana-controls { justify-content: flex-end; margin-top: 0.75rem; }
+
+.text-muted { color: #6b7280; }
+
+.queue-list { margin-top: 0.5rem; }
+.queue-title { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.5rem; }
+.queue-ids { display:flex; gap: 0.5rem; flex-wrap:wrap; }
+.queue-id { background: #f3f4f6; color:#111827; padding: 0.25rem 0.5rem; border-radius: 999px; font-size: 0.78rem; }
+.queue-id.badge { background: #eef2ff; color: #4338ca; }
+
+/* rule-grid */
+.rule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.rule-actions { margin-top: 0.75rem; display:flex; gap:0.75rem; align-items:center }
 
 .metrics-table {
   width: 100%;
