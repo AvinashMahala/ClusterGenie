@@ -1,19 +1,23 @@
-.panel {
+.panel,
+.cg-panel {
   max-width: 1400px;
   margin: 0 auto;
 
-  .panel-header {
+  .panel-header,
+  .cg-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 2rem;
 
-    .panel-header-content {
+    .panel-header-content,
+    .cg-panel-header-content {
       display: flex;
       align-items: center;
       gap: 1rem;
 
-      .panel-icon {
+      .panel-icon,
+      .cg-panel-icon {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -29,15 +33,18 @@
         }
       }
 
-      .panel-title-section {
-        .panel-title {
+      .panel-title-section,
+      .cg-panel-title-section {
+        .panel-title,
+        .cg-panel-title {
           font-size: 2rem;
           font-weight: 700;
           color: #111827;
           margin: 0 0 0.25rem 0;
         }
 
-        .panel-subtitle {
+        .panel-subtitle,
+        .cg-panel-subtitle {
           font-size: 1rem;
           color: #6b7280;
           margin: 0;
@@ -45,13 +52,15 @@
       }
     }
 
-    .panel-actions {
+    .panel-actions,
+    .cg-panel-actions {
       display: flex;
       gap: 0.5rem;
     }
   }
 
-  .panel-content {
+  .panel-content,
+  .cg-panel-content {
     // Default styling, can be overridden
   }
 

@@ -1,9 +1,11 @@
-.select-wrapper {
+.select-wrapper,
+.cg-select-wrapper {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 
-  &.sm {
+  &.sm,
+  &.cg-sm {
     .select-container {
       height: 2rem;
     }
@@ -18,7 +20,8 @@
     }
   }
 
-  &.lg {
+  &.lg,
+  &.cg-lg {
     .select-container {
       height: 3rem;
     }

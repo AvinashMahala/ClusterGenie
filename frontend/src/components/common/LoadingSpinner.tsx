@@ -9,7 +9,7 @@ export interface LoadingSpinnerProps {
 export const LoadingSpinner = ({ size = 'md', color, className = '' }: LoadingSpinnerProps) => {
   return (
     <div
-      className={`loading-spinner ${size} ${className}`}
+      className={`loading-spinner cg-loading-spinner ${size} ${className}`}
       style={color ? { color } : undefined}
     >
       <svg className="spinner-icon" fill="none" viewBox="0 0 24 24">

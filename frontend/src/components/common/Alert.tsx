@@ -43,18 +43,18 @@ export function Alert({ type, title, message, icon, onClose, className = '' }: A
   };
 
   return (
-    <div className={`alert ${type} ${className}`}>
-      <div className="alert-content">
-        <div className="alert-icon">
+    <div className={`alert cg-alert ${type} ${className}`}>
+      <div className="alert-content cg-alert-content">
+        <div className="alert-icon cg-alert-icon">
           {icon || getDefaultIcon(type)}
         </div>
-        <div className="alert-text">
+        <div className="alert-text cg-alert-text">
           {title && <h4 className="alert-title">{title}</h4>}
           <p className="alert-message">{message}</p>
         </div>
       </div>
       {onClose && (
-        <button className="alert-close" onClick={onClose}>
+        <button className="alert-close cg-alert-close" onClick={onClose}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

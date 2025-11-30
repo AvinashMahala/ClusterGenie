@@ -22,7 +22,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`card ${padding} ${shadow} ${border ? 'border' : ''} ${hover ? 'hover' : ''} ${onClick ? 'clickable' : ''} ${className}`}
+      className={`card cg-card ${padding} ${shadow} ${border ? 'border' : ''} ${hover ? 'hover' : ''} ${onClick ? 'clickable' : ''} ${className}`}
       onClick={onClick}
     >
       {children}
