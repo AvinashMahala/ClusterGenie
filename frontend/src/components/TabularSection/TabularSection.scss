@@ -210,6 +210,7 @@
             /* keep default table-cell behavior so each td sits in its own column */
 
             &.status-cell {
+              .cg-status-badge,
               .status-badge {
                 display: inline-flex;
                 align-items: center;
@@ -252,6 +253,7 @@
             }
 
             &.actions-cell {
+              .cg-action-button,
               .action-button {
                 display: inline-flex;
                 align-items: center;

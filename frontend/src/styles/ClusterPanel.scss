@@ -175,6 +175,7 @@
           gap: 1rem;
           flex-wrap: wrap;
 
+          .cg-action-button,
           .action-button {
             display: inline-flex;
             align-items: center;
@@ -276,6 +277,7 @@
           margin-bottom: 2rem;
         }
 
+        .cg-action-button,
         .action-button {
           display: inline-flex;
           align-items: center;

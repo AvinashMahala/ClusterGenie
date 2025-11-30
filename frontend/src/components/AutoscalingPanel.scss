@@ -47,13 +47,13 @@
   }
 
   .left-pane {
-    .panel { padding: 1rem; background: linear-gradient(180deg,#ffffff,#fbfbff); border-radius:10px; border:1px solid rgba(99,102,241,0.06); }
+  .cg-panel, .panel { padding: 1rem; background: linear-gradient(180deg,#ffffff,#fbfbff); border-radius:10px; border:1px solid rgba(99,102,241,0.06); }
 
     h3 { margin-top: 0; margin-bottom: 8px; }
   }
 
   .right-pane {
-    .panel { padding: 1rem; }
+  .cg-panel, .panel { padding: 1rem; }
 
     .toolbar {
       display: flex;
@@ -106,7 +106,7 @@
 
   /* Left template CTA */
   .left-pane .panel > div { display:block; }
-  .left-pane .panel .action-button.small { padding: 0.25rem 0.6rem; border-radius: 8px; }
+  .left-pane .cg-panel .cg-action-button.small, .left-pane .cg-panel .action-button.small, .left-pane .panel .cg-action-button.small, .left-pane .panel .action-button.small { padding: 0.25rem 0.6rem; border-radius: 8px; }
 
   @media (max-width: 880px) {
     .autoscaling-body { grid-template-columns: 1fr; }

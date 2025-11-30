@@ -1,3 +1,4 @@
+.cg-btn,
 .btn {
   display: inline-flex;
   align-items: center;
@@ -12,44 +13,52 @@
   transition: all 0.2s ease;
 }
 
+.cg-btn-primary,
 .btn-primary {
   background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #ffffff;
   box-shadow: 0 10px 20px rgba(79, 70, 229, 0.25);
 }
 
+.cg-btn-secondary,
 .btn-secondary {
   background: #e0e7ff;
   color: #312e81;
 }
 
+.cg-btn-ghost,
 .btn-ghost {
   background: transparent;
   border: 1px solid rgba(99, 102, 241, 0.4);
   color: #4c1d95;
 }
 
+.cg-btn-small,
 .btn-small {
   padding: 0.35rem 0.85rem;
   border-radius: 0.65rem;
   font-size: 0.75rem;
 }
 
+.cg-btn-view,
 .btn-view {
   background: #eef2ff;
   color: #312e81;
 }
 
+.cg-btn-danger,
 .btn-danger {
   background: #dc2626;
   color: #ffffff;
 }
 
+.cg-btn:disabled,
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
+.cg-link,
 .link {
   background: none;
   border: none;

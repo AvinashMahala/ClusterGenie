@@ -1,3 +1,4 @@
+.cg-form-section,
 .form-section {
   background: white;
   border-radius: 12px;
@@ -30,7 +31,7 @@
   margin-bottom: 2rem;
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr;
   }
 }
 
