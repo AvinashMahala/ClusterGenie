@@ -7,7 +7,6 @@ package main
 // @BasePath /api/v1
 
 import (
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/database"
 	_ "github.com/AvinashMahala/ClusterGenie/backend/core-api/docs"
 	eventbus "github.com/AvinashMahala/ClusterGenie/backend/core-api/kafka"
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/middleware"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/repositories"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/services"
@@ -31,10 +31,13 @@ import (
 func main() {
 	// Load local .env (optional) to make development easier
 	if err := godotenv.Load(); err != nil {
-		log.Println(".env not found or failed to load, falling back to environment variables")
+		logger.Warnf(".env not found or failed to load, falling back to environment variables")
 	} else {
-		log.Println("Loaded .env file for configuration")
+		logger.Info("Loaded .env file for configuration")
 	}
+
+	// initialize structured logger
+	logger.Init("core-api", getEnv("ENVIRONMENT", "dev"))
 	// Initialize database
 	database.InitDB()
 	defer database.CloseDB()
@@ -75,7 +78,7 @@ func main() {
 
 	// Start event consumer in background
 	go func() {
-		log.Println("Starting event consumer...")
+		logger.Info("Starting event consumer...")
 		consumer.ConsumeEvents(eventHandler.HandleClusterEvent)
 	}()
 	defer consumer.Close()
@@ -352,14 +355,18 @@ func main() {
 	// @Router /observability/workerpool [get]
 	api.GET("/observability/workerpool", WorkerPoolHandler(workerPool))
 
-	// Prometheus metrics endpoint (scrape target)
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	// Prometheus metrics endpoint (scrape target).
+	// Support GET and HEAD and any additional methods Prometheus may use by
+	// registering a catch-all for '/metrics' to avoid 404s from the router.
+	r.Any("/metrics", gin.WrapH(promhttp.Handler()))
 
 	apiPort := getEnv("API_PORT", "8080")
-	log.Printf("REST API server listening on :%s", apiPort)
-	log.Printf("Swagger UI available at http://localhost:%s/swagger/index.html", apiPort)
+	logger.Infof("REST API server listening on :%s", apiPort)
+	logger.Infof("Swagger UI available at http://localhost:%s/swagger/index.html", apiPort)
 	if err := r.Run(":" + apiPort); err != nil {
-		log.Fatalf("Failed to start REST server: %v", err)
+		logger.Errorf("Failed to start REST server: %v", err)
+		// ensure we exit with non-zero status
+		os.Exit(1)
 	}
 }
 

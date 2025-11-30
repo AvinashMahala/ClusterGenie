@@ -36,6 +36,9 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Ensure Kafka listens on both the public 9092 port and the internal 29092
+      # so other containers can successfully connect (Vector, core-api, etc.).
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -53,9 +56,9 @@ services:
       - REDIS_ADDR=redis:6379
       - KAFKA_BROKERS=kafka:29092
       - API_PORT=8080
-    # Allow host port override via COREAPI_PORT env (defaults to 8080)
+    # Allow host port override via COREAPI_PORT env (defaults to 8085 to avoid collisions)
     ports:
-      - "${COREAPI_PORT:-8080}:8080"
+      - "${COREAPI_PORT:-8085}:8080"
     depends_on:
       - mysql
       - redis
@@ -100,6 +103,41 @@ services:
     depends_on:
       - prometheus
 
+  loki:
+    image: grafana/loki:2.8.2
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki_data:/loki
+    restart: unless-stopped
+
+  vector:
+    image: timberio/vector:0.36.0-debian
+    depends_on:
+      - kafka
+    volumes:
+      # Vector needs a config file; we mount a developer config in monitoring/vector
+      - ./monitoring/vector/vector.toml:/etc/vector/vector.yaml:ro
+      # Docker socket (dev only) so Vector's docker_logs source can read container logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - VECTOR_LOG=info
+    restart: unless-stopped
+
+  log-consumer:
+    build:
+      context: ./backend
+      dockerfile: ./log-consumer/Dockerfile
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - LOGS_TOPIC=logs.dev
+      - LOKI_URL=http://loki:3100/loki/api/v1/push
+    depends_on:
+      - kafka
+      - loki
+    restart: unless-stopped
+
 volumes:
   mysql_data:
   redis_data:
+  loki_data:

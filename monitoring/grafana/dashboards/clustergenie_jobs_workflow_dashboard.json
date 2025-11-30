@@ -1,0 +1,180 @@
+{
+  "id": null,
+  "uid": "cg-jobs",
+  "title": "ClusterGenie — Jobs: Workflows & Failures",
+  "tags": ["clustergenie", "jobs", "logs"],
+  "schemaVersion": 36,
+  "version": 1,
+  "timezone": "browser",
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "jobType",
+        "label": "Job type",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "query": "label_values(clustergenie_job_processing_seconds_bucket, job_type)",
+        "refresh": 2,
+        "hide": 0
+      },
+      {
+        "type": "query",
+        "name": "status",
+        "label": "Status",
+        "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+        "query": "label_values(clustergenie_jobs_processed_total, status)",
+        "refresh": 2,
+        "hide": 0
+      },
+      {
+        "type": "textbox",
+        "name": "jobId",
+        "label": "Job ID (optional)",
+        "hide": 0,
+        "query": "",
+        "includeAll": false
+      },
+      {
+        "type": "textbox",
+        "name": "traceId",
+        "label": "Trace ID (optional)",
+        "hide": 0,
+        "query": "",
+        "includeAll": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Summary",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Jobs processed (1m)",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "sum(rate(clustergenie_jobs_processed_total[1m]))", "refId": "A" }],
+      "gridPos": { "x": 0, "y": 2, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Failures (1m)",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "sum(rate(clustergenie_jobs_processed_total{status=~\"failure|error\"}[1m]))", "refId": "A" }],
+      "gridPos": { "x": 6, "y": 2, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Worker pool queue length",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "clustergenie_workerpool_queue_length", "refId": "A" }],
+      "gridPos": { "x": 12, "y": 2, "w": 6, "h": 4 }
+    },
+    {
+      "type": "stat",
+      "title": "Active workers",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "clustergenie_workerpool_active_workers", "refId": "A" }],
+      "gridPos": { "x": 18, "y": 2, "w": 6, "h": 4 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Job Latency (p95) — job_type",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "A" }],
+      "gridPos": { "x": 0, "y": 7, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Jobs processed by type (1m)",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "sum by (job_type) (rate(clustergenie_jobs_processed_total[1m]))", "refId": "A" }],
+      "gridPos": { "x": 12, "y": 7, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Failures by type (1m)",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "sum by (job_type) (rate(clustergenie_jobs_processed_total{status=~\"failure|error\"}[1m]))", "refId": "A" }],
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "timeseries",
+      "title": "Job latency histogram (job_type)",
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "targets": [{ "expr": "sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type)", "refId": "A" }],
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 }
+    },
+
+    {
+      "type": "row",
+      "title": "Logs & Correlation",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 }
+    },
+
+    {
+      "id": 200,
+      "type": "logs",
+      "title": "Core API logs (filtered)",
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "targets": [
+        {
+          "expr": "{service=\"core-api\"}"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 27, "w": 16, "h": 12 },
+      "options": {
+        "showLabels": true,
+        "showTime": true,
+        "wrapLogMessage": false
+      }
+      ,
+      "links": [
+        {
+          "title": "Filter dashboard by job_id/trace_id",
+          "url": "/d/cg-jobs?var-jobId=${__labels.job_id}&var-traceId=${__labels.trace_id}",
+          "targetBlank": false
+        }
+      ]
+    },
+
+    {
+      "type": "logs",
+      "title": "Errors (Core API)",
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "targets": [
+        {
+          "expr": "{service=\"core-api\", level=\"error\"} | json"
+        }
+      ],
+      "gridPos": { "x": 16, "y": 27, "w": 8, "h": 12 },
+      "options": { "showLabels": true, "showTime": true },
+      "links": [
+        {
+          "title": "Filter dashboard by job_id/trace_id",
+          "url": "/d/cg-jobs?var-jobId=${__labels.job_id}&var-traceId=${__labels.trace_id}",
+          "targetBlank": false
+        }
+      ]
+    },
+
+    {
+      "type": "table",
+      "title": "Recent log entries (filtered by Job ID or Trace ID)",
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "targets": [
+        {
+          "expr": "{service=\"core-api\"} | json | line_format \"{{.timestamp}} {{.level}} {{.job_id}} {{.trace_id}} {{.message}}\"",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 6 }
+    }
+  ]
+}

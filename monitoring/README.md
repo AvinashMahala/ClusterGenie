@@ -5,6 +5,19 @@ This directory contains monitoring and observability configuration for ClusterGe
 ## Files of interest
 - `prometheus/` — Prometheus config, recording/alerting rules, and a short README with run & verification steps. See `prometheus/README.md` for details.
 - `grafana/` — Grafana provisioning and dashboards for local development (pre-provisioned data sources and dashboards).
+	- NOTE: Grafana is now provisioned with a Loki datasource and a minimal logs dashboard (see `monitoring/grafana/provisioning/datasources/loki.yml` and `monitoring/grafana/dashboards/clustergenie_logs_dashboard.json`). This helps Explore and dashboard log panels work out-of-the-box in dev.
+
+	## Jobs dashboard: logs + metrics correlation
+
+	Newly added in this branch is a richer dashboard which combines Prometheus metrics and Loki logs for job workflows and failures:
+
+	- `monitoring/grafana/dashboards/clustergenie_jobs_workflow_dashboard.json` — a combined dashboard showing job throughput, failures, latency (p95) and Core API logs (Loki). Use the dashboard's Job type and status variables to filter metrics, and the Job ID / Trace ID text fields to correlate specific logs with metric spikes.
+
+	Tips for combining logs + metrics:
+	- Use `job_id` or `trace_id` fields in log messages (Core API emits these in structured JSON) — in Explore or dashboard log panels, use `| json` then filter by `job_id` or `trace_id` to narrow results.
+	- The dashboard also includes a new Prometheus recording rule `clustergenie_job_failures_rate_by_type` so failure-rate queries are precomputed and efficient.
+	 - The log pipeline now includes `job_id` and `trace_id` as Loki labels (via `log-consumer`), so Grafana can filter logs by these labels quickly. Dashboards were updated to allow clicking a log entry to pre-populate `job_id`/`trace_id` variables on the Jobs dashboard for fast correlation.
+	 - New Prometheus recording rules and alerts were added to help detect job failure spikes by `job_type` and by `cluster_id`. See `monitoring/prometheus/rules/prometheus_rules.yml`.
 
 ## Quick start (dev)
 

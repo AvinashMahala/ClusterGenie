@@ -10,6 +10,13 @@ groups:
       - record: clustergenie_rate_limit_exceeded_per_endpoint
         expr: sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (endpoint)
 
+      # Record failure rate for jobs grouped by job_type to speed up dashboard queries
+      - record: clustergenie_job_failures_rate_by_type
+        expr: sum(rate(clustergenie_jobs_processed_total{status=~"failure|error"}[5m])) by (job_type)
+
+      - record: clustergenie_job_failures_rate_by_cluster
+        expr: sum(rate(clustergenie_jobs_processed_total{status=~"failure|error"}[5m])) by (cluster_id)
+
   - name: clustergenie_alerts
     rules:
       - alert: HighJobLatencyP95
@@ -38,3 +45,21 @@ groups:
         annotations:
           summary: "Rate limiter spike detected"
           description: "Rate limiting spikes (>5/m) detected for endpoint {{ $labels.endpoint }}."
+
+      - alert: JobFailureSpikeByType
+        expr: clustergenie_job_failures_rate_by_type > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job failure spike by job_type"
+          description: "High failure rate detected for job type {{ $labels.job_type }} (>5 failures/min over 5m average)"
+
+      - alert: JobFailureSpikeByCluster
+        expr: clustergenie_job_failures_rate_by_cluster > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job failure spike by cluster"
+          description: "High failure rate detected for cluster {{ $labels.cluster_id }} (>5 failures/min over 5m average)"

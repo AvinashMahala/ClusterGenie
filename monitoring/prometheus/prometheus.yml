@@ -20,7 +20,7 @@ scrape_configs:
       # - When Prometheus runs on the host (or via Docker Desktop on macOS): use `host.docker.internal:8080`.
       # - When both Prometheus and core-api run on the host, `localhost:8080` will work.
       # Keep all three so scraping is robust in dev environments.
-      - targets: ['host.docker.internal:8080', 'core-api:8080', 'localhost:8080']
+      - targets: ['host.docker.internal:8085', 'core-api:8080', 'localhost:8085']
 
   - job_name: 'prometheus'
     static_configs:

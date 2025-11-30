@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/services"
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,7 @@ func RateLimitMiddleware(manager *services.LimiterManager, bucketName string) gi
 
 		if ok := b.Allow(1); !ok {
 			// log throttle occurrences for observability
-			log.Printf("rate limit exceeded for %s %s", c.Request.Method, c.FullPath())
+			logger.Warnf("rate limit exceeded for %s %s", c.Request.Method, c.FullPath())
 			// increment Prometheus metric if available
 			if services.RateLimitExceeded != nil {
 				services.RateLimitExceeded.WithLabelValues(bucketName, "global", "").Inc()
@@ -61,7 +62,7 @@ func RateLimitMiddlewareByUserHeader(manager *services.LimiterManager, bucketNam
 		}
 
 		if ok := b.Allow(1); !ok {
-			log.Printf("rate limit exceeded for %s %s user=%s", c.Request.Method, c.FullPath(), uid)
+			logger.Warnf("rate limit exceeded for %s %s user=%s", c.Request.Method, c.FullPath(), uid)
 			if services.RateLimitExceeded != nil {
 				services.RateLimitExceeded.WithLabelValues(bucketName, "user", uid).Inc()
 			}
@@ -115,7 +116,7 @@ func RateLimitMiddlewareByClusterFromBody(manager *services.LimiterManager, buck
 		}
 
 		if ok := b.Allow(1); !ok {
-			log.Printf("rate limit exceeded for %s %s cluster=%s", c.Request.Method, c.FullPath(), scopeKey)
+			logger.Warnf("rate limit exceeded for %s %s cluster=%s", c.Request.Method, c.FullPath(), scopeKey)
 			if services.RateLimitExceeded != nil {
 				// cluster scope label
 				services.RateLimitExceeded.WithLabelValues(bucketName, "cluster", scopeKey).Inc()

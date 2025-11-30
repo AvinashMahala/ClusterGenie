@@ -5,8 +5,9 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"time"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/events"
 	"github.com/google/uuid"
@@ -83,7 +84,7 @@ func (s *JobService) CreateJob(req *models.CreateJobRequest) (*models.JobRespons
 		go func() {
 			err := s.ProcessJob(resp.Job.ID)
 			if err != nil {
-				log.Printf("Failed to process job %s: %v", resp.Job.ID, err)
+				logger.Errorf("Failed to process job %s: %v", resp.Job.ID, err)
 			}
 		}()
 	}
