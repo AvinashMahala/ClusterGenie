@@ -1,0 +1,134 @@
+/* New styling for LimiterRulesPanel */
+.limiter-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .search-input {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+
+    input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      min-width: 240px;
+      outline: none;
+      transition: box-shadow .12s ease-in-out;
+    }
+
+    input:focus {
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+      border-color: #2563eb;
+    }
+  }
+}
+
+.rules-table-wrap {
+  margin-top: 1rem;
+}
+
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+
+  thead {
+    background: #f9fafb;
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 700;
+      color: #374151;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid #e6e6e6;
+    }
+  }
+
+  tbody tr {
+    transition: background .12s ease-in-out;
+  }
+
+  tbody tr.rule-row:hover {
+    background: #fbfcfe;
+  }
+
+  td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+    font-size: 0.95rem;
+    color: #111827;
+  }
+
+  .rule-col-name {
+    .name {
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+    .meta {
+      font-size: 0.8rem;
+      color: #6b7280;
+      code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+}
+
+.empty-state {
+  padding: 2rem 1rem;
+  color: #6b7280;
+}
+
+/* modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-card {
+  width: 720px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(2,6,23,0.2);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #eef2f7;
+
+  .modal-title { font-weight: 800; font-size: 1rem; }
+  .modal-actions { display: flex; gap: 0.5rem; }
+}
+
+.modal-body { padding: 1rem 1.25rem; }
+.form-row { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.75rem; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+@media (max-width: 768px) {
+  .modal-card { width: 92%; }
+  .limiter-controls { flex-direction: column; align-items: stretch; }
+}

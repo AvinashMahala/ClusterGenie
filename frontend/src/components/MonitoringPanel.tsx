@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { MonitoringService } from '../services/monitoringService';
 import { ObservabilityService } from '../services/observabilityService';
 import type { Metric, MetricsResponse } from '../models/metric';
-import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Select, ActionButton, Alert, LoadingSpinner } from './common';
+import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, Select, ActionButton, Alert, LoadingSpinner, StatusBadge } from './common';
 import { ClusterRepositoryImpl } from '../repositories/clusterRepository';
 import type { Cluster } from '../models/cluster';
 import './MonitoringPanel.scss';
@@ -242,6 +242,24 @@ export function MonitoringPanel() {
           />
         )}
 
+        {/* Dashboard summary */}
+        <div className="monitoring-hero">
+          <div className="hero-left">
+            <div className="hero-title">Realtime cluster health</div>
+            <div className="hero-sub">Quick snapshot — latest values across monitored clusters</div>
+          </div>
+          <div className="hero-stats">
+            {['cpu', 'memory', 'network'].map((t) => (
+              <div key={t} className="stat-card">
+                <div className={`stat-value ${getMetricColor(t)}`}>
+                  {latestMetrics[t] ? formatValue(latestMetrics[t].value, latestMetrics[t].unit) : '—'}
+                </div>
+                <div className="stat-label">{t.toUpperCase()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Current Metrics Summary */}
         {/* Phase 6: Observability (Rate limiter / Worker pool) */}
         <Card>
@@ -249,7 +267,7 @@ export function MonitoringPanel() {
           <CardContent>
             <div className="observability-grid">
               <div className="observability-item">
-                <div className="observability-title">Rate Limit (diagnosis)</div>
+                <div className="observability-title">Rate Limit (diagnosis) {rateLimit ? <StatusBadge status={String(Math.round(rateLimit.available * 100)/100)} variant="success" size="sm" /> : <StatusBadge status="unavailable" variant="error" size="sm" />}</div>
                 <div className="observability-body">
                   {rateLimit ? (
                     <>
@@ -258,7 +276,7 @@ export function MonitoringPanel() {
                       <div>Rate (per sec): {rateLimit.rate_per_sec}</div>
                     </>
                   ) : (
-                    <div className="text-gray-500">Rate limit status unavailable</div>
+                    <div className="text-muted">Rate limit status unavailable</div>
                   )}
                   <div className="observability-controls">
                     <Select label="Scope" value={scopeType} onChange={(e) => setScopeType(e.target.value)} options={[{ value: 'global', label: 'Global' }, { value: 'user', label: 'User' }, { value: 'cluster', label: 'Cluster' }]} />
@@ -269,17 +287,17 @@ export function MonitoringPanel() {
                   </div>
                 </div>
                 <div className="observability-controls grafana-controls">
-                  <ActionButton onClick={() => setShowGrafanaEmbed((s) => !s)}>
+                  <ActionButton variant="secondary" onClick={() => setShowGrafanaEmbed((s) => !s)}>
                     {showGrafanaEmbed ? 'Hide' : 'Embed'} Grafana Panel
                   </ActionButton>
-                  <ActionButton onClick={() => window.open(`${GRAFANA_URL}/d/cg-demo?orgId=1${scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeId && scopeType === 'user' ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`)}>
+                  <ActionButton variant="secondary" onClick={() => window.open(`${GRAFANA_URL}/d/cg-demo?orgId=1${scopeId ? `&var-cluster=${encodeURIComponent(scopeId)}` : ''}${scopeId && scopeType === 'user' ? `&var-user=${encodeURIComponent(scopeId)}` : ''}`)}>
                     Open Dashboard
                   </ActionButton>
                 </div>
               </div>
 
               <div className="observability-item">
-                <div className="observability-title">Job Worker Pool</div>
+                <div className="observability-title">Job Worker Pool {workerPool ? <StatusBadge status={`${workerPool.active_workers} active`} variant="success" size="sm" /> : <StatusBadge status="unavailable" variant="error" size="sm" />}</div>
                 <div className="observability-body">
                   {workerPool ? (
                     <>
@@ -291,7 +309,7 @@ export function MonitoringPanel() {
                           <div className="queue-title">Queued job IDs</div>
                           <div className="queue-ids">
                             {workerPool.queued_ids.slice(0, 20).map((id: string) => (
-                              <div key={id} className="queue-id">{id}</div>
+                              <div key={id} className="queue-id badge">{id}</div>
                             ))}
                             {workerPool.queued_ids.length > 20 && (
                               <div className="queue-more">+{workerPool.queued_ids.length - 20} more</div>

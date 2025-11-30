@@ -71,3 +71,21 @@ export default defineConfig([
   },
 ])
 ```
+
+## Developer notes — local pages to check
+
+When running the dev server (vite) you can preview the admin pages directly. Common routes to check during UI development:
+
+- /admin/limiter-rules — admin page for persisted limiter rules (create/edit/delete)
+- /monitoring — monitoring dashboard with observability, metrics and worker pool status
+- /billing — billing & cost estimate page (estimate cluster costs and view breakdowns)
+- /providers — providers management page (create providers, simulate scheduling, migrate droplets)
+- /providers — providers management page (create providers, simulate scheduling, migrate droplets)
+- /autoscaling — autoscaling page (create/manage policies, evaluate simulations)
+
+Start the front-end dev server from the frontend/ folder:
+
+```bash
+npm run dev
+```
+

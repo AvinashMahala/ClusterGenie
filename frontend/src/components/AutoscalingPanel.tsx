@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './AutoscalingPanel.scss';
 import { ClusterService, AutoscalingService, MonitoringService } from '../services';
+import { Panel, PanelHeader, PanelContent, Card, CardHeader, CardContent, ActionButton, Select, Input, StatusBadge } from './common';
 import { useToast } from './Toast/ToastProvider';
 import EvaluateModal from './EvaluateModal';
 import AutoscalingTopBar from './AutoscalingTopBar';
@@ -157,7 +158,10 @@ export const AutoscalingPanel: React.FC = () => {
   };
 
   return (
-    <div className="panel autoscaling-panel autoscaling-page">
+    <Panel>
+      <PanelHeader title="Autoscaling" subtitle="Manage autoscaling policies and evaluate simulations" />
+      <PanelContent>
+      <div className="autoscaling-panel autoscaling-page">
       <AutoscalingTopBar
         clusters={clusters}
         selectedCluster={selectedCluster}
@@ -171,8 +175,10 @@ export const AutoscalingPanel: React.FC = () => {
 
 
         <div className="left-pane col">
-          <h3>Create policy</h3>
-          <div className="panel" style={{padding:'12px'}}>
+          <Card>
+            <CardHeader title="Create policy" subtitle="Templates and quickstarts" />
+            <CardContent>
+            <div style={{padding:'0px 4px'}}>
             <div style={{marginBottom:8, color:'#6b7280'}}>Create from templates or create a custom policy. Templates help you quickly get started.</div>
 
             <div style={{display:'flex', flexDirection:'column', gap:8}}>
@@ -206,11 +212,15 @@ export const AutoscalingPanel: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="right-pane col">
-          <h3>Policies</h3>
+          <Card>
+            <CardHeader title="Policies" subtitle="Active policies for the selected cluster" />
+            <CardContent>
           {!selectedCluster && <div className="muted">Select a cluster to view policies</div>}
           {selectedCluster && (
             <div className="policies-list">
@@ -250,6 +260,8 @@ export const AutoscalingPanel: React.FC = () => {
               </div>
             </div>
           )}
+            </CardContent>
+          </Card>
         </div>
       </div>
       {detailPolicy && (
@@ -298,7 +310,9 @@ export const AutoscalingPanel: React.FC = () => {
         defaultCluster={selectedCluster}
       />
       <EvaluateModal open={evaluateOpen} onClose={() => setEvaluateOpen(false)} results={evaluateResult} />
-    </div>
+      </div>
+      </PanelContent>
+    </Panel>
   );
 };
 

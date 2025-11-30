@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { MonitoringService } from '../services';
+import { Select, ActionButton, StatusBadge } from './common';
 
 const monitoringSvc = new MonitoringService();
 
@@ -47,24 +48,18 @@ export const AutoscalingTopBar: React.FC<Props> = ({ clusters, selectedCluster, 
           <div className="subtitle">Manage autoscaling policies and evaluate simulations</div>
         </div>
 
-        <div>
-          <label style={{display: 'block', fontSize: '0.85rem', color: '#6b7280'}}>Cluster</label>
-          <select value={selectedCluster} onChange={(e) => setSelectedCluster(e.target.value)}>
-            <option value="">-- select cluster --</option>
-            {clusters.map((c) => (
-              <option value={c.id} key={c.id}>{c.name}</option>
-            ))}
-          </select>
+        <div style={{minWidth: 240}}>
+          <Select label="Cluster" value={selectedCluster} onChange={(e) => setSelectedCluster(e.target.value)} options={[{ value: '', label: '-- select cluster --' }, ...(clusters.map((c) => ({ value: c.id, label: c.name })))]} />
         </div>
 
-        <div style={{display:'flex', gap: '0.75rem', marginLeft: '1rem'}}>
-          <div style={{fontSize: '0.9rem'}}>
-            <div style={{fontWeight:700}}>{cpuAvg === null ? '—' : `${cpuAvg}%`}</div>
+        <div style={{display:'flex', gap: '0.75rem', marginLeft: '1rem', alignItems: 'center'}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontWeight:700, fontSize: '0.95rem'}}>{cpuAvg === null ? '—' : `${cpuAvg}%`}</div>
             <div style={{fontSize: '0.8rem', color:'#6b7280'}}>CPU avg</div>
           </div>
 
-          <div style={{fontSize: '0.9rem'}}>
-            <div style={{fontWeight:700}}>{selectedCluster ? 'n/a' : '—'}</div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontWeight:700, fontSize: '0.95rem'}}>{selectedCluster ? 'n/a' : '—'}</div>
             <div style={{fontSize: '0.8rem', color:'#6b7280'}}>Replicas</div>
           </div>
         </div>
@@ -72,12 +67,12 @@ export const AutoscalingTopBar: React.FC<Props> = ({ clusters, selectedCluster, 
 
       <div className="topbar-actions">
         <div style={{display: 'flex', gap: '6px'}}>
-          <button className="action-button" onClick={onEvaluate} disabled={!selectedCluster}>Evaluate</button>
-          <button className="action-button secondary" onClick={onRefresh} disabled={!selectedCluster}>Refresh</button>
+          <ActionButton variant="secondary" onClick={onEvaluate} disabled={!selectedCluster}>Evaluate</ActionButton>
+          <ActionButton variant="secondary" onClick={onRefresh} disabled={!selectedCluster}>Refresh</ActionButton>
         </div>
 
         <div>
-          <button className="action-button primary" onClick={onNewPolicy} disabled={!selectedCluster}>New Policy</button>
+          <ActionButton variant="primary" onClick={onNewPolicy} disabled={!selectedCluster}>New policy</ActionButton>
         </div>
       </div>
     </div>
