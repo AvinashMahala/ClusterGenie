@@ -1,7 +1,7 @@
 package services
 
 import (
-	"log"
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -90,12 +90,12 @@ func RegisterPrometheusMetrics() {
 	// These may already be registered (hot reload or tests), so handle "already registered" safely.
 	if err := prometheus.Register(prometheus.NewGoCollector()); err != nil {
 		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			log.Printf("failed to register go collector: %v", err)
+			logger.Errorf("failed to register go collector: %v", err)
 		}
 	}
 	if err := prometheus.Register(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{})); err != nil {
 		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
-			log.Printf("failed to register process collector: %v", err)
+			logger.Errorf("failed to register process collector: %v", err)
 		}
 	}
 
@@ -106,10 +106,10 @@ func RegisterPrometheusMetrics() {
 				if existing, ok2 := are.ExistingCollector.(*prometheus.CounterVec); ok2 {
 					*target = existing
 				} else {
-					log.Printf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
+					logger.Warnf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
 				}
 			} else {
-				log.Printf("failed to register %s: %v", name, err)
+				logger.Errorf("failed to register %s: %v", name, err)
 			}
 		}
 	}
@@ -120,10 +120,10 @@ func RegisterPrometheusMetrics() {
 				if existing, ok2 := are.ExistingCollector.(*prometheus.GaugeVec); ok2 {
 					*target = existing
 				} else {
-					log.Printf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
+					logger.Warnf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
 				}
 			} else {
-				log.Printf("failed to register %s: %v", name, err)
+				logger.Errorf("failed to register %s: %v", name, err)
 			}
 		}
 	}
@@ -135,10 +135,10 @@ func RegisterPrometheusMetrics() {
 				if existing, ok2 := are.ExistingCollector.(prometheus.Gauge); ok2 {
 					*target = existing
 				} else {
-					log.Printf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
+					logger.Warnf("unexpected existing collector type for %s: %T", name, are.ExistingCollector)
 				}
 			} else {
-				log.Printf("failed to register %s: %v", name, err)
+				logger.Errorf("failed to register %s: %v", name, err)
 			}
 		}
 	}
@@ -157,10 +157,10 @@ func RegisterPrometheusMetrics() {
 			if existing, ok2 := are.ExistingCollector.(*prometheus.HistogramVec); ok2 {
 				JobProcessingSeconds = existing
 			} else {
-				log.Printf("unexpected existing collector type for job processing seconds: %T", are.ExistingCollector)
+				logger.Warnf("unexpected existing collector type for job processing seconds: %T", are.ExistingCollector)
 			}
 		} else {
-			log.Printf("failed to register job processing histogram: %v", err)
+			logger.Errorf("failed to register job processing histogram: %v", err)
 		}
 	}
 
@@ -170,10 +170,10 @@ func RegisterPrometheusMetrics() {
 			if existing, ok2 := are.ExistingCollector.(*prometheus.HistogramVec); ok2 {
 				HTTPRequestDuration = existing
 			} else {
-				log.Printf("unexpected existing collector type for http request duration: %T", are.ExistingCollector)
+				logger.Warnf("unexpected existing collector type for http request duration: %T", are.ExistingCollector)
 			}
 		} else {
-			log.Printf("failed to register http request duration histogram: %v", err)
+			logger.Errorf("failed to register http request duration histogram: %v", err)
 		}
 	}
 	tryRegisterCounterVec(&HTTPRequestTotal, HTTPRequestTotal, "clustergenie_http_requests_total")

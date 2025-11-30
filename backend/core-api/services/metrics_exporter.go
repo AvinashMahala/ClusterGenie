@@ -1,8 +1,9 @@
 package services
 
 import (
-	"log"
 	"time"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/interfaces"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
@@ -12,7 +13,7 @@ import (
 // them as Prometheus gauges so Grafana can plot per-cluster metrics.
 func StartClusterMetricsExporter(clusterRepo interfaces.ClusterRepository, metricRepo interfaces.MetricRepository, interval time.Duration) {
 	if clusterRepo == nil || metricRepo == nil {
-		log.Println("cluster metrics exporter: repositories not configured; skipping exporter")
+		logger.Warn("cluster metrics exporter: repositories not configured; skipping exporter")
 		return
 	}
 
@@ -30,7 +31,7 @@ func StartClusterMetricsExporter(clusterRepo interfaces.ClusterRepository, metri
 func exportOnce(clusterRepo interfaces.ClusterRepository, metricRepo interfaces.MetricRepository) {
 	clusters, err := clusterRepo.ListClusters()
 	if err != nil {
-		log.Printf("cluster metrics exporter: failed to list clusters: %v", err)
+		logger.Errorf("cluster metrics exporter: failed to list clusters: %v", err)
 		return
 	}
 
@@ -40,7 +41,7 @@ func exportOnce(clusterRepo interfaces.ClusterRepository, metricRepo interfaces.
 		}
 		metrics, err := metricRepo.ListMetricsByCluster(c.ID)
 		if err != nil {
-			log.Printf("cluster metrics exporter: failed to list metrics for cluster %s: %v", c.ID, err)
+			logger.Errorf("cluster metrics exporter: failed to list metrics for cluster %s: %v", c.ID, err)
 			continue
 		}
 

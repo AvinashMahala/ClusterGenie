@@ -5,7 +5,8 @@ package eventbus
 import (
 	"context"
 	"encoding/json"
-	"log"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -30,20 +31,20 @@ func (c *Consumer) ConsumeEvents(handler func(event map[string]interface{}) erro
 	for {
 		m, err := c.reader.ReadMessage(context.Background())
 		if err != nil {
-			log.Printf("Error reading message: %v", err)
+			logger.Errorf("Error reading message: %v", err)
 			continue
 		}
 
 		var event map[string]interface{}
 		if err := json.Unmarshal(m.Value, &event); err != nil {
-			log.Printf("Error unmarshaling event: %v", err)
+			logger.Errorf("Error unmarshaling event: %v", err)
 			continue
 		}
 
-		log.Printf("Consumed event: %s", string(m.Key))
+		logger.Infof("Consumed event: %s", string(m.Key))
 
 		if err := handler(event); err != nil {
-			log.Printf("Error handling event: %v", err)
+			logger.Errorf("Error handling event: %v", err)
 		}
 	}
 }

@@ -1,0 +1,47 @@
+# Vector dev config (reads docker logs and publishes to Kafka topic `logs.dev`).
+# Minimal dev config for POC only. In production use a hardened config and
+# avoid mounting the docker socket directly.
+
+sources:
+  docker:
+    type: docker_logs
+    # Limit to only the core-api container for the POC so we don't pollute
+    # the Kafka topic with logs from every container (avoids loops).
+    # We include a few common container-name variants so the docker_logs source
+    # will capture the core API container regardless of how docker-compose names
+    # it in local environments (project-name variations lead to underscores).
+    # Keep backwards compatible forms and a generic match for 'core-api'.
+    include_containers: ["clustergenie-core-api-1", "clustergenie_core-api_1", "core-api"]
+
+transforms:
+  filter_core_api:
+    type: remap
+    inputs: ["docker"]
+    source: |
+      # The docker source is already restricted to only the core-api container
+      # via `include_containers`. Parse message as JSON and merge in if it's an
+      # object. Use the infallible merge! operator to avoid fallible assignment errors.
+      parsed, perr = parse_json(.message)
+      if perr == null {
+        ., merr = merge(., parsed)
+      }
+
+sinks:
+  kafka:
+    type: kafka
+    inputs: ["filter_core_api_1"]
+    # Broker(s) reachable from inside the docker-compose network
+    bootstrap_servers: "kafka:29092"
+    topic: "logs.dev"
+    encoding:
+      codec: json
+    key_field: host
+
+  # Debug sink (prints events to the Vector container stdout). Useful for
+  # quick debugging to confirm Vector is reading docker logs before we
+  # rely on Kafka forwarding.
+  print:
+    type: console
+    inputs: ["filter_core_api"]
+    encoding:
+      codec: json

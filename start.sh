@@ -226,7 +226,7 @@ wait_for_services() {
 # Check prerequisites
 check_prerequisites
 
-# Start Docker services if not running
+echo "   URL: http://localhost:5173"
 if ! docker-compose ps | grep -q "Up"; then
     echo "🐳 Starting Docker services..."
     start_docker_services >> "$LOG_FILE" 2>&1

@@ -3,9 +3,10 @@
 package services
 
 import (
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/events"
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/models"
@@ -28,7 +29,7 @@ func NewEventHandler(jobSvc *JobService, metricSvc *MonitoringService, provision
 func (h *EventHandler) HandleClusterEvent(event map[string]interface{}) error {
 	eventType, ok := event["type"].(string)
 	if !ok {
-		log.Printf("Invalid event type: %v", event["type"])
+		logger.Warnf("Invalid event type: %v", event["type"])
 		return nil
 	}
 
@@ -116,33 +117,33 @@ func (h *EventHandler) HandleClusterEvent(event map[string]interface{}) error {
 	case "metric_threshold_exceeded":
 		return h.handleMetricThresholdExceeded(event)
 	default:
-		log.Printf("Unknown event type: %s", eventType)
+		logger.Warnf("Unknown event type: %s", eventType)
 	}
 
 	return nil
 }
 
 func (h *EventHandler) handleDropletCreated(event map[string]interface{}) error {
-	log.Printf("Handling droplet created event: %v", event)
+	logger.Infof("Handling droplet created event: %v", event)
 	// Could trigger health checks or scaling logic
 	return nil
 }
 
 func (h *EventHandler) handleJobCompleted(event map[string]interface{}) error {
-	log.Printf("Handling job completed event: %v", event)
+	logger.Infof("Handling job completed event: %v", event)
 	// Update job status, trigger next steps
 	return nil
 }
 
 func (h *EventHandler) handleJobRequested(event map[string]interface{}) error {
 	// lightweight wrapper that delegates to the typed handler
-	log.Printf("Handling job requested event (legacy wrapper): %v", event)
+	logger.Infof("Handling job requested event (legacy wrapper): %v", event)
 	return h.handleJobRequestedTyped(event)
 }
 
 // handleJobRequestedTyped converts a raw event into typed events and orchestrates
 func (h *EventHandler) handleJobRequestedTyped(event map[string]interface{}) error {
-	log.Printf("Handling job requested event (typed): %v", event)
+	logger.Infof("Handling job requested event (typed): %v", event)
 	e := events.FromMap(event)
 	jobID := e.JobID
 	jobType := e.JobType
@@ -227,7 +228,7 @@ func (h *EventHandler) handleJobRequestedTyped(event map[string]interface{}) err
 			}
 		}
 	default:
-		log.Printf("Unhandled job type in orchestration: %s", jobType)
+		logger.Warnf("Unhandled job type in orchestration: %s", jobType)
 	}
 
 	if jobID != "" && h.jobSvc != nil {
@@ -257,7 +258,7 @@ func (h *EventHandler) handleJobRequestedTyped(event map[string]interface{}) err
 }
 
 func (h *EventHandler) handleMetricThresholdExceeded(event map[string]interface{}) error {
-	log.Printf("Handling metric threshold exceeded: %v", event)
+	logger.Infof("Handling metric threshold exceeded: %v", event)
 	// Trigger auto-scaling
 	return h.triggerAutoScaling(event)
 }
@@ -272,10 +273,9 @@ func (h *EventHandler) triggerAutoScaling(event map[string]interface{}) error {
 	// Perform actual scaling
 	err := h.provisioningSvc.ScaleCluster(clusterID, "scale_up")
 	if err != nil {
-		log.Printf("Failed to scale cluster %s: %v", clusterID, err)
+		logger.Errorf("Failed to scale cluster %s: %v", clusterID, err)
 		return err
 	}
-
-	log.Printf("Auto-scaled cluster %s", clusterID)
+	logger.Infof("Auto-scaled cluster %s", clusterID)
 	return nil
 }

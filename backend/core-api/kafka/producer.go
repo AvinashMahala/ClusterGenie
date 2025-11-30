@@ -3,7 +3,8 @@ package eventbus
 import (
 	"context"
 	"encoding/json"
-	"log"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/AvinashMahala/ClusterGenie/backend/core-api/events"
 
@@ -37,11 +38,11 @@ func (p *Producer) PublishEvent(topic string, key string, event interface{}) err
 		},
 	)
 	if err != nil {
-		log.Printf("Failed to publish event to topic %s: %v", topic, err)
+		logger.Errorf("Failed to publish event to topic %s: %v", topic, err)
 		return err
 	}
 
-	log.Printf("Published event to topic %s: %s", topic, key)
+	logger.Infof("Published event to topic %s: %s", topic, key)
 
 	// also publish locally so SSE/WebSocket clients get the event immediately
 	events.PublishRaw(event)

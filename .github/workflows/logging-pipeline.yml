@@ -1,0 +1,31 @@
+name: Logging pipeline CI
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/logging-pipeline.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: |
+          go test ./... -v
+
+      - name: Build log-consumer (smoke)
+        working-directory: ./backend
+        run: |
+          go build -v ./log-consumer

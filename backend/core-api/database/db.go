@@ -5,8 +5,9 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
@@ -32,11 +33,12 @@ func InitDB() {
 
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to MySQL:", err)
+		logger.Errorf("Failed to connect to MySQL: %v", err)
+		os.Exit(1)
 	}
 
 	// Note: Schema is created via database/init.sql, not auto-migration
-	log.Println("Database connection established")
+	logger.Info("Database connection established")
 
 	// Redis connection (env-driven)
 	redisAddr := getEnv("REDIS_ADDR", getEnv("REDIS_HOST", "localhost")+":"+getEnv("REDIS_PORT", "6379"))
@@ -45,10 +47,11 @@ func InitDB() {
 	})
 	_, err = Redis.Ping(context.Background()).Result()
 	if err != nil {
-		log.Fatal("Failed to connect to Redis:", err)
+		logger.Errorf("Failed to connect to Redis: %v", err)
+		os.Exit(1)
 	}
 
-	log.Println("Database connections initialized")
+	logger.Info("Database connections initialized")
 }
 
 func CloseDB() {

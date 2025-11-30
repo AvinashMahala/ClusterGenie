@@ -1,10 +1,11 @@
 package services
 
 import (
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/AvinashMahala/ClusterGenie/backend/core-api/logger"
 )
 
 // WorkerPool processes job IDs using a pool of goroutines and a queue backed by a channel.
@@ -45,7 +46,7 @@ func (w *WorkerPool) Start() {
 	for i := 0; i < int(w.workerCount); i++ {
 		go w.workerLoop(i)
 	}
-	log.Printf("WorkerPool started with %d workers and queue size %d", w.workerCount, cap(w.queue))
+	logger.Infof("WorkerPool started with %d workers and queue size %d", w.workerCount, cap(w.queue))
 }
 
 func (w *WorkerPool) workerLoop(id int) {
@@ -60,7 +61,7 @@ func (w *WorkerPool) workerLoop(id int) {
 				defer atomic.AddInt32(&w.active, -1)
 				defer func() {
 					if r := recover(); r != nil {
-						log.Printf("worker %d recovered from panic: %v", id, r)
+						logger.Errorf("worker %d recovered from panic: %v", id, r)
 					}
 				}()
 				// allow handler to run
