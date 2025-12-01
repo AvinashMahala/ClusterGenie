@@ -291,23 +291,44 @@ This structure promotes modularity, making it easy to locate and modify specific
    - `dev.sh` starts infrastructure (MySQL, Redis, Kafka, Zookeeper) in Docker, initializes DB/schema + sample data if missing, and launches backend (Air) + frontend (Vite) in new Terminal tabs.
    - Note: `dev.sh` uses macOS Terminal scripting (osascript) and assumes a macOS environment; on Linux/Windows run the manual commands instead (see below).
 4. **For Production-like Testing**: Run `./start.sh` to start the full environment and helper monitor terminals (macOS). `start.sh` is macOS-oriented — it attempts to install missing prerequisites (Homebrew, Xcode CLI, Docker Desktop, Node, Go, Air, Swag) and opens a set of Terminal tabs for logs.
-5. Access the app (local defaults):
+5. Access the app (local defaults - configurable via .env):
 
-- Frontend (Vite dev server): http://localhost:5173
-- Backend REST API (host): http://localhost:8085  (the `core-api` container binds to container port 8080; docker-compose maps this to host:${COREAPI_PORT:-8085})
+- Frontend (Vite dev server): http://localhost:5173 (FRONTEND_PORT)
+- Backend REST API (host): http://localhost:8085 (COREAPI_PORT - maps to container port 8080)
 - Swagger / API Docs (host): http://localhost:8085/swagger/index.html
 
-Docker services and observability ports:
-- MySQL: 3306
-- Redis: 6379
-- Kafka: 9092
-- Prometheus: 9090
-- Prometheus: 9090 (by default development config scrapes host.docker.internal:8085 so Prometheus can collect metrics from a locally-running backend)
-- Grafana: 3001 (see note below)
+Docker services and observability ports (configurable via .env):
+- MySQL: 3306 (MYSQL_PORT)
+- Redis: 6379 (REDIS_PORT)
+- Kafka: 9092 (KAFKA_PORT)
+- Zookeeper: 2181 (ZOOKEEPER_PORT)
+- Prometheus: 9090 (PROMETHEUS_PORT)
+- Grafana: 3001 (GRAFANA_PORT)
+- Loki: 3100 (LOKI_PORT)
 
-Note about core-api host port (COREAPI_PORT)
+**Additional configurable settings:**
+- Docker image versions for all services
+- Database credentials and connection details
+- Kafka broker configuration and replication factors
+- Rate limiting rates and capacities
+- Worker pool size and queue capacity
+- Grafana authentication and security settings
+- Vector logging levels
+- Log consumer topics and groups
+
+Note about configuration centralization
 -------------------------------------------
-The `core-api` container exposes port 8080 inside the container. When running via `docker-compose` we map a host port to container port 8080 so you can reach the API at http://localhost:<host-port>. The host port defaults to 8085 (to avoid collisions with a host backend), but you can override it using the environment variable `COREAPI_PORT`. Example `.env.example` with recommended defaults is provided at the repo root.
+All service ports, Docker image versions, application settings, and infrastructure configuration can be customized via environment variables defined in the `.env` file at the repo root. The `.env` file contains centralized configuration for the entire system. Default values are provided in `.env.example`. When you modify configuration in `.env`, restart the services for changes to take effect.
+
+**Configurable Categories:**
+- **Infrastructure**: Docker image versions for all services
+- **Ports**: All service ports (databases, APIs, monitoring)
+- **Application**: Rate limiting, worker pools, scopes
+- **Monitoring**: Grafana settings, Vector logging, Loki URLs
+- **Database**: Connection details, credentials
+- **Message Queue**: Kafka/Zookeeper configuration
+
+The `core-api` container exposes port 8080 inside the container. When running via `docker-compose` we map a host port to container port 8080 so you can reach the API at http://localhost:<host-port>. The host port defaults to 8085 (to avoid collisions with a host backend), but you can override it using the environment variable `COREAPI_PORT`.
 
 Examples:
 

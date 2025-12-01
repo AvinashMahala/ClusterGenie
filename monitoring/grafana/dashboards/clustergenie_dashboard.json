@@ -12,7 +12,7 @@
           "type": "query",
           "name": "cluster",
           "label": "Cluster",
-          "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+          "datasource": "Prometheus",
           "query": "label_values(clustergenie_rate_limit_available_tokens{endpoint=\"diagnosis\",scope_type=\"cluster\"}, scope_id)",
           "refresh": 2,
           "hide": 0
@@ -59,7 +59,7 @@
       {
         "type": "stat",
         "title": "Worker Pool Queue Length",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "clustergenie_workerpool_queue_length", "refId": "A" }
         ],
@@ -68,7 +68,7 @@
       {
         "type": "stat",
         "title": "Active Workers",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "clustergenie_workerpool_active_workers", "refId": "A" }
         ],
@@ -77,7 +77,7 @@
       {
         "type": "timeseries",
         "title": "Rate Limit Tokens (diagnosis - cluster)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "clustergenie_rate_limit_available_tokens{endpoint=\"diagnosis\",scope_type=\"cluster\",scope_id=~\"$cluster\"}", "refId": "A" }
         ],
@@ -86,7 +86,7 @@
       {
         "type": "timeseries",
         "title": "Rate Limit Tokens (jobs_create - user)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "clustergenie_rate_limit_available_tokens{endpoint=\"jobs_create\",scope_type=\"user\",scope_id=~\"$user\"}", "refId": "A" }
         ],
@@ -95,7 +95,7 @@
       {
         "type": "timeseries",
         "title": "Jobs processed",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "sum(rate(clustergenie_jobs_processed_total[1m]))", "refId": "A" }
         ],
@@ -105,7 +105,7 @@
       {
         "type": "stat",
         "title": "Rate-limit rejects (per min)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "sum(rate(clustergenie_rate_limit_exceeded_total{endpoint=~\"$endpoint\",scope_type=~\"$scope_type\"}[1m]))", "refId": "A" }
         ],
@@ -114,7 +114,7 @@
       {
         "type": "timeseries",
         "title": "Job latency p95 (job type)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "A" }
         ],
@@ -123,7 +123,7 @@
       {
         "type": "stat",
         "title": "Latency distribution (p50/p95/p99)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "histogram_quantile(0.5, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "A" },
           { "expr": "histogram_quantile(0.95, sum(rate(clustergenie_job_processing_seconds_bucket[5m])) by (le, job_type))", "refId": "B" },
@@ -134,7 +134,7 @@
       {
         "type": "heatmap",
         "title": "Rate-limit rejects — heatmap (scope_id)",
-        "datasource": {"type": "prometheus", "uid": "PBFA97CFB590B2093"},
+        "datasource": "Prometheus",
         "targets": [
           { "expr": "sum(rate(clustergenie_rate_limit_exceeded_total[1m])) by (scope_id)", "refId": "A" }
         ],

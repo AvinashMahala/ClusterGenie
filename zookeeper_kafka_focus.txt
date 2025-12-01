@@ -1,0 +1,203 @@
+================================================================================
+                    ZOOKEEPER & KAFKA RELATIONSHIP IN CLUSTERGENIE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           CLUSTERGENIE EVENT SYSTEM                         │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐         │
+│  │  Job Service    │    │  Event Handler  │    │  Log Consumer  │         │
+│  │  (Producer)     │───►│  (Consumer)     │    │  (Consumer)     │         │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   │
+                                   │ Kafka Protocol
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           APACHE KAFKA CLUSTER                             │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐         │
+│  │   Producer API  │    │   Broker        │    │   Consumer API  │         │
+│  │                 │◄──►│   (Message      │◄──►│                 │         │
+│  │ • Publish msgs  │    │    Broker)     │    │ • Subscribe      │         │
+│  │ • Topic routing │    │                 │    │ • Group mgmt    │         │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘         │
+│                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    ZOOKEEPER COORDINATION                           │   │
+│  │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐ │   │
+│  │  │  Zookeeper      │◄──►│   Kafka Broker  │◄──►│  Metadata       │ │   │
+│  │  │  (2181)         │    │   (9092)        │    │  Store           │ │   │
+│  │  │                 │    │                 │    │                  │ │   │
+│  │  │ • Controller    │    │ • Message       │    │ • Topic config   │ │   │
+│  │  │ • Leader elect  │    │ • Storage       │    │ • Partition map  │ │   │
+│  │  │ • Health check  │    │ • Replication   │    │ • Consumer offset│ │   │
+│  │  │ • Config store  │    │                 │    │ • ACLs           │ │   │
+│  │  └─────────────────┘    └─────────────────┘    └─────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                          ZOOKEEPER'S CRITICAL FUNCTIONS
+================================================================================
+
+🎯 CONTROLLER ELECTION:
+   Zookeeper elects which Kafka broker becomes the "controller"
+   Controller manages partition leadership and cluster coordination
+
+📍 TOPIC MANAGEMENT:
+   • Stores topic configurations (partitions, replication factor)
+   • Maintains partition-to-broker mappings
+   • Tracks ISR (In-Sync Replica) sets
+
+👥 CONSUMER GROUP COORDINATION:
+   • Manages consumer group membership
+   • Coordinates partition rebalancing across consumers
+   • Tracks consumer offsets for fault tolerance
+
+🏥 HEALTH MONITORING:
+   • Monitors broker liveness and health
+   • Triggers automatic failover when brokers die
+   • Maintains cluster state during network partitions
+
+================================================================================
+                          CLUSTERGENIE USE CASES
+================================================================================
+
+🔄 JOB PROCESSING WORKFLOW:
+   1. JobService publishes "job.requested" → Kafka topic "cluster-events"
+   2. Zookeeper routes message to correct partition + broker
+   3. EventHandler consumer receives message via group coordination
+   4. WorkerPool processes job asynchronously
+   5. Progress events flow back through same coordinated system
+
+📊 LOGGING PIPELINE:
+   1. Vector ships container logs → Kafka topic "logs.dev"
+   2. Zookeeper ensures log message durability and ordering
+   3. Log Consumer reads via coordinated consumer group
+   4. Structured logs forwarded to Loki for Grafana visualization
+
+⚡ ASYNC EVENT SYSTEM:
+   • Job lifecycle events (created → processing → completed)
+   • Monitoring alerts and metrics events
+   • Cross-service communication without tight coupling
+
+================================================================================
+                          FAILURE SCENARIOS WITHOUT ZOOKEEPER
+================================================================================
+
+❌ BROKER FAILURE:
+   Without Zookeeper, surviving brokers can't detect failures
+   No automatic partition leader reassignment
+   Messages become unavailable until manual intervention
+
+❌ CONSUMER REBALANCING:
+   Consumer groups can't coordinate partition ownership
+   Multiple consumers may read same messages
+   Load balancing becomes impossible
+
+❌ TOPIC MANAGEMENT:
+   No centralized configuration store
+   Topic creation/modification requires manual broker updates
+   Replication and partitioning become unmanaged
+
+================================================================================
+
+================================================================================
+                          ARCHITECTURE EXPLANATION
+================================================================================
+
+This diagram illustrates Zookeeper's critical role as the coordination backbone
+of ClusterGenie's Kafka-based event-driven architecture. Without Zookeeper,
+the distributed messaging system that powers job processing, logging, and
+monitoring would collapse.
+
+================================================================================
+                          KEY INSIGHTS
+================================================================================
+
+🎯 ZOOKEEPER AS THE "BRAIN" OF KAFKA:
+   - Elects the controller broker that manages cluster-wide coordination
+   - Serves as the distributed configuration store for all Kafka metadata
+   - Coordinates consumer groups for automatic load balancing and failover
+   - Monitors broker health and triggers automatic recovery mechanisms
+
+🔄 REAL CLUSTERGENIE WORKFLOWS POWERED BY ZOOKEEPER:
+
+   JOB PROCESSING PIPELINE:
+   1. JobService publishes "job.requested" events to Kafka topic "cluster-events"
+   2. Zookeeper routes messages to correct partitions and brokers
+   3. EventHandler consumers receive messages via coordinated group management
+   4. WorkerPool processes jobs asynchronously with guaranteed delivery
+   5. Progress events flow back through the same fault-tolerant system
+
+   LOGGING INFRASTRUCTURE:
+   1. Vector collects container logs and ships them to Kafka topic "logs.dev"
+   2. Zookeeper ensures message durability, ordering, and fault tolerance
+   3. Log Consumer reads via coordinated consumer groups for load balancing
+   4. Structured logs are forwarded to Loki for Grafana visualization
+
+   EVENT-DRIVEN ARCHITECTURE:
+   - Job lifecycle events (created → queued → processing → completed)
+   - Real-time monitoring alerts and metrics collection
+   - Cross-service communication without tight coupling dependencies
+
+================================================================================
+                          WHY ZOOKEEPER IS ESSENTIAL
+================================================================================
+
+Zookeeper provides the distributed coordination that makes Kafka reliable and
+scalable. It's the invisible infrastructure that:
+
+• Ensures no message loss during broker failures
+• Automatically rebalances load when consumers scale up/down
+• Maintains topic configurations across the entire cluster
+• Coordinates partition leadership and replication
+• Tracks consumer progress for exactly-once processing semantics
+
+================================================================================
+                          FAILURE SCENARIOS WITHOUT ZOOKEEPER
+================================================================================
+
+❌ BROKER FAILURE IMPACT:
+   - Surviving brokers cannot detect when others fail
+   - No automatic partition leader reassignment occurs
+   - Messages become unavailable until manual intervention
+   - Service disruption until operators manually reconfigure
+
+❌ CONSUMER GROUP BREAKDOWN:
+   - Consumer groups lose coordination capabilities
+   - Multiple consumers may process the same messages
+   - Load balancing becomes impossible to maintain
+   - Message processing becomes unreliable and inefficient
+
+❌ TOPIC MANAGEMENT CHAOS:
+   - No centralized configuration store exists
+   - Topic creation/modification requires manual broker updates
+   - Replication and partitioning become unmanaged
+   - Configuration drift across brokers leads to inconsistencies
+
+================================================================================
+                          CLUSTERGENIE DEPENDENCY MAP
+================================================================================
+
+Every major feature in ClusterGenie depends on this Zookeeper-coordinated
+Kafka infrastructure:
+
+• Job Processing → Event-driven task distribution
+• Monitoring → Real-time metrics and alerting events
+• Logging → Centralized log aggregation and analysis
+• Auto-scaling → Dynamic worker pool coordination
+• Fault Tolerance → Automatic recovery and load balancing
+
+================================================================================
+                          COMPLEMENTARY DIAGRAMS
+================================================================================
+
+This focused diagram complements the comprehensive system overview in:
+• zookeeper_architecture.txt - Complete ClusterGenie system architecture
+• zookeeper_kafka_focus.txt - Deep dive into Zookeeper-Kafka coordination
+
+Together, these diagrams explain how Zookeeper enables the distributed,
+fault-tolerant messaging system that powers all of ClusterGenie's
+event-driven capabilities.
+
+================================================================================

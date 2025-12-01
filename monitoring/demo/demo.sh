@@ -9,7 +9,7 @@ USER_ID=${1:-alice}
 COUNT=${2:-50}
 RATE=${3:-20}
 
-API="http://localhost:8080/api/v1"
+API="http://localhost:8085/api/v1"
 
 echo "Demo: seed limiter rule for user=${USER_ID}"
 
@@ -20,7 +20,7 @@ echo "Starting load: sending $COUNT job create requests as user $USER_ID at ~$RA
 
 for i in $(seq 1 $COUNT); do
   # send job create request; backend will rate-limit depending on config
-  curl -s -X POST "$API/jobs" -H "Content-Type: application/json" -H "X-User-ID: $USER_ID" -d '{"name":"demo-job-'$i'", "cluster_id":"demo-cluster", "job_type":"demo"}' &
+  curl -s -X POST "$API/jobs" -H "Content-Type: application/json" -H "X-User-ID: $USER_ID" -d '{"name":"demo-job-'$i'", "cluster_id":"demo-cluster", "type":"provision"}' &
   # throttle to desired approximate rate
   sleep $(awk "BEGIN {print 1.0/$RATE}")
 done

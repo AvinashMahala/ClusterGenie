@@ -24,4 +24,5 @@ scrape_configs:
 
   - job_name: 'prometheus'
     static_configs:
+      # NOTE: Port 9090 should match PROMETHEUS_PORT in .env file
       - targets: ['localhost:9090']

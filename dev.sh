@@ -456,9 +456,10 @@ EOF
 start_frontend() {
     print_info "Starting frontend in new terminal tab..."
 
-    # Check if port 5173 is available (frontend port)
-    if lsof -Pi :5173 -sTCP:LISTEN -t >/dev/null 2>&1; then
-        print_warning "Port 5173 is already in use. Frontend might already be running."
+    # Check if frontend port is available (from .env or default)
+    FRONTEND_PORT_CHECK=${FRONTEND_PORT:-5173}
+    if lsof -Pi :$FRONTEND_PORT_CHECK -sTCP:LISTEN -t >/dev/null 2>&1; then
+        print_warning "Port $FRONTEND_PORT_CHECK is already in use. Frontend might already be running."
     fi
 
     # Create AppleScript to open new terminal tab for frontend
