@@ -66,6 +66,7 @@ services:
       - CLUSTERGENIE_WORKER_COUNT=${CLUSTERGENIE_WORKER_COUNT:-4}
       - CLUSTERGENIE_WORKER_QUEUE=${CLUSTERGENIE_WORKER_QUEUE:-100}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOKI_URL=${LOKI_URL:-http://loki:3100/loki/api/v1/push}
     # Allow host port override via COREAPI_PORT env (defaults to 8085 to avoid collisions)
     ports:
       - "${COREAPI_PORT:-8085}:8080"

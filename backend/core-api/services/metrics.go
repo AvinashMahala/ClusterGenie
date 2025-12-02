@@ -43,8 +43,8 @@ var (
 	JobsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "clustergenie_jobs_processed_total",
-			Help: "Jobs processed by status",
-		}, []string{"status"},
+			Help: "Jobs processed by job_type and status",
+		}, []string{"job_type", "status"},
 	)
 
 	// Observe job processing durations (seconds)

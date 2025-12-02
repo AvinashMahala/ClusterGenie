@@ -73,7 +73,7 @@ func (s *JobService) CreateJob(req *models.CreateJobRequest) (*models.JobRespons
 			// queue full — mark job as rejected and return an error
 			_ = s.jobRepo.UpdateJobStatus(resp.Job.ID, "queued_rejected")
 			if JobsProcessed != nil {
-				JobsProcessed.WithLabelValues("rejected").Inc()
+				JobsProcessed.WithLabelValues(req.Type, "rejected").Inc()
 			}
 			return resp, errors.New("job queue full — try again later")
 		}
@@ -154,20 +154,20 @@ func (s *JobService) ProcessJob(id string) error {
 		if jobErr != nil {
 			s.jobRepo.UpdateJobStatus(id, "failed")
 			if JobsProcessed != nil {
-				JobsProcessed.WithLabelValues("failed").Inc()
+				JobsProcessed.WithLabelValues(job.Type, "failed").Inc()
 			}
 			finalStatus = "failed"
 		} else {
 			if waitForOrchestration {
 				s.jobRepo.UpdateJobStatus(id, "queued")
 				if JobsProcessed != nil {
-					JobsProcessed.WithLabelValues("queued").Inc()
+					JobsProcessed.WithLabelValues(job.Type, "queued").Inc()
 				}
 				finalStatus = "queued"
 			} else {
 				s.jobRepo.UpdateJobStatus(id, "completed")
 				if JobsProcessed != nil {
-					JobsProcessed.WithLabelValues("completed").Inc()
+					JobsProcessed.WithLabelValues(job.Type, "completed").Inc()
 				}
 				finalStatus = "completed"
 			}

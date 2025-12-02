@@ -1,8 +1,10 @@
 package logger
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 )
@@ -43,14 +45,71 @@ func emit(level, message string, attributes map[string]interface{}) {
 	}
 
 	if b, err := json.Marshal(obj); err == nil {
+		// Print to stdout for local viewing
 		fmt.Println(string(b))
+		// Send to Loki asynchronously
+		go sendToLoki(string(b))
 	} else {
 		// best-effort fallback
-		fmt.Printf("{\"timestamp\":\"%s\",\"level\":\"%s\",\"service\":\"%s\",\"message\":\"%s\"}\n", time.Now().UTC().Format(time.RFC3339Nano), level, serviceName, message)
+		fallback := fmt.Sprintf("{\"timestamp\":\"%s\",\"level\":\"%s\",\"service\":\"%s\",\"message\":\"%s\"}\n", time.Now().UTC().Format(time.RFC3339Nano), level, serviceName, message)
+		fmt.Print(fallback)
+		go sendToLoki(fallback)
 	}
 }
 
-// Convenience helpers
+func sendToLoki(line string) {
+	// Parse the line to get level
+	var obj map[string]interface{}
+	var level string = "info"
+	if err := json.Unmarshal([]byte(line), &obj); err == nil {
+		if l, ok := obj["level"].(string); ok {
+			level = l
+		}
+	}
+
+	// Create Loki payload
+	payload := map[string]interface{}{
+		"streams": []map[string]interface{}{
+			{
+				"labels": fmt.Sprintf(`{service="%s",env="%s",level="%s"}`, serviceName, environment, level),
+				"entries": []map[string]string{
+					{
+						"ts":   time.Now().UTC().Format(time.RFC3339Nano),
+						"line": line,
+					},
+				},
+			},
+		},
+	}
+
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	// Allow overriding Loki push URL via environment variable so logging
+	// works both when running locally (localhost:3100) and from inside
+	// Docker (use http://loki:3100).
+	lokiURL := os.Getenv("LOKI_URL")
+	if lokiURL == "" {
+		lokiURL = "http://localhost:3100/loki/api/v1/push"
+	}
+
+	req, err := http.NewRequest("POST", lokiURL, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Scope-OrgID", "fake")
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	// Ignore response
+}
 func Info(message string)                       { emit("INFO", message, nil) }
 func Infof(format string, args ...interface{})  { Info(fmt.Sprintf(format, args...)) }
 func Debug(message string)                      { emit("DEBUG", message, nil) }

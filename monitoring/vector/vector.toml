@@ -5,31 +5,41 @@
 sources:
   docker:
     type: docker_logs
-    # Limit to only the core-api container for the POC so we don't pollute
-    # the Kafka topic with logs from every container (avoids loops).
-    # We include a few common container-name variants so the docker_logs source
-    # will capture the core API container regardless of how docker-compose names
-    # it in local environments (project-name variations lead to underscores).
-    # Keep backwards compatible forms and a generic match for 'core-api'.
-    include_containers: ["clustergenie-core-api-1", "clustergenie_core-api_1", "core-api"]
+    # Capture from all containers for testing
+    # include_containers: ["clustergenie-core-api-1", "clustergenie_core-api_1", "core-api", "clustergenie-log-consumer-1", "clustergenie_log_consumer_1", "log-consumer"]
 
 transforms:
   filter_core_api:
     type: remap
     inputs: ["docker"]
     source: |
-      # The docker source is already restricted to only the core-api container
-      # via `include_containers`. Parse message as JSON and merge in if it's an
-      # object. Use the infallible merge! operator to avoid fallible assignment errors.
+      # Parse message as JSON and merge in if it's an object
       parsed, perr = parse_json(.message)
       if perr == null {
         ., merr = merge(., parsed)
       }
 
+      # Extract service from container_name
+      if .container_name == "clustergenie-core-api-1" {
+        .service = "core-api"
+      } else if .container_name == "clustergenie-log-consumer-1" {
+        .service = "log-consumer"
+      } else {
+        .service = "unknown"
+      }
+
+      # Set defaults
+      if .environment == null {
+        .environment = "dev"
+      }
+      if .level == null {
+        .level = "info"
+      }
+
 sinks:
   kafka:
     type: kafka
-    inputs: ["filter_core_api_1"]
+    inputs: ["filter_core_api"]
     # Broker(s) reachable from inside the docker-compose network
     bootstrap_servers: "kafka:29092"
     topic: "logs.dev"

@@ -80,12 +80,43 @@ func main() {
 				if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
 					ts = t
 				}
+			}
 
-				// If we did not find top-level fields, try to parse a nested JSON
-				// string commonly present in docker log events under "message" or
-				// "log" so structured app logs are extracted correctly.
+			// If we did not find top-level fields, try to parse a nested JSON
+			// string commonly present in docker log events under "message" or
+			// "log" so structured app logs are extracted correctly.
+			if service == "" {
+				// Try nested under message
+				if v, ok := obj["message"].(string); ok {
+					var nested map[string]interface{}
+					if err := json.Unmarshal([]byte(v), &nested); err == nil {
+						if s, ok := nested["service"].(string); ok {
+							service = s
+						}
+						if e, ok := nested["environment"].(string); ok {
+							env = e
+						}
+						if l, ok := nested["level"].(string); ok {
+							level = l
+						}
+						if tsStr, ok := nested["timestamp"].(string); ok {
+							// extract job_id / trace_id if present in nested JSON
+							if j, ok := nested["job_id"].(string); ok && j != "" {
+								jobID = j
+							}
+							if t, ok := nested["trace_id"].(string); ok && t != "" {
+								traceID = t
+							}
+							if t, err := time.Parse(time.RFC3339Nano, tsStr); err == nil {
+								ts = t
+							}
+						}
+					}
+				}
+
+				// some sources put the raw JSON under the `log` key
 				if service == "" {
-					if v, ok := obj["message"].(string); ok {
+					if v, ok := obj["log"].(string); ok {
 						var nested map[string]interface{}
 						if err := json.Unmarshal([]byte(v), &nested); err == nil {
 							if s, ok := nested["service"].(string); ok {
@@ -98,7 +129,7 @@ func main() {
 								level = l
 							}
 							if tsStr, ok := nested["timestamp"].(string); ok {
-								// extract job_id / trace_id if present in nested JSON
+								// extract job_id / trace_id if present under log nested JSON
 								if j, ok := nested["job_id"].(string); ok && j != "" {
 									jobID = j
 								}
@@ -107,35 +138,6 @@ func main() {
 								}
 								if t, err := time.Parse(time.RFC3339Nano, tsStr); err == nil {
 									ts = t
-								}
-							}
-						}
-					}
-					if service == "" {
-						// some sources put the raw JSON under the `log` key
-						if v, ok := obj["log"].(string); ok {
-							var nested map[string]interface{}
-							if err := json.Unmarshal([]byte(v), &nested); err == nil {
-								if s, ok := nested["service"].(string); ok {
-									service = s
-								}
-								if e, ok := nested["environment"].(string); ok {
-									env = e
-								}
-								if l, ok := nested["level"].(string); ok {
-									level = l
-								}
-								if tsStr, ok := nested["timestamp"].(string); ok {
-									// extract job_id / trace_id if present under log nested JSON
-									if j, ok := nested["job_id"].(string); ok && j != "" {
-										jobID = j
-									}
-									if t, ok := nested["trace_id"].(string); ok && t != "" {
-										traceID = t
-									}
-									if t, err := time.Parse(time.RFC3339Nano, tsStr); err == nil {
-										ts = t
-									}
 								}
 							}
 						}
@@ -181,6 +183,13 @@ func main() {
 			}
 
 			// send to Loki
+			// For debugging: log the payload we send so we can inspect labels/entries.
+			if b2, err := json.Marshal(payload); err == nil {
+				log.Printf("sending-loki-payload=%s", string(b2))
+			} else {
+				log.Printf("failed-to-marshal-loki-payload: %v", err)
+			}
+
 			if err := sendToLoki(lokiURL, payload); err != nil {
 				log.Printf("failed to send to loki: %v", err)
 			} else {
@@ -208,6 +217,7 @@ func sendToLoki(url string, payload interface{}) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Scope-OrgID", "fake")
 
 	// default timeout
 	client := &http.Client{Timeout: 5 * time.Second}
